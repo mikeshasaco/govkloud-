@@ -1,0 +1,13 @@
+apiVersion: v2
+name: govkloud-workbench
+description: Code-server workbench for GovKloud lab sessions
+type: application
+version: 0.1.0
+appVersion: "4.96.1"
+keywords:
+  - code-server
+  - workbench
+  - ide
+  - vscode
+maintainers:
+  - name: GovKloud Team

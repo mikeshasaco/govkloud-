@@ -1,0 +1,72 @@
+# Default values for govkloud-workbench
+# This chart deploys a code-server instance for lab sessions
+
+# Session configuration (set per-deployment)
+session:
+  id: ""
+  token: ""
+
+# Image configuration
+image:
+  repository: codercom/code-server
+  tag: "4.96.1"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+
+# Resource limits (must fit within quota after vcluster takes ~1.5CPU, 700Mi)
+resources:
+  limits:
+    cpu: "500m"
+    memory: "1Gi"
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+
+# Kubeconfig secret (mounted from vcluster kubeconfig)
+kubeconfig:
+  secretName: vcluster-kubeconfig
+  secretKey: config
+  mountPath: /home/coder/.kube
+
+# Workspace volume (ephemeral)
+workspace:
+  mountPath: /workspace
+  sizeLimit: "10Gi"
+
+# Environment variables
+env:
+  - name: PASSWORD
+    value: ""  # Set via session.token
+  - name: HOME
+    value: /home/coder
+
+# Pod security context
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+# Optional: nodeSelector, tolerations, affinity
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Startup/readiness/liveness probes
+probes:
+  startup:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    failureThreshold: 30
+  readiness:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  liveness:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 30

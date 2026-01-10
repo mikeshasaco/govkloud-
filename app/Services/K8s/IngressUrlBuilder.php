@@ -1,0 +1,82 @@
+<?php
+
+namespace App\Services\K8s;
+
+class IngressUrlBuilder
+{
+    protected string $baseDomain;
+    protected string $pathPrefix;
+    protected bool $tlsEnabled;
+
+    public function __construct()
+    {
+        $this->baseDomain = config('govkloud.ingress.base_domain');
+        $this->pathPrefix = config('govkloud.ingress.path_prefix');
+        $this->tlsEnabled = config('govkloud.ingress.tls_enabled');
+    }
+
+    /**
+     * Build the workbench URL for a session
+     */
+    public function buildWorkbenchUrl(string $sessionId): string
+    {
+        $scheme = $this->tlsEnabled ? 'https' : 'http';
+        $path = rtrim($this->pathPrefix, '/') . '/' . $sessionId . '/code';
+
+        return "{$scheme}://{$this->baseDomain}{$path}";
+    }
+
+    /**
+     * Build the ingress path for a session
+     */
+    public function buildIngressPath(string $sessionId): string
+    {
+        return rtrim($this->pathPrefix, '/') . '/' . $sessionId . '/code(/|$)(.*)';
+    }
+
+    /**
+     * Generate Ingress YAML for workbench
+     */
+    public function generateIngressYaml(string $name, string $sessionId, string $serviceName, int $servicePort = 8080): string
+    {
+        $ingressClass = config('govkloud.ingress.ingress_class');
+        $path = $this->buildIngressPath($sessionId);
+        $host = $this->baseDomain;
+
+        $tlsBlock = '';
+        if ($this->tlsEnabled) {
+            $tlsBlock = <<<YAML
+  tls:
+  - hosts:
+    - {$host}
+    secretName: govkloud-tls
+YAML;
+        }
+
+        return <<<YAML
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {$name}
+  annotations:
+    kubernetes.io/ingress.class: {$ingressClass}
+    nginx.ingress.kubernetes.io/rewrite-target: /\$2
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: {$ingressClass}
+{$tlsBlock}
+  rules:
+  - host: {$host}
+    http:
+      paths:
+      - path: {$path}
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {$serviceName}
+            port:
+              number: {$servicePort}
+YAML;
+    }
+}
