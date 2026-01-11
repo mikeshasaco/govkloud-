@@ -30,7 +30,7 @@ return [
     */
     'session' => [
         'ttl_default_minutes' => env('GOVKLOUD_TTL_MINUTES', 180),
-        'idle_timeout_minutes' => env('GOVKLOUD_IDLE_TIMEOUT_MINUTES', 20),
+        'idle_timeout_minutes' => env('GOVKLOUD_IDLE_TIMEOUT_MINUTES', 2),
         'max_concurrent_sessions' => env('GOVKLOUD_MAX_CONCURRENT', 1),
     ],
 

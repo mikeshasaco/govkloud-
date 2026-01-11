@@ -30,21 +30,36 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Module routes
+// Module routes (public)
 Route::get('/modules', [ModuleController::class, 'index'])->name('modules.index');
 Route::get('/modules/{slug}', [ModuleController::class, 'show'])->name('modules.show');
 
-// Lesson routes
+// Lesson routes (auth required for lab-enabled lessons)
 Route::get('/modules/{module}/lessons/{lesson}', [LessonController::class, 'show'])
+    ->middleware('auth')
     ->name('lessons.show');
 
 // Lab routes
 Route::get('/labs/{slug}', [LabController::class, 'show'])->name('labs.show');
 
-// Lab session runtime (protected)
+// Lab session routes (protected)
 Route::middleware('auth')->group(function () {
     Route::get('/lab-sessions/{id}', [LabSessionController::class, 'runtime'])
         ->name('lab-sessions.runtime');
+    Route::post('/lab-sessions', [LabSessionController::class, 'start'])
+        ->name('lab-sessions.start');
+    Route::post('/modules/{module}/start-lab', [LabSessionController::class, 'startFromModule'])
+        ->name('modules.start-lab');
+});
+
+// API routes for AJAX calls
+Route::prefix('api')->middleware('auth')->group(function () {
+    Route::get('/lab-sessions/{id}/status', [LabSessionController::class, 'apiStatus'])
+        ->name('api.lab-sessions.status');
+    Route::post('/lab-sessions/{id}/stop', [LabSessionController::class, 'stop'])
+        ->name('api.lab-sessions.stop');
+    Route::post('/lab-sessions/{id}/heartbeat', [LabSessionController::class, 'heartbeat'])
+        ->name('api.lab-sessions.heartbeat');
 });
 
 require __DIR__ . '/auth.php';
