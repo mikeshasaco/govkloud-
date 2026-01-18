@@ -12,6 +12,7 @@ class LabSession extends Model
 
     protected $fillable = [
         'user_id',
+        'module_id',
         'lab_id',
         'status',
         'host_namespace',
@@ -53,6 +54,11 @@ class LabSession extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function module(): BelongsTo
+    {
+        return $this->belongsTo(Module::class);
     }
 
     public function lab(): BelongsTo

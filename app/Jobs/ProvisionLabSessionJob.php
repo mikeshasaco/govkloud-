@@ -18,7 +18,7 @@ class ProvisionLabSessionJob implements ShouldQueue
     /**
      * Number of times the job may be attempted
      */
-    public int $tries = 3;
+    public int $tries = 1;
 
     /**
      * Timeout in seconds

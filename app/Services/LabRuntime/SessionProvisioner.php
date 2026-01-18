@@ -132,13 +132,13 @@ class SessionProvisioner
         );
 
         // vcluster v0.21+ uses new values format
-        // Use installNoWait so we can control the wait ourselves
+        // Use upgradeInstallNoWait to avoid blocking, we poll for readiness separately
         $values = [
             'controlPlane.statefulSet.resources.limits.memory' => '512Mi',
             'controlPlane.statefulSet.resources.limits.cpu' => '500m',
         ];
 
-        return $this->helmClient->installNoWait(
+        return $this->helmClient->upgradeInstallNoWait(
             $session->vcluster_release_name,
             config('govkloud.helm.vcluster_chart'),
             $session->host_namespace,
@@ -152,10 +152,11 @@ class SessionProvisioner
     protected function waitForVcluster(LabSession $session): bool
     {
         // vcluster v0.21+ creates a statefulset named after the release
+        // 10 minute timeout for init container to complete
         return $this->k8sClient->waitForStatefulSetReady(
             $session->host_namespace,
             $session->vcluster_release_name,
-            300
+            600
         );
     }
 
@@ -352,10 +353,13 @@ YAML;
      */
     protected function createWorkbenchIngress(LabSession $session): bool
     {
+        // The Helm chart creates a service named {releaseName}-govkloud-workbench
+        $serviceName = $session->workbench_release_name . '-govkloud-workbench';
+
         $ingressYaml = $this->ingressUrlBuilder->generateIngressYaml(
             'workbench-ingress',
             $session->id,
-            'workbench',
+            $serviceName,
             8080
         );
 

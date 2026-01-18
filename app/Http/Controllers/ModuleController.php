@@ -8,16 +8,34 @@ use Illuminate\Http\Request;
 class ModuleController extends Controller
 {
     /**
-     * Display a list of published modules
+     * Display a list of published modules/courses
      */
-    public function index()
+    public function index(Request $request)
     {
-        $modules = Module::published()
+        $query = Module::published()
             ->ordered()
-            ->withCount(['lessons', 'labs'])
+            ->with(['lessons', 'labs']);
+
+        // Filter by technology if provided
+        if ($request->has('tech') && $request->tech) {
+            $tech = $request->tech;
+            $query->whereHas('lessons', function ($q) use ($tech) {
+                $q->where('subcategory', $tech);
+            });
+        }
+
+        $modules = $query->get();
+
+        // Get all technologies for the filter dropdown
+        $technologies = \App\Models\Lesson::query()
+            ->whereNotNull('subcategory')
+            ->where('subcategory', '!=', '')
+            ->selectRaw('subcategory')
+            ->groupBy('subcategory')
+            ->orderBy('subcategory')
             ->get();
 
-        return view('modules.index', compact('modules'));
+        return view('courses.index', compact('modules', 'technologies'));
     }
 
     /**

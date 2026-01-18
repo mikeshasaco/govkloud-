@@ -38,15 +38,16 @@ class LabSessionController extends Controller
         $shortId = strtolower(Str::random(8));
         $namespacePrefix = config('govkloud.host_k8s.namespace_prefix');
 
-        // Create session record
+        // Create session record - linked to module, not lab
         $session = LabSession::create([
             'user_id' => $user->id,
+            'module_id' => $lab->module_id,
             'lab_id' => $lab->id,
             'status' => LabSession::STATUS_PROVISIONING,
             'host_namespace' => $namespacePrefix . $shortId,
             'vcluster_release_name' => 'vc-' . $shortId,
             'session_token' => Str::random(32),
-            'expires_at' => now()->addMinutes($lab->ttl_minutes),
+            'expires_at' => now()->addMinutes($lab->ttl_minutes ?? 60),
         ]);
 
         // Dispatch provisioning job
@@ -135,13 +136,13 @@ class LabSessionController extends Controller
         $lab = $module->labs()->published()->first();
 
         if (!$lab) {
-            return redirect()->route('modules.show', $moduleSlug)
+            return redirect()->route('courses.show', $moduleSlug)
                 ->with('error', 'No lab available for this module.');
         }
 
-        // Check for existing active session for this lab
+        // Check for existing active session for this MODULE
         $existingSession = LabSession::where('user_id', $user->id)
-            ->where('lab_id', $lab->id)
+            ->where('module_id', $module->id)
             ->whereIn('status', [LabSession::STATUS_PROVISIONING, LabSession::STATUS_RUNNING])
             ->first();
 
@@ -154,22 +155,23 @@ class LabSessionController extends Controller
         $maxConcurrent = config('govkloud.session.max_concurrent_sessions');
 
         if ($activeCount >= $maxConcurrent) {
-            return redirect()->route('modules.show', $moduleSlug)
+            return redirect()->route('courses.show', $moduleSlug)
                 ->with('error', 'You already have an active lab session. Please stop it before starting a new one.');
         }
 
-        // Create new session
+        // Create new session - linked to MODULE, not just lab
         $shortId = strtolower(Str::random(8));
         $namespacePrefix = config('govkloud.host_k8s.namespace_prefix');
 
         $session = LabSession::create([
             'user_id' => $user->id,
+            'module_id' => $module->id,
             'lab_id' => $lab->id,
             'status' => LabSession::STATUS_PROVISIONING,
             'host_namespace' => $namespacePrefix . $shortId,
             'vcluster_release_name' => 'vc-' . $shortId,
             'session_token' => Str::random(32),
-            'expires_at' => now()->addMinutes($lab->ttl_minutes),
+            'expires_at' => now()->addMinutes($lab->ttl_minutes ?? 60),
         ]);
 
         // Dispatch provisioning job
@@ -186,7 +188,7 @@ class LabSessionController extends Controller
         $session = LabSession::where('id', $id)
             ->where('user_id', $request->user()->id)
             ->with([
-                'lab.module.lessons' => function ($q) {
+                'module.lessons' => function ($q) {
                     $q->published()->ordered();
                 },
                 'lab.steps'
@@ -194,7 +196,7 @@ class LabSessionController extends Controller
             ->firstOrFail();
 
         // Get the module and its lessons for the left panel
-        $module = $session->lab->module;
+        $module = $session->module;
         $lessons = $module ? $module->lessons()->published()->ordered()->get() : collect();
 
         return view('labs.runtime', compact('session', 'module', 'lessons'));

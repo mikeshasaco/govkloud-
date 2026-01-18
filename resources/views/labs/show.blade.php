@@ -77,9 +77,9 @@
 
 @section('content')
     <div class="breadcrumb">
-        <a href="{{ route('modules.index') }}">Modules</a>
+        <a href="{{ route('courses.index') }}">Modules</a>
         <span>/</span>
-        <a href="{{ route('modules.show', $lab->module->slug) }}">{{ $lab->module->title }}</a>
+        <a href="{{ route('courses.show', $lab->module->slug) }}">{{ $lab->module->title }}</a>
         <span>/</span>
         <span>{{ $lab->title }}</span>
     </div>

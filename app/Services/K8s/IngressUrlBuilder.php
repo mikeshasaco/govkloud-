@@ -4,56 +4,64 @@ namespace App\Services\K8s;
 
 class IngressUrlBuilder
 {
-    protected string $baseDomain;
-    protected string $pathPrefix;
-    protected bool $tlsEnabled;
+  protected string $baseDomain;
+  protected string $pathPrefix;
+  protected bool $tlsEnabled;
+  protected ?int $port;
 
-    public function __construct()
-    {
-        $this->baseDomain = config('govkloud.ingress.base_domain');
-        $this->pathPrefix = config('govkloud.ingress.path_prefix');
-        $this->tlsEnabled = config('govkloud.ingress.tls_enabled');
+  public function __construct()
+  {
+    $this->baseDomain = config('govkloud.ingress.base_domain');
+    $this->pathPrefix = config('govkloud.ingress.path_prefix');
+    $this->tlsEnabled = config('govkloud.ingress.tls_enabled');
+    $this->port = config('govkloud.ingress.port');
+  }
+
+  /**
+   * Build the workbench URL for a session
+   */
+  public function buildWorkbenchUrl(string $sessionId): string
+  {
+    $scheme = $this->tlsEnabled ? 'https' : 'http';
+    $path = rtrim($this->pathPrefix, '/') . '/' . $sessionId . '/code';
+
+    // Include port if configured (for local dev with port-forward)
+    $host = $this->baseDomain;
+    if ($this->port) {
+      $host .= ':' . $this->port;
     }
 
-    /**
-     * Build the workbench URL for a session
-     */
-    public function buildWorkbenchUrl(string $sessionId): string
-    {
-        $scheme = $this->tlsEnabled ? 'https' : 'http';
-        $path = rtrim($this->pathPrefix, '/') . '/' . $sessionId . '/code';
+    return "{$scheme}://{$host}{$path}";
+  }
 
-        return "{$scheme}://{$this->baseDomain}{$path}";
-    }
+  /**
+   * Build the ingress path for a session
+   */
+  public function buildIngressPath(string $sessionId): string
+  {
+    return rtrim($this->pathPrefix, '/') . '/' . $sessionId . '/code(/|$)(.*)';
+  }
 
-    /**
-     * Build the ingress path for a session
-     */
-    public function buildIngressPath(string $sessionId): string
-    {
-        return rtrim($this->pathPrefix, '/') . '/' . $sessionId . '/code(/|$)(.*)';
-    }
+  /**
+   * Generate Ingress YAML for workbench
+   */
+  public function generateIngressYaml(string $name, string $sessionId, string $serviceName, int $servicePort = 8080): string
+  {
+    $ingressClass = config('govkloud.ingress.ingress_class');
+    $path = $this->buildIngressPath($sessionId);
+    $host = $this->baseDomain;
 
-    /**
-     * Generate Ingress YAML for workbench
-     */
-    public function generateIngressYaml(string $name, string $sessionId, string $serviceName, int $servicePort = 8080): string
-    {
-        $ingressClass = config('govkloud.ingress.ingress_class');
-        $path = $this->buildIngressPath($sessionId);
-        $host = $this->baseDomain;
-
-        $tlsBlock = '';
-        if ($this->tlsEnabled) {
-            $tlsBlock = <<<YAML
+    $tlsBlock = '';
+    if ($this->tlsEnabled) {
+      $tlsBlock = <<<YAML
   tls:
   - hosts:
     - {$host}
     secretName: govkloud-tls
 YAML;
-        }
+    }
 
-        return <<<YAML
+    return <<<YAML
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -78,5 +86,5 @@ spec:
             port:
               number: {$servicePort}
 YAML;
-    }
+  }
 }

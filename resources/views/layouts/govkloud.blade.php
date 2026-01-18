@@ -6,13 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'GovKloud Labs')</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #10b981;
-            --bg-dark: #0f172a;
-            --bg-card: #1e293b;
+            --gk-navy: #0a0f1a;
+            --gk-dark: #0f172a;
+            --gk-slate: #1e293b;
+            --gk-cyan: #D2B48C;
+            --gk-teal: #C4A77D;
+            --gk-gold: #fbbf24;
+            --gk-purple: #8b5cf6;
             --text: #f8fafc;
             --text-muted: #94a3b8;
             --border: #334155;
@@ -27,66 +30,224 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-dark);
+            background: var(--gk-navy);
             color: var(--text);
             line-height: 1.6;
             min-height: 100vh;
         }
 
         /* Navigation */
-        .navbar {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
+        .nav {
             position: sticky;
             top: 0;
             z-index: 100;
-        }
-
-        .navbar-content {
-            max-width: 1200px;
-            margin: 0 auto;
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: rgba(10, 15, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(210, 180, 140, 0.1);
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
             text-decoration: none;
+            color: var(--text);
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .nav-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--gk-cyan), var(--gk-teal));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
         }
 
         .nav-links {
             display: flex;
-            gap: 1.5rem;
-            list-style: none;
+            gap: 2rem;
             align-items: center;
         }
 
         .nav-links a {
             color: var(--text-muted);
             text-decoration: none;
-            transition: color 0.2s;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
         }
 
         .nav-links a:hover {
+            color: var(--gk-cyan);
+        }
+
+        /* Dropdown Menu */
+        .nav-dropdown {
+            position: relative;
+        }
+
+        .nav-dropdown-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .nav-dropdown-trigger:hover {
+            color: var(--gk-cyan);
+        }
+
+        .nav-dropdown-trigger svg {
+            width: 12px;
+            height: 12px;
+            transition: transform 0.2s ease;
+        }
+
+        .nav-dropdown:hover .nav-dropdown-trigger svg {
+            transform: rotate(180deg);
+        }
+
+        .nav-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 0.75rem;
+            min-width: 280px;
+            background: var(--gk-slate);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.5rem;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-dropdown:hover .nav-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(210, 180, 140, 0.1);
+            color: var(--gk-cyan);
+        }
+
+        .dropdown-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+
+        .dropdown-item-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-item-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .dropdown-item-count {
+            background: rgba(210, 180, 140, 0.2);
+            color: var(--gk-cyan);
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0.5rem 0;
+        }
+
+        .dropdown-header {
+            padding: 0.5rem 1rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .nav-cta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-ghost {
+            background: transparent;
             color: var(--text);
         }
 
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        .btn-ghost:hover {
+            color: var(--gk-cyan);
         }
 
-        .user-name {
-            color: var(--text-muted);
-            font-size: 0.875rem;
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gk-cyan), var(--gk-teal));
+            color: var(--gk-navy);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(210, 180, 140, 0.4);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--gk-cyan), var(--gk-teal));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--gk-navy);
         }
 
         /* Main content */
@@ -98,7 +259,7 @@
 
         /* Cards */
         .card {
-            background: var(--bg-card);
+            background: var(--gk-slate);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 1.5rem;
@@ -116,41 +277,6 @@
             gap: 1.5rem;
         }
 
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-secondary {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--secondary), #059669);
-            color: white;
-        }
-
         /* Badges */
         .badge {
             display: inline-block;
@@ -161,13 +287,13 @@
         }
 
         .badge-primary {
-            background: rgba(99, 102, 241, 0.2);
-            color: var(--primary);
+            background: rgba(210, 180, 140, 0.2);
+            color: var(--gk-cyan);
         }
 
         .badge-secondary {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--secondary);
+            background: rgba(196, 167, 125, 0.2);
+            color: var(--gk-teal);
         }
 
         /* Typography */
@@ -230,53 +356,136 @@
         .gap-2 {
             gap: 1rem;
         }
-
-        /* Breadcrumb */
-        .breadcrumb {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-
-        .breadcrumb a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
     </style>
     @stack('styles')
 </head>
 
 <body>
-    <nav class="navbar">
-        <div class="navbar-content">
-            <a href="/" class="logo">GovKloud</a>
-            <ul class="nav-links">
-                <li><a href="{{ route('modules.index') }}">Modules</a></li>
-                @auth
-                    <li class="user-menu">
-                        <span class="user-name">{{ Auth::user()->name }}</span>
-                        <a href="{{ route('dashboard') }}">Dashboard</a>
-                        <form method="POST" action="{{ route('logout') }}" style="display: inline;">
-                            @csrf
-                            <button type="submit"
-                                style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
-                                Logout
-                            </button>
-                        </form>
-                    </li>
-                @else
-                    <li><a href="{{ route('login') }}">Login</a></li>
-                    <li><a href="{{ route('register') }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">Sign Up</a>
-                    </li>
-                @endauth
-            </ul>
+    @php
+        $navModules = \App\Models\Module::published()->ordered()->get();
+        $navSubcategories = \App\Models\Lesson::selectRaw('subcategory, COUNT(*) as count')
+            ->whereNotNull('subcategory')
+            ->where('is_published', true)
+            ->groupBy('subcategory')
+            ->orderBy('subcategory')
+            ->get();
+    @endphp
+
+    <nav class="nav">
+        <a href="/" class="nav-logo">
+            <div class="nav-logo-icon">☁️</div>
+            <span>GovKloud</span>
+        </a>
+        <div class="nav-links">
+            <!-- Modules Dropdown -->
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-trigger">
+                    Modules
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <div class="nav-dropdown-menu">
+                    <div class="dropdown-header">Available Courses</div>
+                    @forelse($navModules as $module)
+                        <a href="{{ route('courses.show', $module->slug) }}" class="dropdown-item">
+                            <div class="dropdown-item-info">
+                                <span class="dropdown-item-title">{{ $module->title }}</span>
+                                @if($module->category)
+                                    <span class="dropdown-item-desc">{{ $module->category }}</span>
+                                @endif
+                            </div>
+                            <span class="dropdown-item-count">{{ $module->lessons()->count() }} lessons</span>
+                        </a>
+                    @empty
+                        <span class="dropdown-item">No modules yet</span>
+                    @endforelse
+                    <div class="dropdown-divider"></div>
+                    <a href="{{ route('courses.index') }}" class="dropdown-item">
+                        <span class="dropdown-item-title">View All Courses →</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Courses by Tech Dropdown -->
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-trigger">
+                    Browse by Tech
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <div class="nav-dropdown-menu">
+                    <a href="{{ route('courses.index') }}" class="dropdown-item" style="background: rgba(210, 180, 140, 0.1); border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;">
+                        <span class="dropdown-item-title">🔍 View All Courses</span>
+                    </a>
+                    <div class="dropdown-header">Filter by Technology</div>
+                    @forelse($navSubcategories as $sub)
+                        <a href="{{ route('courses.index') }}?tech={{ urlencode($sub->subcategory) }}"
+                            class="dropdown-item">
+                            <span class="dropdown-item-title">{{ $sub->subcategory }}</span>
+                            <span class="dropdown-item-count">{{ $sub->count }} lessons</span>
+                        </a>
+                    @empty
+                        <span class="dropdown-item">No technologies yet</span>
+                    @endforelse
+                </div>
+            </div>
+
+            @auth
+                <a href="#">Upgrade</a>
+            @else
+                <a href="#">Pricing</a>
+            @endauth
         </div>
+
+        @auth
+            <!-- Logged In User Menu -->
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div class="user-avatar">
+                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                    </div>
+                    <span>{{ Auth::user()->name }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <div class="nav-dropdown-menu" style="right: 0; left: auto; min-width: 200px;">
+                    @if(Auth::user()->is_admin)
+                        <a href="/admin" class="dropdown-item" style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); margin-bottom: 0.5rem;">
+                            <span class="dropdown-item-title" style="color: #a78bfa;">🛡️ Admin Panel</span>
+                        </a>
+                    @endif
+                    <a href="{{ route('account.settings') }}" class="dropdown-item">
+                        <span class="dropdown-item-title">⚙️ Account Settings</span>
+                    </a>
+                    <a href="{{ route('my-courses') }}" class="dropdown-item">
+                        <span class="dropdown-item-title">📚 My Courses</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="dropdown-item"
+                            style="width: 100%; background: none; border: none; cursor: pointer; text-align: left;">
+                            <span class="dropdown-item-title" style="color: #ef4444;">🚪 Sign Out</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @else
+            <!-- Guest CTA Buttons -->
+            <div class="nav-cta">
+                <a href="{{ route('login') }}" class="btn btn-ghost">Sign In</a>
+                <a href="{{ route('register') }}" class="btn btn-primary">Get Started Free</a>
+            </div>
+        @endauth
     </nav>
 
     <main class="container">

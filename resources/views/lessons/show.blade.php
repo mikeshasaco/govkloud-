@@ -71,9 +71,9 @@
 
 @section('content')
     <div class="breadcrumb">
-        <a href="{{ route('modules.index') }}">Modules</a>
+        <a href="{{ route('courses.index') }}">Modules</a>
         <span>/</span>
-        <a href="{{ route('modules.show', $module->slug) }}">{{ $module->title }}</a>
+        <a href="{{ route('courses.show', $module->slug) }}">{{ $module->title }}</a>
         <span>/</span>
         <span>{{ $lesson->title }}</span>
     </div>
@@ -110,7 +110,7 @@
                     {{ $nextLesson->title }} →
                 </a>
             @else
-                <a href="{{ route('modules.show', $module->slug) }}" class="btn btn-success">
+                <a href="{{ route('courses.show', $module->slug) }}" class="btn btn-success">
                     ✓ Complete Module
                 </a>
             @endif

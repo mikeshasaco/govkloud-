@@ -10,7 +10,8 @@ return new class extends Migration {
         Schema::create('lab_sessions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('lab_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('module_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('lab_id')->nullable()->constrained()->nullOnDelete();
             $table->enum('status', [
                 'provisioning',
                 'running',
@@ -22,7 +23,7 @@ return new class extends Migration {
                 'error'
             ])->default('provisioning');
             $table->string('host_namespace')->unique();
-            $table->string('vcluster_release_name');
+            $table->string('vcluster_release_name')->nullable();
             $table->string('workbench_release_name')->nullable();
             $table->string('session_token', 64);
             $table->text('code_url')->nullable();
@@ -31,7 +32,7 @@ return new class extends Migration {
             $table->text('error_message')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'status']);
+            $table->index(['user_id', 'module_id', 'status']);
             $table->index('expires_at');
         });
     }

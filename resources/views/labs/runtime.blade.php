@@ -11,8 +11,8 @@
         :root {
             --gk-navy: #0f172a;
             --gk-slate: #1e293b;
-            --gk-cyan: #06b6d4;
-            --gk-teal: #14b8a6;
+            --gk-cyan: #D2B48C;
+            --gk-teal: #C4A77D;
             --gk-gold: #fbbf24;
             --gk-purple: #8b5cf6;
             --text: #f8fafc;
@@ -196,7 +196,7 @@
 
         .lesson-item.active {
             border-color: var(--gk-cyan);
-            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+            box-shadow: 0 0 0 2px rgba(210, 180, 140, 0.2);
         }
 
         .lesson-item.completed .lesson-number {
@@ -213,7 +213,7 @@
         .lesson-number {
             width: 28px;
             height: 28px;
-            background: rgba(6, 182, 212, 0.2);
+            background: rgba(210, 180, 140, 0.2);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -444,7 +444,7 @@
         .spinner {
             width: 60px;
             height: 60px;
-            border: 4px solid rgba(6, 182, 212, 0.2);
+            border: 4px solid rgba(210, 180, 140, 0.2);
             border-top-color: var(--gk-cyan);
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -497,7 +497,7 @@
 <body>
     <header class="runtime-header">
         <div class="header-left">
-            <a href="{{ route('modules.show', $module->slug ?? 'k8s-basics') }}" class="back-btn">
+            <a href="{{ route('courses.show', $module->slug ?? 'k8s-basics') }}" class="back-btn">
                 ← Back
             </a>
             <span class="module-title">{{ $module->title ?? $session->lab->title }}</span>
@@ -552,20 +552,21 @@
                                 </div>
                             @endif
                             @if($lesson->hasQuiz())
-                                <div class="quiz-section">
+                                <div class="quiz-section" id="quiz_{{ $lesson->id }}">
                                     <div class="quiz-header">
                                         <span class="quiz-icon">❓</span>
                                         <span>Knowledge Check</span>
                                     </div>
                                     @foreach($lesson->getQuizQuestions() as $qIndex => $quiz)
-                                        <div class="quiz-question" data-quiz-index="{{ $qIndex }}">
-                                            <div class="quiz-question-text">{{ $quiz['question'] ?? '' }}</div>
-                                            @if(($quiz['type'] ?? 'text') === 'multiple_choice')
+                                        <div class="quiz-question" data-question-index="{{ $qIndex }}" data-correct="{{ $quiz['correct_answer'] ?? '' }}" data-lesson-id="{{ $lesson->id }}">
+                                            <div class="quiz-question-text">{{ $qIndex + 1 }}. {{ $quiz['question'] ?? '' }}</div>
+                                            @if(($quiz['type'] ?? 'multiple_choice') === 'multiple_choice')
                                                 <div class="quiz-options">
                                                     @foreach($quiz['options'] ?? [] as $oIndex => $option)
-                                                        <label class="quiz-option">
-                                                            <input type="radio" name="quiz_{{ $lesson->id }}_{{ $qIndex }}" value="{{ $option }}">
-                                                            <span class="quiz-option-text">{{ $option }}</span>
+                                                        @php $optionText = is_array($option) ? ($option['text'] ?? '') : $option; @endphp
+                                                        <label class="quiz-option" data-option="{{ $optionText }}">
+                                                            <input type="radio" name="quiz_{{ $lesson->id }}_{{ $qIndex }}" value="{{ $optionText }}">
+                                                            <span class="quiz-option-text">{{ $optionText }}</span>
                                                         </label>
                                                     @endforeach
                                                 </div>
@@ -574,22 +575,54 @@
                                                     <input type="text" class="quiz-input" 
                                                         placeholder="Type your answer..." 
                                                         data-correct="{{ $quiz['correct_answer'] ?? '' }}">
-                                                    <button type="button" class="quiz-check-btn" onclick="checkQuizAnswer(this)">
-                                                        Check
-                                                    </button>
                                                 </div>
                                             @endif
-                                            <div class="quiz-feedback" style="display: none;">
-                                                <div class="quiz-correct">✅ Correct!</div>
-                                                <div class="quiz-incorrect">❌ Try again</div>
+                                            <div class="quiz-feedback" style="display: none; margin-top: 0.75rem; padding: 0.75rem; border-radius: 8px;">
+                                                <div class="quiz-correct" style="display: none; color: #10b981;">✅ Correct!</div>
+                                                <div class="quiz-incorrect" style="display: none; color: #ef4444;">❌ Incorrect</div>
                                                 @if(!empty($quiz['explanation']))
-                                                    <div class="quiz-explanation">{{ $quiz['explanation'] }}</div>
+                                                    <div class="quiz-explanation" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">{{ $quiz['explanation'] }}</div>
                                                 @endif
                                             </div>
                                         </div>
                                     @endforeach
+                                    <button type="button" class="quiz-submit-btn" onclick="submitQuiz({{ $lesson->id }})" 
+                                        style="width: 100%; margin-top: 1rem; padding: 0.75rem; background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                        Submit Answers
+                                    </button>
+                                    <div id="quiz_result_{{ $lesson->id }}" style="display: none; margin-top: 1rem; padding: 1rem; border-radius: 8px; text-align: center;"></div>
                                 </div>
                             @endif
+                            
+                            <!-- Completion Section -->
+                            @auth
+                                @php $isCompleted = Auth::user()->hasCompletedLesson($lesson); @endphp
+                                <div class="lesson-completion" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                                    @if($isCompleted)
+                                        <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; color: #10b981;">
+                                            <span style="font-size: 1.25rem;">✅</span>
+                                            <div>
+                                                <strong>Lesson Completed!</strong>
+                                                <div style="font-size: 0.8rem; opacity: 0.8;">Great job! Continue to the next lesson.</div>
+                                            </div>
+                                        </div>
+                                    @elseif($lesson->hasQuiz())
+                                        <div id="quizCompletionBtn_{{ $lesson->id }}" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px; color: #fbbf24;">
+                                            <span style="font-size: 1.25rem;">❓</span>
+                                            <div>
+                                                <strong>Complete the quiz above</strong>
+                                                <div style="font-size: 0.8rem; opacity: 0.8;">Answer all questions correctly to mark this lesson complete.</div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <button onclick="markLessonComplete({{ $lesson->id }}, this)" 
+                                            class="btn-mark-complete"
+                                            style="width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--gk-cyan), var(--gk-teal)); color: var(--gk-navy); border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s;">
+                                            ✓ Mark as Complete
+                                        </button>
+                                    @endif
+                                </div>
+                            @endauth
                         </div>
                     </div>
                 @empty
@@ -783,7 +816,7 @@
                 console.error('Stop error:', error);
             }
             
-            window.location.href = '{{ route("modules.show", $module->slug ?? "k8s-basics") }}';
+            window.location.href = '{{ route("courses.show", $module->slug ?? "k8s-basics") }}';
         }
 
         document.getElementById('stopBtn').addEventListener('click', function() {
@@ -859,6 +892,160 @@
             pollInterval = setInterval(pollStatus, 3000);
             pollStatus();
         @endif
+
+        // Mark lesson as complete
+        async function markLessonComplete(lessonId, btn) {
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Saving...';
+            
+            try {
+                const response = await fetch(`/lessons/${lessonId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                });
+                
+                if (response.ok) {
+                    btn.outerHTML = `
+                        <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; color: #10b981;">
+                            <span style="font-size: 1.25rem;">✅</span>
+                            <div>
+                                <strong>Lesson Completed!</strong>
+                                <div style="font-size: 0.8rem; opacity: 0.8;">Great job! Continue to the next lesson.</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '✓ Mark as Complete';
+                    alert('Error marking lesson complete');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.innerHTML = '✓ Mark as Complete';
+            }
+        }
+
+        // Submit quiz and show results
+        function submitQuiz(lessonId) {
+            const quizSection = document.getElementById(`quiz_${lessonId}`);
+            const questions = quizSection.querySelectorAll('.quiz-question');
+            const resultDiv = document.getElementById(`quiz_result_${lessonId}`);
+            
+            let correctCount = 0;
+            let totalQuestions = questions.length;
+            
+            questions.forEach((question, index) => {
+                const correctAnswer = question.dataset.correct;
+                const feedback = question.querySelector('.quiz-feedback');
+                const correctEl = feedback.querySelector('.quiz-correct');
+                const incorrectEl = feedback.querySelector('.quiz-incorrect');
+                const options = question.querySelectorAll('.quiz-option');
+                
+                // Get selected answer
+                let selectedAnswer = '';
+                const selectedRadio = question.querySelector('input[type="radio"]:checked');
+                const textInput = question.querySelector('.quiz-input');
+                
+                if (selectedRadio) {
+                    selectedAnswer = selectedRadio.value;
+                } else if (textInput) {
+                    selectedAnswer = textInput.value.trim();
+                }
+                
+                // Check if correct
+                const isCorrect = selectedAnswer.toLowerCase() === correctAnswer.toLowerCase();
+                
+                // Reset option styles
+                options.forEach(opt => {
+                    opt.style.borderColor = 'var(--border)';
+                    opt.style.background = '';
+                });
+                
+                // Show feedback
+                feedback.style.display = 'block';
+                
+                if (isCorrect) {
+                    correctCount++;
+                    correctEl.style.display = 'block';
+                    incorrectEl.style.display = 'none';
+                    feedback.style.background = 'rgba(16, 185, 129, 0.1)';
+                    feedback.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    
+                    // Highlight correct option in green
+                    options.forEach(opt => {
+                        if (opt.dataset.option === correctAnswer) {
+                            opt.style.borderColor = '#10b981';
+                            opt.style.background = 'rgba(16, 185, 129, 0.15)';
+                        }
+                    });
+                } else {
+                    correctEl.style.display = 'none';
+                    incorrectEl.style.display = 'block';
+                    feedback.style.background = 'rgba(239, 68, 68, 0.1)';
+                    feedback.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    
+                    // Highlight selected option in red, correct in green
+                    options.forEach(opt => {
+                        if (opt.dataset.option === selectedAnswer) {
+                            opt.style.borderColor = '#ef4444';
+                            opt.style.background = 'rgba(239, 68, 68, 0.15)';
+                        }
+                        if (opt.dataset.option === correctAnswer) {
+                            opt.style.borderColor = '#10b981';
+                            opt.style.background = 'rgba(16, 185, 129, 0.15)';
+                        }
+                    });
+                }
+            });
+            
+            // Show overall result
+            const percentage = Math.round((correctCount / totalQuestions) * 100);
+            const passed = percentage >= 70;
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">${passed ? '🎉' : '📝'}</div>
+                <div style="font-weight: 700; font-size: 1.1rem; color: ${passed ? '#10b981' : '#ef4444'};">
+                    ${correctCount} of ${totalQuestions} correct (${percentage}%)
+                </div>
+                <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    ${passed ? 'Great job! Quiz passed.' : 'You need 70% to pass. Try again!'}
+                </div>
+            `;
+            resultDiv.style.background = passed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+            resultDiv.style.border = `1px solid ${passed ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`;
+            
+            // If passed, update the completion section
+            if (passed) {
+                const completionBtn = document.getElementById(`quizCompletionBtn_${lessonId}`);
+                if (completionBtn) {
+                    completionBtn.innerHTML = `
+                        <span style="font-size: 1.25rem;">✅</span>
+                        <div>
+                            <strong>Quiz Passed!</strong>
+                            <div style="font-size: 0.8rem; opacity: 0.8;">Lesson marked as complete.</div>
+                        </div>
+                    `;
+                    completionBtn.style.background = 'rgba(16, 185, 129, 0.1)';
+                    completionBtn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                    completionBtn.style.color = '#10b981';
+                }
+                
+                // Mark lesson as complete via API (need to add route for quiz completion)
+                fetch(`/lessons/${lessonId}/complete-quiz`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ score: percentage })
+                }).catch(e => console.error('Error saving progress:', e));
+            }
+        }
     </script>
 </body>
 

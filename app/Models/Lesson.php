@@ -12,7 +12,9 @@ class Lesson extends Model
         'lab_id',
         'slug',
         'title',
+        'subcategory',
         'video_url',
+        'video_file',
         'reading_md',
         'quiz_json',
         'order_index',
@@ -57,6 +59,36 @@ class Lesson extends Model
     public function getQuizQuestions(): array
     {
         return $this->quiz_json ?? [];
+    }
+
+    /**
+     * Check if this lesson has video content
+     */
+    public function hasVideo(): bool
+    {
+        return !empty($this->video_url) || !empty($this->video_file);
+    }
+
+    /**
+     * Get the video source (URL or uploaded file path)
+     */
+    public function getVideoSource(): ?string
+    {
+        if (!empty($this->video_url)) {
+            return $this->video_url;
+        }
+        if (!empty($this->video_file)) {
+            return asset('storage/' . $this->video_file);
+        }
+        return null;
+    }
+
+    /**
+     * Check if video is uploaded file (not embed URL)
+     */
+    public function isUploadedVideo(): bool
+    {
+        return empty($this->video_url) && !empty($this->video_file);
     }
 
     public function scopePublished($query)

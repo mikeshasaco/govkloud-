@@ -41,7 +41,7 @@
             right: 0;
             height: 44px;
             background: rgba(15, 23, 42, 0.95);
-            border-bottom: 1px solid rgba(6, 182, 212, 0.2);
+            border-bottom: 1px solid rgba(210, 180, 140, 0.2);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -163,8 +163,8 @@
         .session-status .spinner {
             width: 60px;
             height: 60px;
-            border: 4px solid rgba(6, 182, 212, 0.3);
-            border-top: 4px solid #06b6d4;
+            border: 4px solid rgba(210, 180, 140, 0.3);
+            border-top: 4px solid #D2B48C;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 1.5rem;
@@ -188,7 +188,7 @@
         }
 
         .session-status .btn-restart {
-            background: linear-gradient(135deg, #06b6d4, #14b8a6);
+            background: linear-gradient(135deg, #D2B48C, #C4A77D);
             color: #0f172a;
             border: none;
             padding: 0.75rem 1.5rem;
@@ -246,7 +246,7 @@
         }
 
         .reading-content code {
-            background: rgba(6, 182, 212, 0.15);
+            background: rgba(210, 180, 140, 0.15);
             padding: 0.2rem 0.5rem;
             border-radius: 4px;
             font-family: 'Fira Code', monospace;
@@ -330,9 +330,9 @@
         <div class="lesson-panel">
             <div class="lesson-header">
                 <div class="breadcrumb">
-                    <a href="{{ route('modules.index') }}">Modules</a>
+                    <a href="{{ route('courses.index') }}">Modules</a>
                     <span>/</span>
-                    <a href="{{ route('modules.show', $module->slug) }}">{{ $module->title }}</a>
+                    <a href="{{ route('courses.show', $module->slug) }}">{{ $module->title }}</a>
                     <span>/</span>
                     <span>{{ $lesson->title }}</span>
                 </div>
@@ -368,7 +368,7 @@
                         {{ Str::limit($nextLesson->title, 20) }} →
                     </a>
                 @else
-                    <a href="{{ route('modules.show', $module->slug) }}" class="btn btn-success">
+                    <a href="{{ route('courses.show', $module->slug) }}" class="btn btn-success">
                         ✓ Complete Module
                     </a>
                 @endif

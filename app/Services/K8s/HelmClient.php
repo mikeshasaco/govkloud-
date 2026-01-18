@@ -124,7 +124,7 @@ class HelmClient
     }
 
     /**
-     * Upgrade or install a Helm release
+     * Upgrade or install a Helm release (with --wait)
      */
     public function upgradeInstall(string $release, string $chart, string $namespace, array $values = []): bool
     {
@@ -139,6 +139,30 @@ class HelmClient
             '--wait',
             '--timeout',
             '10m',
+        ];
+
+        foreach ($values as $key => $value) {
+            $args[] = '--set';
+            $args[] = "{$key}={$value}";
+        }
+
+        $result = $this->runCommand($args);
+        return $result['success'];
+    }
+
+    /**
+     * Upgrade or install a Helm release without waiting (returns immediately)
+     */
+    public function upgradeInstallNoWait(string $release, string $chart, string $namespace, array $values = []): bool
+    {
+        $args = [
+            'upgrade',
+            '--install',
+            $release,
+            $chart,
+            '-n',
+            $namespace,
+            '--create-namespace',
         ];
 
         foreach ($values as $key => $value) {

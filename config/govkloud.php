@@ -21,6 +21,7 @@ return [
         'path_prefix' => env('GOVKLOUD_PATH_PREFIX', '/labs'),
         'tls_enabled' => env('GOVKLOUD_TLS_ENABLED', true),
         'ingress_class' => env('GOVKLOUD_INGRESS_CLASS', 'nginx'),
+        'port' => env('GOVKLOUD_INGRESS_PORT', null), // For local dev port-forward
     ],
 
     /*

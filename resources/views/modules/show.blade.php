@@ -12,25 +12,30 @@
     :root {
         --gk-navy: #0f172a;
         --gk-slate: #1e293b;
-        --gk-cyan: #06b6d4;
-        --gk-teal: #14b8a6;
+        --gk-cyan: #D2B48C;
+        --gk-teal: #C4A77D;
         --gk-gold: #fbbf24;
         --gk-purple: #8b5cf6;
-        --gk-glow: rgba(6, 182, 212, 0.4);
+        --gk-glow: rgba(210, 180, 140, 0.4);
     }
 
-    /* Page Layout */
+    /* Page Layout - Full Width */
     .module-page {
-        display: grid;
-        grid-template-columns: 1fr 380px;
-        gap: 2.5rem;
-        max-width: 1440px;
+        max-width: 1200px;
         margin: 0 auto;
         padding: 1rem 0;
     }
 
-    @media (max-width: 1100px) {
-        .module-page {
+    /* Info Cards Row - Below Hero */
+    .info-cards-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin: 1.5rem 0;
+    }
+
+    @media (max-width: 900px) {
+        .info-cards-row {
             grid-template-columns: 1fr;
         }
     }
@@ -44,7 +49,7 @@
         padding: 2.5rem;
         overflow: hidden;
         background: var(--gk-slate);
-        border: 1px solid rgba(6, 182, 212, 0.2);
+        border: 1px solid rgba(210, 180, 140, 0.2);
     }
 
     .module-hero::before {
@@ -52,9 +57,9 @@
         position: absolute;
         inset: 0;
         background: 
-            radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 20% 20%, rgba(210, 180, 140, 0.15) 0%, transparent 50%),
             radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 50%, rgba(20, 184, 166, 0.08) 0%, transparent 70%);
+            radial-gradient(ellipse at 50% 50%, rgba(196, 167, 125, 0.08) 0%, transparent 70%);
         pointer-events: none;
     }
 
@@ -65,7 +70,7 @@
         right: -20%;
         width: 500px;
         height: 500px;
-        background: conic-gradient(from 180deg, transparent, rgba(6, 182, 212, 0.1), transparent 60%);
+        background: conic-gradient(from 180deg, transparent, rgba(210, 180, 140, 0.1), transparent 60%);
         animation: rotate 20s linear infinite;
         pointer-events: none;
     }
@@ -98,8 +103,8 @@
     }
 
     .pill {
-        background: rgba(6, 182, 212, 0.12);
-        border: 1px solid rgba(6, 182, 212, 0.3);
+        background: rgba(210, 180, 140, 0.12);
+        border: 1px solid rgba(210, 180, 140, 0.3);
         color: var(--gk-cyan);
         padding: 0.35rem 0.9rem;
         border-radius: 50px;
@@ -198,14 +203,14 @@
         position: absolute;
         width: 180px;
         height: 180px;
-        background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(139, 92, 246, 0.2));
+        background: linear-gradient(135deg, rgba(210, 180, 140, 0.3), rgba(139, 92, 246, 0.2));
         border-radius: 50%;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         box-shadow: 
-            0 0 60px rgba(6, 182, 212, 0.3),
-            inset 0 0 60px rgba(6, 182, 212, 0.1);
+            0 0 60px rgba(210, 180, 140, 0.3),
+            inset 0 0 60px rgba(210, 180, 140, 0.1);
         animation: pulse 4s ease-in-out infinite;
     }
 
@@ -240,7 +245,7 @@
         background: rgba(30, 41, 59, 0.8);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(6, 182, 212, 0.15);
+        border: 1px solid rgba(210, 180, 140, 0.15);
         border-radius: 16px;
         padding: 1.75rem;
         position: relative;
@@ -254,7 +259,7 @@
         left: 0;
         right: 0;
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.5), transparent);
+        background: linear-gradient(90deg, transparent, rgba(210, 180, 140, 0.5), transparent);
     }
 
     .glass-card h3 {
@@ -286,7 +291,7 @@
 
     .progress-ring-bg {
         fill: none;
-        stroke: rgba(6, 182, 212, 0.15);
+        stroke: rgba(210, 180, 140, 0.15);
         stroke-width: 6;
     }
 
@@ -337,12 +342,12 @@
         text-decoration: none;
         text-align: center;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
+        box-shadow: 0 4px 20px rgba(210, 180, 140, 0.3);
     }
 
     .btn-start:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 30px rgba(6, 182, 212, 0.4);
+        box-shadow: 0 8px 30px rgba(210, 180, 140, 0.4);
     }
 
     .btn-secondary {
@@ -378,15 +383,15 @@
         align-items: center;
         gap: 0.75rem;
         padding: 0.875rem;
-        background: rgba(6, 182, 212, 0.05);
-        border: 1px solid rgba(6, 182, 212, 0.1);
+        background: rgba(210, 180, 140, 0.05);
+        border: 1px solid rgba(210, 180, 140, 0.1);
         border-radius: 10px;
         transition: all 0.2s ease;
     }
 
     .include-item:hover {
-        border-color: rgba(6, 182, 212, 0.3);
-        background: rgba(6, 182, 212, 0.1);
+        border-color: rgba(210, 180, 140, 0.3);
+        background: rgba(210, 180, 140, 0.1);
     }
 
     .include-icon {
@@ -421,7 +426,7 @@
         align-items: center;
         justify-content: center;
         font-size: 1.25rem;
-        box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
+        box-shadow: 0 4px 20px rgba(210, 180, 140, 0.3);
     }
 
     .section-header h2 {
@@ -490,15 +495,15 @@
     }
 
     .timeline-card:hover {
-        background: rgba(6, 182, 212, 0.08);
-        border-color: rgba(6, 182, 212, 0.3);
+        background: rgba(210, 180, 140, 0.08);
+        border-color: rgba(210, 180, 140, 0.3);
         transform: translateX(8px);
     }
 
     .timeline-number {
         width: 32px;
         height: 32px;
-        background: rgba(6, 182, 212, 0.15);
+        background: rgba(210, 180, 140, 0.15);
         border-radius: 8px;
         display: flex;
         align-items: center;
@@ -544,12 +549,12 @@
     }
 
     .badge-lesson {
-        background: rgba(6, 182, 212, 0.15);
+        background: rgba(210, 180, 140, 0.15);
         color: var(--gk-cyan);
     }
 
     .badge-lab {
-        background: rgba(20, 184, 166, 0.15);
+        background: rgba(196, 167, 125, 0.15);
         color: var(--gk-teal);
     }
 
@@ -564,8 +569,8 @@
         align-items: center;
         gap: 1rem;
         padding: 1.25rem;
-        background: rgba(6, 182, 212, 0.05);
-        border: 1px solid rgba(6, 182, 212, 0.1);
+        background: rgba(210, 180, 140, 0.05);
+        border: 1px solid rgba(210, 180, 140, 0.1);
         border-radius: 12px;
         margin-top: 1.5rem;
     }
@@ -656,6 +661,104 @@
                 </div>
             </div>
 
+            <!-- Info Cards Row - Below Hero -->
+            <div class="info-cards-row">
+                <!-- Progress Card -->
+                <div class="glass-card">
+                    <h3>Your Progress</h3>
+                    @auth
+                        @php 
+                            $progress = Auth::user()->getModuleProgress($module);
+                            $strokeDashoffset = 226 - (226 * $progress['percentage'] / 100);
+                        @endphp
+                        <div class="progress-ring-container">
+                            <div class="progress-ring">
+                                <svg width="80" height="80">
+                                    <circle class="progress-ring-bg" cx="40" cy="40" r="36"/>
+                                    <circle class="progress-ring-fill" cx="40" cy="40" r="36" style="stroke-dashoffset: {{ $strokeDashoffset }};"/>
+                                </svg>
+                                <span class="progress-ring-text">{{ $progress['percentage'] }}%</span>
+                            </div>
+                            <div class="progress-info">
+                                <h4>{{ $progress['percentage'] == 100 ? 'Complete!' : ($progress['percentage'] > 0 ? 'In Progress' : 'Get Started') }}</h4>
+                                <p>{{ $progress['completed'] }} of {{ $progress['total'] }} completed</p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="progress-ring-container">
+                            <div class="progress-ring">
+                                <svg width="80" height="80">
+                                    <circle class="progress-ring-bg" cx="40" cy="40" r="36"/>
+                                    <circle class="progress-ring-fill" cx="40" cy="40" r="36"/>
+                                </svg>
+                                <span class="progress-ring-text">0%</span>
+                            </div>
+                            <div class="progress-info">
+                                <h4>Sign in to track</h4>
+                                <p>0 of {{ $module->lessons->count() }} completed</p>
+                            </div>
+                        </div>
+                    @endauth
+                    
+                    @if($module->labs->count() > 0)
+                        <form action="{{ route('modules.start-lab', $module->slug) }}" method="POST" style="margin-top: 1rem;">
+                            @csrf
+                            <button type="submit" class="btn-start">⚡ Begin Course</button>
+                        </form>
+                    @endif
+                </div>
+
+                <!-- What's Included Card -->
+                <div class="glass-card">
+                    <h3>What's Included</h3>
+                    <div class="includes-grid">
+                        <div class="include-item">
+                            <span class="include-icon">🎓</span>
+                            <span class="include-text">Certificate</span>
+                        </div>
+                        <div class="include-item">
+                            <span class="include-icon">🧪</span>
+                            <span class="include-text">{{ $module->labs->count() }} Labs</span>
+                        </div>
+                        <div class="include-item">
+                            <span class="include-icon">📚</span>
+                            <span class="include-text">{{ $module->lessons->count() }} Lessons</span>
+                        </div>
+                        <div class="include-item">
+                            <span class="include-icon">📹</span>
+                            <span class="include-text">{{ $module->lessons->whereNotNull('video_url')->count() }} Videos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Card -->
+                <div class="glass-card">
+                    <h3>Quick Actions</h3>
+                    @auth
+                        @php $isSaved = Auth::user()->hasSavedModule($module); @endphp
+                        <button id="saveBtn" onclick="toggleSave()" class="btn-secondary" style="width: 100%; {{ $isSaved ? 'background: rgba(210, 180, 140, 0.2); color: var(--gk-cyan); border-color: var(--gk-cyan);' : '' }}">
+                            <span id="saveIcon">{{ $isSaved ? '✓' : '🔖' }}</span>
+                            <span id="saveText">{{ $isSaved ? 'Saved' : 'Save for Later' }}</span>
+                        </button>
+                    @else
+                        <a href="{{ route('login') }}" class="btn-secondary" style="display: block; text-align: center; text-decoration: none; width: 100%;">
+                            🔖 Save for Later
+                        </a>
+                    @endauth
+                    
+                    <div class="includes-grid" style="margin-top: 1rem;">
+                        <div class="include-item">
+                            <span class="include-icon">♾️</span>
+                            <span class="include-text">Lifetime Access</span>
+                        </div>
+                        <div class="include-item">
+                            <span class="include-icon">💬</span>
+                            <span class="include-text">Community</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Instructor -->
             <div class="instructor-row">
                 <div class="instructor-avatar">👨‍💻</div>
@@ -677,126 +780,83 @@
                 
                 <div class="curriculum-timeline">
                     @foreach($module->lessons as $lesson)
-                        <div class="timeline-item">
+                        @php $lessonCompleted = Auth::check() && Auth::user()->hasCompletedLesson($lesson); @endphp
+                        <div class="timeline-item {{ $lessonCompleted ? 'completed' : '' }}">
                             <a href="{{ route('lessons.show', [$module->slug, $lesson->slug]) }}" class="timeline-card">
-                                <div class="timeline-number">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</div>
+                                <div class="timeline-number" style="{{ $lessonCompleted ? 'background: rgba(16, 185, 129, 0.2); color: #10b981;' : '' }}">
+                                    @if($lessonCompleted)
+                                        ✓
+                                    @else
+                                        {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}
+                                    @endif
+                                </div>
                                 <div class="timeline-content">
-                                    <div class="timeline-title">{{ $lesson->title }}</div>
+                                    <div class="timeline-title" style="{{ $lessonCompleted ? 'text-decoration: line-through; opacity: 0.7;' : '' }}">{{ $lesson->title }}</div>
                                     <div class="timeline-meta">
                                         <span>📖 Lesson</span>
                                         @if($lesson->video_url)<span>📹 Video</span>@endif
                                         @if($lesson->hasLab())<span>🧪 Lab Included</span>@endif
+                                        @if($lessonCompleted)<span style="color: #10b981;">✅ Done</span>@endif
                                     </div>
                                 </div>
                                 <div class="timeline-badges">
-                                    <span class="badge badge-lesson">Lesson</span>
-                                    @if($lesson->video_url)<span class="badge badge-video">Video</span>@endif
-                                    @if($lesson->hasLab())<span class="badge badge-lab">Lab</span>@endif
+                                    @if($lessonCompleted)
+                                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">Complete</span>
+                                    @else
+                                        <span class="badge badge-lesson">Lesson</span>
+                                        @if($lesson->video_url)<span class="badge badge-video">Video</span>@endif
+                                        @if($lesson->hasLab())<span class="badge badge-lab">Lab</span>@endif
+                                    @endif
                                 </div>
                             </a>
                         </div>
                     @endforeach
-
-                    @foreach($module->labs as $lab)
-                        @if(!$module->lessons->contains(fn($l) => $l->lab_id === $lab->id))
-                            <div class="timeline-item">
-                                <a href="{{ route('labs.show', $lab->slug) }}" class="timeline-card">
-                                    <div class="timeline-number">{{ str_pad($module->lessons->count() + $loop->iteration, 2, '0', STR_PAD_LEFT) }}</div>
-                                    <div class="timeline-content">
-                                        <div class="timeline-title">{{ $lab->title }}</div>
-                                        <div class="timeline-meta">
-                                            <span>🧪 Hands-on Lab</span>
-                                            <span>⏱️ {{ $lab->estimated_minutes }} min</span>
-                                        </div>
-                                    </div>
-                                    <div class="timeline-badges">
-                                        <span class="badge badge-lab">Lab</span>
-                                    </div>
-                                </a>
-                            </div>
-                        @endif
-                    @endforeach
                 </div>
             </section>
         </div>
-
-        <!-- Sidebar -->
-        <div class="module-sidebar">
-            <!-- Progress Card -->
-            <div class="glass-card">
-                <h3>Your Progress</h3>
-                
-                <div class="progress-ring-container">
-                    <div class="progress-ring">
-                        <svg width="80" height="80">
-                            <circle class="progress-ring-bg" cx="40" cy="40" r="36"/>
-                            <circle class="progress-ring-fill" cx="40" cy="40" r="36"/>
-                        </svg>
-                        <span class="progress-ring-text">0%</span>
-                    </div>
-                    <div class="progress-info">
-                        <h4>Get Started</h4>
-                        <p>0 of {{ $module->lessons->count() + $module->labs->count() }} completed</p>
-                    </div>
-                </div>
-                
-                @if($module->labs->count() > 0)
-                    <form action="{{ route('modules.start-lab', $module->slug) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="btn-start">
-                            ⚡ Begin Course
-                        </button>
-                    </form>
-                @endif
-                
-                <button class="btn-secondary">
-                    🔖 Save for Later
-                </button>
-            </div>
-
-            <!-- Course Includes -->
-            <div class="glass-card">
-                <h3>What's Included</h3>
-                <div class="includes-grid">
-                    <div class="include-item">
-                        <span class="include-icon">🎓</span>
-                        <span class="include-text">Certificate</span>
-                    </div>
-                    <div class="include-item">
-                        <span class="include-icon">🧪</span>
-                        <span class="include-text">{{ $module->labs->count() }} Labs</span>
-                    </div>
-                    <div class="include-item">
-                        <span class="include-icon">📚</span>
-                        <span class="include-text">{{ $module->lessons->count() }} Lessons</span>
-                    </div>
-                    <div class="include-item">
-                        <span class="include-icon">📹</span>
-                        <span class="include-text">{{ $module->lessons->whereNotNull('video_url')->count() }} Videos</span>
-                    </div>
-                    <div class="include-item">
-                        <span class="include-icon">♾️</span>
-                        <span class="include-text">Lifetime Access</span>
-                    </div>
-                    <div class="include-item">
-                        <span class="include-icon">💬</span>
-                        <span class="include-text">Community</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Skills Card -->
-            <div class="glass-card">
-                <h3>Skills You'll Gain</h3>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    <span class="pill">kubectl</span>
-                    <span class="pill">Pods</span>
-                    <span class="pill">Deployments</span>
-                    <span class="pill">Services</span>
-                    <span class="pill">YAML</span>
-                    <span class="pill">Namespaces</span>
-                </div>
-            </div>
-        </div>
     </div>
+
+    @auth
+    <script>
+        async function toggleSave() {
+            const btn = document.getElementById('saveBtn');
+            const icon = document.getElementById('saveIcon');
+            const text = document.getElementById('saveText');
+            
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            
+            try {
+                const response = await fetch('{{ route('modules.save', $module->id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.saved) {
+                    icon.textContent = '✓';
+                    text.textContent = 'Saved';
+                    btn.style.background = 'rgba(210, 180, 140, 0.2)';
+                    btn.style.color = 'var(--gk-cyan)';
+                    btn.style.borderColor = 'var(--gk-cyan)';
+                } else {
+                    icon.textContent = '🔖';
+                    text.textContent = 'Save for Later';
+                    btn.style.background = '';
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+            
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
+    </script>
+    @endauth
 @endsection
