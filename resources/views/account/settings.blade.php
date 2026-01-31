@@ -492,52 +492,49 @@
                 <div class="plan-card">
                     <div class="plan-info">
                         <h3>
-                            Free Plan
-                            <span class="plan-badge">Current</span>
+                            @if(Auth::user()->subscribed())
+                                {{ Auth::user()->getPlanName() }} Plan
+                                <span class="plan-badge {{ Auth::user()->isPro() ? 'pro' : '' }}">Current</span>
+                            @else
+                                Free Plan
+                                <span class="plan-badge">Current</span>
+                            @endif
                         </h3>
                         <div class="plan-features">
-                            <span class="plan-feature"><span>✓</span> 5 labs/month</span>
-                            <span class="plan-feature"><span>✓</span> Basic courses</span>
-                            <span class="plan-feature"><span>✓</span> Community support</span>
+                            @if(Auth::user()->subscribed())
+                                <span class="plan-feature"><span>✓</span> Full Access</span>
+                                <span class="plan-feature"><span>✓</span> All Labs</span>
+                                @if(Auth::user()->onTrial())
+                                    <span class="plan-feature" style="color: var(--gk-gold);">
+                                        <span>⏱️</span> Trial until {{ Auth::user()->trialEndsAt()->format('M j, Y') }}
+                                    </span>
+                                @endif
+                            @else
+                                <span class="plan-feature"><span>✓</span> Basic courses</span>
+                                <span class="plan-feature"><span>✓</span> Community support</span>
+                            @endif
                         </div>
                     </div>
-                    <button class="btn btn-primary">Upgrade to Pro</button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        @if(Auth::user()->subscribed())
+                            <a href="{{ route('billing') }}" class="btn btn-outline">Manage Billing</a>
+                        @else
+                            <a href="{{ route('pricing') }}" class="btn btn-primary">View Plans</a>
+                        @endif
+                    </div>
                 </div>
 
-                <div
-                    style="margin-top: 1rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px;">
+                @unless(Auth::user()->subscribed())
+                <div style="margin-top: 1rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px;">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                         <span style="font-size: 1.25rem;">🚀</span>
                         <div>
-                            <div style="font-weight: 600; color: var(--gk-gold);">Pro Plan - $29/month</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">Unlimited labs, all courses,
-                                priority support, certificates</div>
+                            <div style="font-weight: 600; color: var(--gk-gold);">Unlock Full Access</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Unlimited labs, all courses, priority support, certificates</div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- Payment Method Section -->
-        <section class="settings-section">
-            <div class="section-header">
-                <div class="section-title">
-                    <div class="section-icon">💳</div>
-                    <div>
-                        <h2>Payment Method</h2>
-                        <p>Manage your payment details</p>
-                    </div>
-                </div>
-            </div>
-            <div class="section-body">
-                <div class="empty-state">
-                    <div class="empty-state-icon">💳</div>
-                    <p>No payment method on file</p>
-                    <p style="font-size: 0.8rem; margin-top: 0.5rem;">Add a payment method to upgrade to Pro</p>
-                    <button class="btn btn-outline" style="margin-top: 1rem;">
-                        + Add Payment Method
-                    </button>
-                </div>
+                @endunless
             </div>
         </section>
 

@@ -1,17 +1,16 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard') }}
-        </h2>
-    </x-slot>
+@extends('layouts.govkloud')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    {{ __("You're logged in!") }}
-                </div>
-            </div>
+@section('title', 'Dashboard - GovKloud')
+
+@section('content')
+    <div style="max-width: 1200px; margin: 2rem auto;">
+        <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 1.5rem;">Dashboard</h1>
+
+        <div class="card">
+            <p style="font-size: 1.1rem;">You're logged in!</p>
+            <p style="color: var(--text-muted); margin-top: 1rem;">
+                Welcome to GovKloud. Explore our Kubernetes courses and hands-on labs.
+            </p>
         </div>
     </div>
-</x-app-layout>
+@endsection

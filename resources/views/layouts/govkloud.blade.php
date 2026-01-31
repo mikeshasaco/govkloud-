@@ -420,7 +420,8 @@
                     </svg>
                 </button>
                 <div class="nav-dropdown-menu">
-                    <a href="{{ route('courses.index') }}" class="dropdown-item" style="background: rgba(210, 180, 140, 0.1); border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;">
+                    <a href="{{ route('courses.index') }}" class="dropdown-item"
+                        style="background: rgba(210, 180, 140, 0.1); border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;">
                         <span class="dropdown-item-title">🔍 View All Courses</span>
                     </a>
                     <div class="dropdown-header">Filter by Technology</div>
@@ -437,9 +438,9 @@
             </div>
 
             @auth
-                <a href="#">Upgrade</a>
+                <a href="{{ route('pricing') }}">Upgrade</a>
             @else
-                <a href="#">Pricing</a>
+                <a href="{{ route('pricing') }}">Pricing</a>
             @endauth
         </div>
 
@@ -459,7 +460,8 @@
                 </button>
                 <div class="nav-dropdown-menu" style="right: 0; left: auto; min-width: 200px;">
                     @if(Auth::user()->is_admin)
-                        <a href="/admin" class="dropdown-item" style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); margin-bottom: 0.5rem;">
+                        <a href="/admin" class="dropdown-item"
+                            style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); margin-bottom: 0.5rem;">
                             <span class="dropdown-item-title" style="color: #a78bfa;">🛡️ Admin Panel</span>
                         </a>
                     @endif
@@ -468,6 +470,9 @@
                     </a>
                     <a href="{{ route('my-courses') }}" class="dropdown-item">
                         <span class="dropdown-item-title">📚 My Courses</span>
+                    </a>
+                    <a href="{{ route('billing') }}" class="dropdown-item">
+                        <span class="dropdown-item-title">💳 Billing</span>
                     </a>
                     <div class="dropdown-divider"></div>
                     <form method="POST" action="{{ route('logout') }}">

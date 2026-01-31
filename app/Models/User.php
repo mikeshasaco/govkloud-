@@ -9,12 +9,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Cashier\Billable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, Billable, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -169,5 +170,60 @@ class User extends Authenticatable implements FilamentUser
             'total' => $totalLessons,
             'percentage' => round(($completedCount / $totalLessons) * 100)
         ];
+    }
+
+    /**
+     * Check if user has an active subscription
+     */
+    public function isSubscribed(): bool
+    {
+        return $this->subscribed(config('stripe-plans.subscription_name'));
+    }
+
+    /**
+     * Check if user is on Pro plan
+     */
+    public function isPro(): bool
+    {
+        $subscription = $this->subscription(config('stripe-plans.subscription_name'));
+        if (!$subscription) {
+            return false;
+        }
+
+        $proPrices = [
+            config('stripe-plans.plans.pro.monthly.price_id'),
+            config('stripe-plans.plans.pro.yearly.price_id'),
+        ];
+
+        return $subscription->items->contains(function ($item) use ($proPrices) {
+            return in_array($item->stripe_price, $proPrices);
+        });
+    }
+
+    /**
+     * Check if user is on Standard plan
+     */
+    public function isStandard(): bool
+    {
+        return $this->isSubscribed() && !$this->isPro();
+    }
+
+    /**
+     * Get the user's current plan name
+     */
+    public function getPlanName(): ?string
+    {
+        if (!$this->isSubscribed()) {
+            return null;
+        }
+        return $this->isPro() ? 'Pro' : 'Standard';
+    }
+
+    /**
+     * Check if user has access to labs (subscribed or on trial)
+     */
+    public function hasLabAccess(): bool
+    {
+        return $this->isSubscribed() || $this->onTrial();
     }
 }

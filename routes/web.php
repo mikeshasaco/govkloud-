@@ -4,6 +4,7 @@ use App\Http\Controllers\LabSessionController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -51,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
 // Profile management (Breeze)
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile/show', [ProfileController::class, 'edit'])->name('profile.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
@@ -62,6 +64,18 @@ Route::get('/courses/{slug}', [ModuleController::class, 'show'])->name('courses.
 // Redirect old /modules URLs to /courses
 Route::get('/modules', fn() => redirect()->route('courses.index'));
 Route::get('/modules/{slug}', fn($slug) => redirect()->route('courses.show', $slug));
+
+// Subscription / Billing routes
+Route::get('/pricing', [SubscriptionController::class, 'index'])->name('pricing');
+Route::post('/subscribe/{plan}/{interval}', [SubscriptionController::class, 'checkout'])
+    ->middleware('auth')
+    ->name('subscribe');
+Route::get('/subscription/success', [SubscriptionController::class, 'success'])
+    ->middleware('auth')
+    ->name('subscription.success');
+Route::get('/billing', [SubscriptionController::class, 'portal'])
+    ->middleware('auth')
+    ->name('billing');
 
 // Lesson routes (auth required for lab-enabled lessons)
 Route::get('/courses/{module}/lessons/{lesson}', [LessonController::class, 'show'])

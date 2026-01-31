@@ -507,6 +507,11 @@
                 <span class="status-dot"></span>
                 <span id="statusText">Provisioning</span>
             </div>
+            <div class="password-badge" id="headerPassword" style="display: none; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.75rem;">
+                <span style="color: var(--text-muted);">🔐</span>
+                <code style="color: #10b981; font-family: monospace; margin: 0 0.4rem;">{{ $session->session_token }}</code>
+                <button onclick="copyPassword()" style="background: transparent; border: none; cursor: pointer; font-size: 0.8rem;" title="Copy password">📋</button>
+            </div>
             <span class="timer" id="timer">Loading...</span>
             <button class="btn-stop" id="stopBtn">⏹️ Stop Lab</button>
         </div>
@@ -663,6 +668,19 @@
                 <div class="spinner"></div>
                 <h3>Starting Lab Environment</h3>
                 <p id="statusMessage">Provisioning your Kubernetes environment...</p>
+                <div class="password-info" id="passwordInfo" style="display: none; margin-top: 1.5rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; text-align: left; max-width: 450px;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">🔐 Lab Password (use when prompted):</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        <code id="passwordValue" style="flex: 1; background: var(--gk-navy); padding: 0.5rem 0.75rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem; color: var(--gk-cyan); word-break: break-all;">{{ $session->session_token }}</code>
+                        <button onclick="copyPassword()" style="padding: 0.5rem 0.75rem; background: var(--gk-cyan); color: var(--gk-navy); border: none; border-radius: 4px; cursor: pointer; font-weight: 600; white-space: nowrap;">📋 Copy</button>
+                    </div>
+                    <button onclick="openLabInNewTab()" style="width: 100%; padding: 0.75rem 1rem; background: linear-gradient(135deg, var(--gk-cyan), var(--gk-teal)); color: var(--gk-navy); border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem;">
+                        🚀 Open Lab in New Tab
+                    </button>
+                    <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+                        Safari users: Open in new tab for best experience
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -733,12 +751,45 @@
             badge.classList.add('running');
             document.getElementById('statusText').textContent = 'Running';
             
-            // Show iframe - use localhost:9000 for local dev
-            const panel = document.getElementById('workbenchPanel');
-            panel.innerHTML = '<iframe class="workbench-iframe" src="http://localhost:9000"></iframe>';
+            // Show password info before loading iframe
+            showPasswordInfo();
+            
+            // Show iframe with the session's code URL after a brief delay to let user see password
+            setTimeout(() => {
+                const panel = document.getElementById('workbenchPanel');
+                const codeUrl = '{{ $session->code_url ?? "http://localhost:9000/labs/" . $session->id . "/" }}';
+                panel.innerHTML = '<iframe class="workbench-iframe" src="' + codeUrl + '"></iframe>';
+            }, 100);
             
             startHeartbeat();
             startIdleTracking();
+        }
+        
+        function showPasswordInfo() {
+            const passwordInfo = document.getElementById('passwordInfo');
+            if (passwordInfo) {
+                passwordInfo.style.display = 'block';
+            }
+            // Also show the header password badge
+            const headerPassword = document.getElementById('headerPassword');
+            if (headerPassword) {
+                headerPassword.style.display = 'flex';
+            }
+        }
+        
+        function copyPassword() {
+            const password = '{{ $session->session_token }}';
+            navigator.clipboard.writeText(password).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓';
+                setTimeout(() => btn.textContent = originalText, 2000);
+            });
+        }
+        
+        function openLabInNewTab() {
+            const codeUrl = '{{ $session->code_url ?? "http://localhost:9000/labs/" . $session->id . "/" }}';
+            window.open(codeUrl, '_blank');
         }
 
         // Heartbeat

@@ -23,7 +23,7 @@ class IngressUrlBuilder
   public function buildWorkbenchUrl(string $sessionId): string
   {
     $scheme = $this->tlsEnabled ? 'https' : 'http';
-    $path = rtrim($this->pathPrefix, '/') . '/' . $sessionId . '/code';
+    $path = rtrim($this->pathPrefix, '/') . '/' . $sessionId . '/';
 
     // Include port if configured (for local dev with port-forward)
     $host = $this->baseDomain;
@@ -39,7 +39,9 @@ class IngressUrlBuilder
    */
   public function buildIngressPath(string $sessionId): string
   {
-    return rtrim($this->pathPrefix, '/') . '/' . $sessionId . '/code(/|$)(.*)';
+    // Match all paths under /labs/{session}/ - not just /code
+    // This allows VS Code's /login, /static/, /vscode/ etc. to work
+    return rtrim($this->pathPrefix, '/') . '/' . $sessionId . '(/|$)(.*)';
   }
 
   /**
