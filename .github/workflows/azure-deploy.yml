@@ -1,0 +1,49 @@
+name: Deploy to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, pdo, mysql
+      
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+      
+      - name: Create deployment package
+        run: |
+          zip -r deploy.zip . \
+            -x "*.git*" \
+            -x "node_modules/*" \
+            -x "tests/*" \
+            -x ".env*" \
+            -x "storage/logs/*" \
+            -x "storage/framework/cache/*" \
+            -x "storage/framework/sessions/*" \
+            -x "storage/framework/views/*"
+      
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'govkloud-app'
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: deploy.zip
+      
+      - name: Run Laravel optimizations
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az webapp ssh --resource-group govkloud-rg --name govkloud-app --command "cd /home/site/wwwroot && php artisan config:cache && php artisan route:cache && php artisan view:cache"
