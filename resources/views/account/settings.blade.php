@@ -428,54 +428,83 @@
                 </div>
             </div>
             <div class="section-body">
-                <form method="POST" action="{{ route('profile.update') }}">
-                    @csrf
-                    @method('PATCH')
-                    <div class="form-group">
-                        <label class="form-label">Email</label>
-                        <input type="email" name="email" class="form-input" value="{{ Auth::user()->email }}" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Update Email</button>
-                </form>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" value="{{ Auth::user()->email }}" disabled
+                        style="opacity: 0.6; cursor: not-allowed;">
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Contact support to
+                        change your email address.</p>
+                </div>
             </div>
         </section>
 
-        <!-- Password Section -->
-        <section class="settings-section">
-            <div class="section-header">
-                <div class="section-title">
-                    <div class="section-icon">🔒</div>
-                    <div>
-                        <h2>Password</h2>
-                        <p>Keep your account secure</p>
+        @if(!Auth::user()->google_id)
+            <!-- Password Section (only for email/password users) -->
+            <section class="settings-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-icon">🔒</div>
+                        <div>
+                            <h2>Password</h2>
+                            <p>Keep your account secure</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="section-body">
-                <form method="POST" action="{{ route('password.update') }}">
-                    @csrf
-                    @method('PUT')
-                    <div class="form-group">
-                        <label class="form-label">Current Password</label>
-                        <input type="password" name="current_password" class="form-input"
-                            placeholder="Enter current password" required>
-                    </div>
-                    <div class="form-row">
+                <div class="section-body">
+                    <form method="POST" action="{{ route('password.update') }}">
+                        @csrf
+                        @method('PUT')
                         <div class="form-group">
-                            <label class="form-label">New Password</label>
-                            <input type="password" name="password" class="form-input" placeholder="New password"
-                                required>
+                            <label class="form-label">Current Password</label>
+                            <input type="password" name="current_password" class="form-input"
+                                placeholder="Enter current password" required>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Confirm Password</label>
-                            <input type="password" name="password_confirmation" class="form-input"
-                                placeholder="Confirm password" required>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">New Password</label>
+                                <input type="password" name="password" class="form-input" placeholder="New password"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Confirm Password</label>
+                                <input type="password" name="password_confirmation" class="form-input"
+                                    placeholder="Confirm password" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </form>
+                </div>
+            </section>
+        @else
+            <!-- Google Sign-In Info -->
+            <section class="settings-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-icon">🔒</div>
+                        <div>
+                            <h2>Sign-In Method</h2>
+                            <p>How you access your account</p>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Change Password</button>
-                </form>
-            </div>
-        </section>
+                </div>
+                <div class="section-body">
+                    <div
+                        style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--gk-dark); border-radius: 8px; border: 1px solid var(--border);">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#4285F4"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+                            <path fill="#34A853"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                            <path fill="#EA4335"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                        </svg>
+                        <span style="color: var(--text);">Signed in with Google</span>
+                    </div>
+                </div>
+            </section>
+        @endif
 
         <!-- Subscription Plan Section -->
         <section class="settings-section">
@@ -492,23 +521,47 @@
                 <div class="plan-card">
                     <div class="plan-info">
                         <h3>
-                            @if(Auth::user()->subscribed())
+                            @if(Auth::user()->onTrial())
                                 {{ Auth::user()->getPlanName() }} Plan
-                                <span class="plan-badge {{ Auth::user()->isPro() ? 'pro' : '' }}">Current</span>
+                                <span class="plan-badge"
+                                    style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;">Trial</span>
+                            @elseif(Auth::user()->subscribed())
+                                {{ Auth::user()->getPlanName() }} Plan
+                                <span class="plan-badge {{ Auth::user()->isPro() ? 'pro' : '' }}">Active</span>
                             @else
                                 Free Plan
                                 <span class="plan-badge">Current</span>
                             @endif
                         </h3>
                         <div class="plan-features">
-                            @if(Auth::user()->subscribed())
+                            @if(Auth::user()->onTrial())
+                                @php
+                                    $daysLeft = (int) now()->diffInDays(Auth::user()->trialEndsAt(), false);
+                                    $totalTrialDays = 3;
+                                    $pct = max(0, min(100, ($daysLeft / $totalTrialDays) * 100));
+                                @endphp
+                                <div style="width: 100%; margin-bottom: 0.5rem;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                                        <span style="font-size: 0.85rem; color: #fbbf24; font-weight: 600;">
+                                            ⏱️ {{ $daysLeft }} {{ Str::plural('day', $daysLeft) }} remaining
+                                        </span>
+                                        <span style="font-size: 0.8rem; color: var(--text-muted);">
+                                            Ends {{ Auth::user()->trialEndsAt()->format('M j, Y') }}
+                                        </span>
+                                    </div>
+                                    <div
+                                        style="width: 100%; height: 6px; background: var(--gk-dark); border-radius: 3px; overflow: hidden;">
+                                        <div
+                                            style="width: {{ $pct }}%; height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); border-radius: 3px; transition: width 0.3s;">
+                                        </div>
+                                    </div>
+                                </div>
                                 <span class="plan-feature"><span>✓</span> Full Access</span>
                                 <span class="plan-feature"><span>✓</span> All Labs</span>
-                                @if(Auth::user()->onTrial())
-                                    <span class="plan-feature" style="color: var(--gk-gold);">
-                                        <span>⏱️</span> Trial until {{ Auth::user()->trialEndsAt()->format('M j, Y') }}
-                                    </span>
-                                @endif
+                            @elseif(Auth::user()->subscribed())
+                                <span class="plan-feature"><span>✓</span> Full Access</span>
+                                <span class="plan-feature"><span>✓</span> All Labs</span>
+                                <span class="plan-feature" style="color: #10b981;"><span>✓</span> Subscribed</span>
                             @else
                                 <span class="plan-feature"><span>✓</span> Basic courses</span>
                                 <span class="plan-feature"><span>✓</span> Community support</span>
@@ -525,15 +578,17 @@
                 </div>
 
                 @unless(Auth::user()->subscribed())
-                <div style="margin-top: 1rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <span style="font-size: 1.25rem;">🚀</span>
-                        <div>
-                            <div style="font-weight: 600; color: var(--gk-gold);">Unlock Full Access</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">Unlimited labs, all courses, priority support, certificates</div>
+                    <div
+                        style="margin-top: 1rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.25rem;">🚀</span>
+                            <div>
+                                <div style="font-weight: 600; color: var(--gk-gold);">Unlock Full Access</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">Unlimited labs, all courses,
+                                    priority support, certificates</div>
+                            </div>
                         </div>
                     </div>
-                </div>
                 @endunless
             </div>
         </section>

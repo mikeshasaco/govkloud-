@@ -67,6 +67,6 @@ class SubscriptionController extends Controller
             return redirect()->route('pricing')->with('message', 'Please subscribe to access the billing portal.');
         }
 
-        return $user->redirectToBillingPortal(route('profile.edit'));
+        return $user->redirectToBillingPortal(route('account.settings'));
     }
 }
