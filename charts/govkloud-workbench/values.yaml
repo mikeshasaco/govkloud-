@@ -8,7 +8,7 @@ session:
 
 # Image configuration
 image:
-  repository: codercom/code-server
+  repository: govkloudacr.azurecr.io/code-server
   tag: "4.96.1"
   pullPolicy: IfNotPresent
 
