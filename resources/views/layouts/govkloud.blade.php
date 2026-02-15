@@ -39,15 +39,18 @@
         /* Navigation */
         .nav {
             position: sticky;
-            top: 0;
+            top: 0.75rem;
             z-index: 100;
-            padding: 1rem 2rem;
+            padding: 0.75rem 1.5rem;
+            margin: 0.75rem 2rem 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(10, 15, 26, 0.95);
+            background: transparent;
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(210, 180, 140, 0.1);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(210, 180, 140, 0.12);
+            border-radius: 16px;
         }
 
         .nav-logo {
@@ -488,7 +491,7 @@
             <!-- Guest CTA Buttons -->
             <div class="nav-cta">
                 <a href="{{ route('login') }}" class="btn btn-ghost">Sign In</a>
-                <a href="{{ route('register') }}" class="btn btn-primary">Get Started Free</a>
+                <a href="{{ route('register') }}" class="btn btn-primary">Sign Up</a>
             </div>
         @endauth
     </nav>

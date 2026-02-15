@@ -26,7 +26,7 @@ Route::get('/', function () {
 })->name('home');
 
 // Account Settings (replaces dashboard)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::get('/account/settings', function () {
         return view('account.settings');
     })->name('account.settings');

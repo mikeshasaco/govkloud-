@@ -782,33 +782,36 @@
                     @foreach($module->lessons as $lesson)
                         @php $lessonCompleted = Auth::check() && Auth::user()->hasCompletedLesson($lesson); @endphp
                         <div class="timeline-item {{ $lessonCompleted ? 'completed' : '' }}">
-                            <a href="{{ route('lessons.show', [$module->slug, $lesson->slug]) }}" class="timeline-card">
-                                <div class="timeline-number" style="{{ $lessonCompleted ? 'background: rgba(16, 185, 129, 0.2); color: #10b981;' : '' }}">
-                                    @if($lessonCompleted)
-                                        ✓
-                                    @else
-                                        {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}
-                                    @endif
-                                </div>
-                                <div class="timeline-content">
-                                    <div class="timeline-title" style="{{ $lessonCompleted ? 'text-decoration: line-through; opacity: 0.7;' : '' }}">{{ $lesson->title }}</div>
-                                    <div class="timeline-meta">
-                                        <span>📖 Lesson</span>
-                                        @if($lesson->video_url)<span>📹 Video</span>@endif
-                                        @if($lesson->hasLab())<span>🧪 Lab Included</span>@endif
-                                        @if($lessonCompleted)<span style="color: #10b981;">✅ Done</span>@endif
+                            <form action="{{ route('modules.start-lab', $module->slug) }}" method="POST" style="margin: 0;">
+                                @csrf
+                                <button type="submit" class="timeline-card" style="width: 100%; border: none; cursor: pointer; font-family: inherit; font-size: inherit; color: inherit; text-align: left; -webkit-appearance: none; appearance: none;">
+                                    <div class="timeline-number" style="{{ $lessonCompleted ? 'background: rgba(16, 185, 129, 0.2); color: #10b981;' : '' }}">
+                                        @if($lessonCompleted)
+                                            ✓
+                                        @else
+                                            {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}
+                                        @endif
                                     </div>
-                                </div>
-                                <div class="timeline-badges">
-                                    @if($lessonCompleted)
-                                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">Complete</span>
-                                    @else
-                                        <span class="badge badge-lesson">Lesson</span>
-                                        @if($lesson->video_url)<span class="badge badge-video">Video</span>@endif
-                                        @if($lesson->hasLab())<span class="badge badge-lab">Lab</span>@endif
-                                    @endif
-                                </div>
-                            </a>
+                                    <div class="timeline-content">
+                                        <div class="timeline-title" style="{{ $lessonCompleted ? 'text-decoration: line-through; opacity: 0.7;' : '' }}">{{ $lesson->title }}</div>
+                                        <div class="timeline-meta">
+                                            <span>📖 Lesson</span>
+                                            @if($lesson->video_url)<span>📹 Video</span>@endif
+                                            @if($lesson->hasLab())<span>🧪 Lab Included</span>@endif
+                                            @if($lessonCompleted)<span style="color: #10b981;">✅ Done</span>@endif
+                                        </div>
+                                    </div>
+                                    <div class="timeline-badges">
+                                        @if($lessonCompleted)
+                                            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">Complete</span>
+                                        @else
+                                            <span class="badge badge-lesson">Lesson</span>
+                                            @if($lesson->video_url)<span class="badge badge-video">Video</span>@endif
+                                            @if($lesson->hasLab())<span class="badge badge-lab">Lab</span>@endif
+                                        @endif
+                                    </div>
+                                </button>
+                            </form>
                         </div>
                     @endforeach
                 </div>

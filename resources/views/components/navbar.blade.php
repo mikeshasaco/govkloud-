@@ -125,7 +125,7 @@
         <!-- Guest CTA Buttons -->
         <div class="nav-cta">
             <a href="{{ route('login') }}" class="btn btn-ghost">Sign In</a>
-            <a href="{{ route('register') }}" class="btn btn-primary">Get Started Free</a>
+            <a href="{{ route('register') }}" class="btn btn-primary">Sign Up</a>
         </div>
     @endauth
 </nav>

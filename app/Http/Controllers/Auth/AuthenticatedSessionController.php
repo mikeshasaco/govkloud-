@@ -28,7 +28,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Redirect unsubscribed users to pricing page
+        if (!$request->user()->subscribed()) {
+            return redirect()->route('pricing');
+        }
+
+        return redirect()->intended(route('home', absolute: false));
     }
 
     /**

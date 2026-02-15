@@ -36,7 +36,9 @@ class SocialAuthController extends Controller
 
         if ($user) {
             Auth::login($user, remember: true);
-            return redirect()->intended(route('home'));
+            return $user->subscribed()
+                ? redirect()->intended(route('home'))
+                : redirect()->route('pricing');
         }
 
         // Check if user exists with same email (link accounts)
@@ -49,7 +51,9 @@ class SocialAuthController extends Controller
             ]);
 
             Auth::login($user, remember: true);
-            return redirect()->intended(route('home'));
+            return $user->subscribed()
+                ? redirect()->intended(route('home'))
+                : redirect()->route('pricing');
         }
 
         // Create new user
@@ -64,6 +68,7 @@ class SocialAuthController extends Controller
 
         Auth::login($user, remember: true);
 
-        return redirect()->intended(route('home'));
+        // New user → pick a plan
+        return redirect()->route('pricing');
     }
 }
