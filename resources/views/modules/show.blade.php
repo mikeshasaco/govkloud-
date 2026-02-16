@@ -700,7 +700,7 @@
                         </div>
                     @endauth
                     
-                    @if($module->labs->count() > 0)
+                    @if($module->lessons->count() > 0)
                         <form action="{{ route('modules.start-lab', $module->slug) }}" method="POST" style="margin-top: 1rem;">
                             @csrf
                             <button type="submit" class="btn-start">⚡ Begin Course</button>
@@ -809,6 +809,30 @@
                                             @if($lesson->video_url)<span class="badge badge-video">Video</span>@endif
                                             @if($lesson->hasLab())<span class="badge badge-lab">Lab</span>@endif
                                         @endif
+                                    </div>
+                                </button>
+                            </form>
+                        </div>
+                    @endforeach
+
+                    @foreach($module->labs as $lab)
+                        <div class="timeline-item">
+                            <form action="{{ route('modules.start-lab', $module->slug) }}" method="POST" style="margin: 0;">
+                                @csrf
+                                <button type="submit" class="timeline-card" style="width: 100%; border: none; cursor: pointer; font-family: inherit; font-size: inherit; color: inherit; text-align: left; -webkit-appearance: none; appearance: none;">
+                                    <div class="timeline-number" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">
+                                        {{ str_pad($module->lessons->count() + $loop->iteration, 2, '0', STR_PAD_LEFT) }}
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-title">{{ $lab->title }}</div>
+                                        <div class="timeline-meta">
+                                            <span>🧪 Hands-on Lab</span>
+                                            @if($lab->estimated_minutes)<span>⏱️ {{ $lab->estimated_minutes }} min</span>@endif
+                                        </div>
+                                    </div>
+                                    <div class="timeline-badges">
+                                        <span class="badge badge-lab">Lab</span>
+                                        @if($lab->estimated_minutes)<span class="badge" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">{{ $lab->estimated_minutes }} min</span>@endif
                                     </div>
                                 </button>
                             </form>

@@ -1,41 +1,30 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\ModuleResource\RelationManagers;
 
-use App\Filament\Resources\LessonResource\Pages;
-use App\Filament\Resources\LessonResource\RelationManagers;
-use App\Models\Lesson;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class LessonResource extends Resource
+class LessonsRelationManager extends RelationManager
 {
-    protected static ?string $model = Lesson::class;
+    protected static string $relationship = 'lessons';
 
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $title = 'Lessons';
 
-    protected static ?string $navigationGroup = 'Content';
+    protected static ?string $icon = 'heroicon-o-academic-cap';
 
-    public static function form(Form $form): Form
+    public function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Section::make('Basic Information')
                     ->schema([
-                        Forms\Components\Select::make('module_id')
-                            ->relationship('module', 'title')
-                            ->required()
-                            ->searchable(),
-                        Forms\Components\TextInput::make('slug')
-                            ->required()
-                            ->unique(ignoreRecord: true),
                         Forms\Components\TextInput::make('title')
-                            ->required(),
+                            ->required()
+                            ->maxLength(255),
                         Forms\Components\Select::make('subcategory')
                             ->options([
                                 'Kubernetes' => 'Kubernetes',
@@ -55,11 +44,9 @@ class LessonResource extends Resource
                             ->searchable()
                             ->placeholder('Select technology'),
                         Forms\Components\TextInput::make('order_index')
-                            ->required()
                             ->numeric()
-                            ->default(0),
-                        Forms\Components\Toggle::make('is_published')
-                            ->default(true),
+                            ->default(0)
+                            ->helperText('Auto-assigned if left empty'),
                         Forms\Components\Select::make('lab_id')
                             ->relationship('lab', 'title')
                             ->placeholder('No lab attached'),
@@ -76,7 +63,7 @@ class LessonResource extends Resource
                             ->disk('public')
                             ->directory('lesson-videos')
                             ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
-                            ->maxSize(512000) // 500MB
+                            ->maxSize(512000)
                             ->helperText('Max 500MB. MP4, WebM, or OGG format.'),
                     ]),
 
@@ -135,13 +122,10 @@ class LessonResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('module.title')
-                    ->label('Module')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()
                     ->limit(40),
@@ -152,8 +136,6 @@ class LessonResource extends Resource
                     ->label('Order')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_published')
-                    ->boolean(),
                 Tables\Columns\IconColumn::make('video_url')
                     ->label('Video')
                     ->boolean()
@@ -169,16 +151,9 @@ class LessonResource extends Resource
                     ->placeholder('None'),
             ])
             ->defaultSort('order_index')
-            ->filters([
-                Tables\Filters\SelectFilter::make('module')
-                    ->relationship('module', 'title'),
-                Tables\Filters\SelectFilter::make('subcategory')
-                    ->options([
-                        'Kubernetes' => 'Kubernetes',
-                        'Terraform' => 'Terraform',
-                        'Docker' => 'Docker',
-                        'AWS' => 'AWS',
-                    ]),
+            ->reorderable('order_index')
+            ->headerActions([
+                Tables\Actions\CreateAction::make(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -189,21 +164,5 @@ class LessonResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListLessons::route('/'),
-            'create' => Pages\CreateLesson::route('/create'),
-            'edit' => Pages\EditLesson::route('/{record}/edit'),
-        ];
     }
 }

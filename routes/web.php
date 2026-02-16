@@ -119,7 +119,7 @@ Route::middleware('auth')->group(function () {
         ->name('lab-sessions.runtime');
     Route::post('/lab-sessions', [LabSessionController::class, 'start'])
         ->name('lab-sessions.start');
-    Route::post('/modules/{module}/start-lab', [LabSessionController::class, 'startFromModule'])
+    Route::post('/modules/{module:slug}/start-lab', [LabSessionController::class, 'startFromModule'])
         ->name('modules.start-lab');
 });
 

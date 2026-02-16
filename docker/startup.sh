@@ -33,11 +33,17 @@ helm repo add vcluster https://charts.loft.sh 2>/dev/null || true
 helm repo update 2>/dev/null || true
 echo "[startup] Helm repos configured"
 
-# Run Laravel setup
+# Run Laravel setup (clear stale build-time caches, then re-cache with runtime env)
 cd /var/www/html
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
 php artisan config:cache
-php artisan route:cache
+# Note: route:cache is skipped because Livewire uses closure-based routes
+# that are incompatible with route caching
 php artisan view:cache
+php artisan storage:link 2>/dev/null || true
+php artisan filament:optimize 2>/dev/null || true
 php artisan migrate --force 2>/dev/null || echo "[startup] Migration skipped or failed"
 echo "[startup] Laravel cache warmed"
 

@@ -98,7 +98,7 @@
 
         <div class="lesson-nav">
             @if($prevLesson)
-                <a href="{{ route('lessons.show', [$module->slug, $prevLesson->slug]) }}" class="btn btn-secondary">
+                <a href="{{ route('lessons.show', [$module->slug, $prevLesson->id]) }}" class="btn btn-secondary">
                     ← {{ $prevLesson->title }}
                 </a>
             @else
@@ -106,7 +106,7 @@
             @endif
 
             @if($nextLesson)
-                <a href="{{ route('lessons.show', [$module->slug, $nextLesson->slug]) }}" class="btn btn-primary">
+                <a href="{{ route('lessons.show', [$module->slug, $nextLesson->id]) }}" class="btn btn-primary">
                     {{ $nextLesson->title }} →
                 </a>
             @else

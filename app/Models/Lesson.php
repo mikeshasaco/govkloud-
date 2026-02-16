@@ -7,10 +7,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Lesson extends Model
 {
+    protected static function booted(): void
+    {
+        static::creating(function (Lesson $lesson) {
+            if (empty($lesson->order_index)) {
+                $lesson->order_index = static::where('module_id', $lesson->module_id)->max('order_index') + 1;
+            }
+        });
+    }
+
     protected $fillable = [
         'module_id',
         'lab_id',
-        'slug',
         'title',
         'subcategory',
         'video_url',

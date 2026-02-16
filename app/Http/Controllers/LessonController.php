@@ -13,18 +13,19 @@ class LessonController extends Controller
 {
     /**
      * Display a lesson (with or without associated lab)
+     * GET /courses/{slug}/lessons/{lesson}
      */
-    public function show(string $moduleSlug, string $lessonSlug)
+    public function show(string $moduleSlug, Lesson $lesson)
     {
         $module = Module::where('slug', $moduleSlug)
             ->published()
             ->firstOrFail();
 
-        $lesson = Lesson::where('module_id', $module->id)
-            ->where('slug', $lessonSlug)
-            ->published()
-            ->with('lab')
-            ->firstOrFail();
+        // Ensure lesson belongs to this module
+        abort_if($lesson->module_id !== $module->id, 404);
+        abort_if(!$lesson->is_published, 404);
+
+        $lesson->load('lab');
 
         // Get navigation context
         $lessons = $module->lessons()->published()->ordered()->get();
@@ -91,25 +92,5 @@ class LessonController extends Controller
         ProvisionLabSessionJob::dispatch($session->id);
 
         return $session;
-    }
-
-    /**
-     * API: Get lesson details
-     */
-    public function apiShow(string $moduleSlug, string $lessonSlug)
-    {
-        $module = Module::where('slug', $moduleSlug)
-            ->published()
-            ->firstOrFail();
-
-        $lesson = Lesson::where('module_id', $module->id)
-            ->where('slug', $lessonSlug)
-            ->published()
-            ->with('lab')
-            ->firstOrFail();
-
-        return response()->json([
-            'data' => $lesson,
-        ]);
     }
 }

@@ -1,8 +1,8 @@
 @php
-    $navModules = \App\Models\Module::published()->ordered()->get();
+    $navModules = \App\Models\Module::published()->ordered()->withCount('lessons')->get();
     $navSubcategories = \App\Models\Lesson::selectRaw('subcategory, COUNT(*) as count')
         ->whereNotNull('subcategory')
-        ->where('is_published', true)
+        ->whereHas('module', fn($q) => $q->published())
         ->groupBy('subcategory')
         ->orderBy('subcategory')
         ->get();

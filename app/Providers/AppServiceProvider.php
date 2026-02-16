@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Force HTTPS in non-local environments (Azure terminates SSL at the load balancer)
+        if ($this->app->environment('production', 'staging')) {
+            URL::forceScheme('https');
+        }
     }
 }

@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Module extends Model
 {
+    protected static function booted(): void
+    {
+        static::creating(function (Module $module) {
+            if (empty($module->order_index)) {
+                $module->order_index = static::max('order_index') + 1;
+            }
+        });
+    }
+
     protected $fillable = [
         'slug',
         'title',

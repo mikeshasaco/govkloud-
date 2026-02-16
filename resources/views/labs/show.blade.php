@@ -119,7 +119,7 @@
         <p class="text-muted mb-3">This lab will provision a dedicated environment for {{ $lab->ttl_minutes }} minutes.</p>
 
         @auth
-            <button id="start-lab-btn" class="btn btn-success" data-lab-slug="{{ $lab->slug }}">
+            <button id="start-lab-btn" class="btn btn-success" data-lab-id="{{ $lab->id }}">
                 🚀 Start Lab
             </button>
         @else
@@ -132,13 +132,13 @@
     <script>
         document.getElementById('start-lab-btn')?.addEventListener('click', async function () {
             const btn = this;
-            const slug = btn.dataset.labSlug;
+            const labId = btn.dataset.labId;
 
             btn.disabled = true;
             btn.textContent = 'Starting...';
 
             try {
-                const response = await fetch(`/api/labs/${slug}/start`, {
+                const response = await fetch(`/api/labs/${labId}/start`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

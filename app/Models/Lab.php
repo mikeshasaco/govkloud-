@@ -10,7 +10,6 @@ class Lab extends Model
 {
     protected $fillable = [
         'module_id',
-        'slug',
         'title',
         'description',
         'estimated_minutes',

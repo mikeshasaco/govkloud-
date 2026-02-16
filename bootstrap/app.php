@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust Azure's load balancer (SSL termination proxy)
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'subscribed' => \App\Http\Middleware\EnsureSubscribed::class,
         ]);

@@ -46,8 +46,8 @@ class ModuleController extends Controller
         $module = Module::where('slug', $slug)
             ->published()
             ->with([
-                'lessons' => fn($q) => $q->published()->ordered(),
-                'labs' => fn($q) => $q->published(),
+                'lessons' => fn($q) => $q->ordered(),
+                'labs',
             ])
             ->firstOrFail();
 
@@ -77,8 +77,8 @@ class ModuleController extends Controller
         $module = Module::where('slug', $slug)
             ->published()
             ->with([
-                'lessons' => fn($q) => $q->published()->ordered(),
-                'labs' => fn($q) => $q->published(),
+                'lessons' => fn($q) => $q->ordered(),
+                'labs',
             ])
             ->firstOrFail();
 
