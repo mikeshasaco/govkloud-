@@ -757,7 +757,7 @@
             // Show iframe with the session's code URL after a brief delay to let user see password
             setTimeout(() => {
                 const panel = document.getElementById('workbenchPanel');
-                const codeUrl = '{{ $session->code_url ?? "http://localhost:9000/labs/" . $session->id . "/" }}';
+                const codeUrl = '{{ $codeUrl }}';
                 panel.innerHTML = '<iframe class="workbench-iframe" src="' + codeUrl + '"></iframe>';
             }, 100);
             
@@ -788,7 +788,7 @@
         }
         
         function openLabInNewTab() {
-            const codeUrl = '{{ $session->code_url ?? "http://localhost:9000/labs/" . $session->id . "/" }}';
+            const codeUrl = '{{ $codeUrl }}';
             window.open(codeUrl, '_blank');
         }
 

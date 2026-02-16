@@ -187,7 +187,7 @@ class LabSessionController extends Controller
             ->where('user_id', $request->user()->id)
             ->with([
                 'module.lessons' => function ($q) {
-                    $q->published()->ordered();
+                    $q->ordered();
                 },
                 'lab.steps'
             ])
@@ -195,9 +195,16 @@ class LabSessionController extends Controller
 
         // Get the module and its lessons for the left panel
         $module = $session->module;
-        $lessons = $module ? $module->lessons()->published()->ordered()->get() : collect();
+        $lessons = $module ? $module->lessons()->ordered()->get() : collect();
 
-        return view('labs.runtime', compact('session', 'module', 'lessons'));
+        // Compute code URL from session or from config-based builder
+        $codeUrl = $session->code_url;
+        if (!$codeUrl) {
+            $urlBuilder = app(\App\Services\K8s\IngressUrlBuilder::class);
+            $codeUrl = $urlBuilder->buildWorkbenchUrl($session->id);
+        }
+
+        return view('labs.runtime', compact('session', 'module', 'lessons', 'codeUrl'));
     }
 
     /**
