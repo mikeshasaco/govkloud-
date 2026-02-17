@@ -33,6 +33,10 @@ helm repo add vcluster https://charts.loft.sh 2>/dev/null || true
 helm repo update 2>/dev/null || true
 echo "[startup] Helm repos configured"
 
+# Fix storage permissions at runtime (Azure may mount /home with different ownership)
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
 # Run Laravel setup (clear stale build-time caches, then re-cache with runtime env)
 cd /var/www/html
 php artisan config:clear
@@ -44,7 +48,7 @@ php artisan config:cache
 php artisan view:cache
 php artisan storage:link 2>/dev/null || true
 php artisan filament:optimize 2>/dev/null || true
-php artisan migrate --force 2>/dev/null || echo "[startup] Migration skipped or failed"
+php artisan migrate --force || echo "[startup] Migration failed"
 echo "[startup] Laravel cache warmed"
 
 # Start supervisor (nginx + php-fpm + redis + queue worker)
