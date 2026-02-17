@@ -3,12 +3,15 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
     public function up(): void
     {
+        // Disable FK checks so we can freely drop indexes
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
         Schema::table('lessons', function (Blueprint $table) {
-            // Drop the composite unique index first, then the column
             $table->dropUnique(['module_id', 'slug']);
             $table->dropColumn('slug');
         });
@@ -17,6 +20,8 @@ return new class extends Migration {
             $table->dropUnique(['slug']);
             $table->dropColumn('slug');
         });
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
     }
 
     public function down(): void
