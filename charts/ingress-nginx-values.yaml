@@ -1,0 +1,27 @@
+# Nginx Ingress Controller Configuration for GovKloud
+# Helm chart: ingress-nginx/ingress-nginx
+# Install: helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+#   --namespace ingress-nginx --create-namespace -f charts/ingress-nginx-values.yaml
+
+controller:
+  service:
+    loadBalancerIP: "20.112.122.26"
+    annotations:
+      service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/healthz"
+      service.beta.kubernetes.io/azure-load-balancer-resource-group: "MC_govkloud-rg_govkloud-cluster_westus2"
+
+  # Resource limits for the controller
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+  # WebSocket support for code-server
+  config:
+    proxy-read-timeout: "3600"
+    proxy-send-timeout: "3600"
+    proxy-body-size: "50m"
+    use-forwarded-headers: "true"

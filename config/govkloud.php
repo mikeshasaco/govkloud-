@@ -17,7 +17,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'ingress' => [
-        'base_domain' => env('GOVKLOUD_BASE_DOMAIN', 'labs.govkloud.io'),
+        'base_domain' => env('GOVKLOUD_BASE_DOMAIN', 'labs.govkloud.com'),
         'path_prefix' => env('GOVKLOUD_PATH_PREFIX', '/labs'),
         'tls_enabled' => env('GOVKLOUD_TLS_ENABLED', true),
         'ingress_class' => env('GOVKLOUD_INGRESS_CLASS', 'nginx'),
