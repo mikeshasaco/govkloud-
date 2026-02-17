@@ -133,4 +133,8 @@ Route::prefix('api')->middleware('auth')->group(function () {
         ->name('api.lab-sessions.heartbeat');
 });
 
+// Health check (unauthenticated, for monitoring)
+Route::get('/api/health', [App\Http\Controllers\HealthCheckController::class, 'check'])
+    ->name('api.health');
+
 require __DIR__ . '/auth.php';

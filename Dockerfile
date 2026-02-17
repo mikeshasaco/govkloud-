@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     supervisor \
     redis-server \
+    openssh-server \
     curl \
     unzip \
     git \
@@ -80,6 +81,12 @@ COPY docker/nginx/default.conf /etc/nginx/sites-available/default
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # =============================================================================
+# SSH configuration (Azure App Service compatible)
+# =============================================================================
+COPY docker/ssh/sshd_config /etc/ssh/sshd_config
+RUN mkdir -p /run/sshd
+
+# =============================================================================
 # Redis configuration
 # =============================================================================
 COPY docker/redis/redis.conf /etc/redis/redis-custom.conf
@@ -111,6 +118,6 @@ RUN mkdir -p /var/log/supervisor /run
 COPY docker/startup.sh /usr/local/bin/startup.sh
 RUN chmod +x /usr/local/bin/startup.sh
 
-EXPOSE 8080
+EXPOSE 8080 2222
 
 CMD ["/usr/local/bin/startup.sh"]

@@ -10,6 +10,11 @@ set -e
 mkdir -p /tmp/redis
 rm -f /tmp/redis/dump.rdb
 
+# SSH setup for Azure App Service remote debugging
+ssh-keygen -A 2>/dev/null
+echo "root:Docker!" | chpasswd
+echo "[startup] SSH host keys generated"
+
 # Write kubeconfig from env var (base64 encoded)
 if [ -n "$KUBE_CONFIG_BASE64" ]; then
     mkdir -p /root/.kube
