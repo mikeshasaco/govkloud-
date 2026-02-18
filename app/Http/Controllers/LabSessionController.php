@@ -139,7 +139,20 @@ class LabSessionController extends Controller
             ->first();
 
         if ($existingSession) {
-            return redirect()->route('lab-sessions.runtime', $existingSession->id);
+            // Auto-cleanup stale provisioning sessions (stuck > 15 min)
+            if (
+                $existingSession->status === LabSession::STATUS_PROVISIONING
+                && $existingSession->created_at->diffInMinutes(now()) > 15
+            ) {
+                \Log::warning("Auto-cleaning stale provisioning session", [
+                    'session_id' => $existingSession->id,
+                    'age_minutes' => $existingSession->created_at->diffInMinutes(now()),
+                ]);
+                $existingSession->markError('Provisioning timed out (stale session auto-cleanup)');
+                // Fall through to create a new session
+            } else {
+                return redirect()->route('lab-sessions.runtime', $existingSession->id);
+            }
         }
 
         // Check max concurrent sessions
