@@ -7,7 +7,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'host_k8s' => [
-        'kubeconfig_path' => env('GOVKLOUD_KUBECONFIG_PATH', null), // null = in-cluster
+        'kubeconfig_path' => env('GOVKLOUD_KUBECONFIG_PATH', '/home/www-data/.kube/config'),
         'namespace_prefix' => env('GOVKLOUD_NAMESPACE_PREFIX', 'gk-sess-'),
     ],
 
