@@ -24,11 +24,14 @@ spec:
         - name: code-server
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args:
+          command:
+            - dumb-init
+            - /usr/bin/code-server
             - --auth
             - none
             - --bind-addr
             - "0.0.0.0:8080"
+            - .
           ports:
             - name: http
               containerPort: 8080
