@@ -729,9 +729,9 @@
                 const data = await response.json();
                 const session = data.data;
 
-                if (session.status === 'running') {
+                if (session.status === 'running' && session.code_url) {
                     clearInterval(pollInterval);
-                    onLabReady();
+                    onLabReady(session.code_url);
                 } else if (session.status === 'error') {
                     clearInterval(pollInterval);
                     document.getElementById('statusMessage').textContent = session.error_message || 'Error provisioning lab';
@@ -742,7 +742,7 @@
             }
         }
 
-        function onLabReady() {
+        function onLabReady(codeUrl) {
             labRunning = true;
             
             // Update status badge
@@ -751,15 +751,10 @@
             badge.classList.add('running');
             document.getElementById('statusText').textContent = 'Running';
             
-            // Show password info before loading iframe
-            showPasswordInfo();
-            
-            // Show iframe with the session's code URL after a brief delay to let user see password
-            setTimeout(() => {
-                const panel = document.getElementById('workbenchPanel');
-                const codeUrl = '{{ $codeUrl }}';
-                panel.innerHTML = '<iframe class="workbench-iframe" src="' + codeUrl + '"></iframe>';
-            }, 100);
+            // Load the code-server iframe using the URL from the API
+            // (not the Blade variable, which may be stale from initial page load)
+            const panel = document.getElementById('workbenchPanel');
+            panel.innerHTML = '<iframe class="workbench-iframe" src="' + codeUrl + '"></iframe>';
             
             startHeartbeat();
             startIdleTracking();
@@ -787,9 +782,16 @@
             });
         }
         
-        function openLabInNewTab() {
-            const codeUrl = '{{ $codeUrl }}';
-            window.open(codeUrl, '_blank');
+        async function openLabInNewTab() {
+            try {
+                const response = await fetch(`/api/lab-sessions/${SESSION_ID}/status`);
+                const data = await response.json();
+                if (data.data.code_url) {
+                    window.open(data.data.code_url, '_blank');
+                }
+            } catch (e) {
+                console.error('Failed to get lab URL:', e);
+            }
         }
 
         // Heartbeat
@@ -938,7 +940,7 @@
         setInterval(updateTimer, 1000);
 
         @if($session->status === 'running' && $session->code_url)
-            onLabReady();
+            onLabReady('{{ $codeUrl }}');
         @else
             pollInterval = setInterval(pollStatus, 3000);
             pollStatus();
