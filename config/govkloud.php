@@ -58,12 +58,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | vcluster CLI Configuration
+    | vcluster Configuration
     |--------------------------------------------------------------------------
+    | Note: Kubeconfig extraction uses kubectl (not the vcluster CLI).
+    | See docs/vcluster-kubeconfig-extraction.yaml for details.
     */
-    'vcluster' => [
-        'binary_path' => env('GOVKLOUD_VCLUSTER_PATH', '/usr/local/bin/vcluster'),
-    ],
 
     /*
     |--------------------------------------------------------------------------
