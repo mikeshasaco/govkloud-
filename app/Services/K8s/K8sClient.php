@@ -163,6 +163,50 @@ class K8sClient
     }
 
     /**
+     * Copy a secret from one namespace to another
+     */
+    public function copySecret(string $name, string $fromNamespace, string $toNamespace): bool
+    {
+        // Get the secret as JSON
+        $result = $this->runCommand([
+            'get',
+            'secret',
+            $name,
+            '-n',
+            $fromNamespace,
+            '-o',
+            'json'
+        ]);
+
+        if (!$result['success']) {
+            Log::error("Failed to read secret {$name} from {$fromNamespace}");
+            return false;
+        }
+
+        $secret = json_decode($result['output'], true);
+        if (!$secret) {
+            return false;
+        }
+
+        // Strip metadata that would prevent applying to a new namespace
+        $secret['metadata'] = [
+            'name' => $secret['metadata']['name'],
+            'namespace' => $toNamespace,
+        ];
+        unset($secret['metadata']['resourceVersion'], $secret['metadata']['uid'], $secret['metadata']['creationTimestamp']);
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'k8s_copy_');
+        file_put_contents($tempFile, json_encode($secret));
+
+        try {
+            $result = $this->runCommand(['apply', '-f', $tempFile]);
+            return $result['success'];
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    /**
      * Get secret data
      */
     public function getSecretData(string $namespace, string $name, string $key): ?string

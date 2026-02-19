@@ -33,6 +33,13 @@ class SessionProvisioner
         throw new Exception("Failed to create namespace: {$namespace}");
       }
 
+      // Step 1b: Copy TLS certificate into session namespace
+      Log::info("Copying TLS secret to: {$namespace}");
+      if (!$this->k8sClient->copySecret('govkloud-tls', 'default', $namespace)) {
+        Log::warning("Failed to copy TLS secret - ingress will use default cert");
+        // Non-fatal: ingress will still work with the nginx default cert
+      }
+
       // Step 2: Apply ResourceQuota and LimitRange
       Log::info("Applying resource quotas to: {$namespace}");
       $this->applyResourceGuardrails($session);
