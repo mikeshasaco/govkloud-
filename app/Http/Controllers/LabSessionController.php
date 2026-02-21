@@ -167,18 +167,19 @@ class LabSessionController extends Controller
         // Get the first lab associated with this module (if any)
         $lab = $module->labs()->first();
 
-        $shortId = strtolower(Str::random(8));
-        $namespacePrefix = config('govkloud.host_k8s.namespace_prefix');
+        // Use the user's persistent namespace instead of a random one
+        $namespace = $user->k8s_namespace;
+        $vclusterRelease = 'vc-' . $user->username;
         $ttlMinutes = $lab?->ttl_minutes ?? config('govkloud.session.ttl_minutes', 60);
 
-        // Create new session - linked to MODULE
+        // Create new session - linked to MODULE, using user's persistent namespace
         $session = LabSession::create([
             'user_id' => $user->id,
             'module_id' => $module->id,
             'lab_id' => $lab?->id,
             'status' => $lab ? LabSession::STATUS_PROVISIONING : LabSession::STATUS_RUNNING,
-            'host_namespace' => $namespacePrefix . $shortId,
-            'vcluster_release_name' => 'vc-' . $shortId,
+            'host_namespace' => $namespace,
+            'vcluster_release_name' => $vclusterRelease,
             'session_token' => Str::random(32),
             'expires_at' => now()->addMinutes($ttlMinutes),
         ]);

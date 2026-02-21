@@ -31,14 +31,21 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'min:3', 'max:20', 'regex:/^[a-z0-9][a-z0-9-]*[a-z0-9]$/', 'unique:users'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'username.regex' => 'Username must be lowercase letters, numbers, and hyphens only (cannot start/end with hyphen).',
         ]);
+
+        $username = strtolower($request->username);
 
         $user = User::create([
             'name' => $request->name,
+            'username' => $username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'k8s_namespace' => 'gk-user-' . $username,
         ]);
 
         event(new Registered($user));

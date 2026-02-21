@@ -57,11 +57,15 @@ class SocialAuthController extends Controller
         }
 
         // Create new user
+        $username = $this->generateUsername($googleUser->getEmail());
+
         $user = User::create([
             'name' => $googleUser->getName(),
+            'username' => $username,
             'email' => $googleUser->getEmail(),
             'google_id' => $googleUser->getId(),
             'avatar' => $googleUser->getAvatar(),
+            'k8s_namespace' => 'gk-user-' . $username,
         ]);
 
         event(new Registered($user));
@@ -70,5 +74,23 @@ class SocialAuthController extends Controller
 
         // New user → pick a plan
         return redirect()->route('pricing');
+    }
+
+    /**
+     * Generate a unique username from an email address.
+     */
+    protected function generateUsername(string $email): string
+    {
+        $base = strtolower(preg_replace('/[^a-z0-9]/', '', explode('@', $email)[0]));
+        $username = substr($base, 0, 20) ?: 'user';
+
+        $candidate = $username;
+        $suffix = 1;
+        while (User::where('username', $candidate)->exists()) {
+            $candidate = substr($username, 0, 17) . $suffix;
+            $suffix++;
+        }
+
+        return $candidate;
     }
 }

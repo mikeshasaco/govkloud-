@@ -305,6 +305,16 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="johndoe"
+                        value="{{ old('username') }}" required pattern="[a-z0-9][a-z0-9-]*[a-z0-9]" minlength="3"
+                        maxlength="20" style="text-transform: lowercase;">
+                    <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                        3-20 characters, lowercase letters, numbers & hyphens. This will be your lab workspace ID.
+                    </small>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label" for="email">Email Address</label>
                     <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com"
                         value="{{ old('email') }}" required>

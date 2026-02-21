@@ -25,27 +25,31 @@ class SessionProvisioner
   {
     $lab = $session->lab;
     $namespace = $session->host_namespace;
+    $namespaceAlreadyExists = $this->k8sClient->namespaceExists($namespace);
 
     try {
-      // Step 1: Create host namespace
-      Log::info("Creating namespace: {$namespace}");
-      if (!$this->k8sClient->createNamespace($namespace)) {
-        throw new Exception("Failed to create namespace: {$namespace}");
+      // Step 1: Create host namespace (idempotent)
+      if ($namespaceAlreadyExists) {
+        Log::info("Namespace already exists, reusing: {$namespace}");
+      } else {
+        Log::info("Creating namespace: {$namespace}");
+        if (!$this->k8sClient->createNamespace($namespace)) {
+          throw new Exception("Failed to create namespace: {$namespace}");
+        }
+
+        // Step 1b: Copy TLS certificate into new namespace
+        Log::info("Copying TLS secret to: {$namespace}");
+        if (!$this->k8sClient->copySecret('govkloud-tls', 'default', $namespace)) {
+          Log::warning("Failed to copy TLS secret - ingress will use default cert");
+        }
+
+        // Step 2: Apply ResourceQuota and LimitRange to new namespace
+        Log::info("Applying resource quotas to: {$namespace}");
+        $this->applyResourceGuardrails($session);
       }
 
-      // Step 1b: Copy TLS certificate into session namespace
-      Log::info("Copying TLS secret to: {$namespace}");
-      if (!$this->k8sClient->copySecret('govkloud-tls', 'default', $namespace)) {
-        Log::warning("Failed to copy TLS secret - ingress will use default cert");
-        // Non-fatal: ingress will still work with the nginx default cert
-      }
-
-      // Step 2: Apply ResourceQuota and LimitRange
-      Log::info("Applying resource quotas to: {$namespace}");
-      $this->applyResourceGuardrails($session);
-
-      // Step 3: Install vcluster
-      Log::info("Installing vcluster: {$session->vcluster_release_name}");
+      // Step 3: Install vcluster (helm upgrade --install is idempotent)
+      Log::info("Installing/upgrading vcluster: {$session->vcluster_release_name}");
       if (!$this->installVcluster($session)) {
         throw new Exception("Failed to install vcluster");
       }
@@ -62,21 +66,26 @@ class SessionProvisioner
         throw new Exception("Failed to store vcluster kubeconfig");
       }
 
-      // Step 6: Install workbench
-      Log::info("Installing workbench: {$session->workbench_release_name}");
+      // Step 6: Install workbench (helm upgrade --install is idempotent)
+      Log::info("Installing/upgrading workbench: {$session->workbench_release_name}");
       if (!$this->installWorkbench($session)) {
         throw new Exception("Failed to install workbench");
       }
 
-      // Step 7: Create ingress for workbench
-      Log::info("Creating ingress for session: {$session->id}");
+      // Step 7: Create ingress for workbench (kubectl apply is idempotent)
+      Log::info("Creating/updating ingress for session: {$session->id}");
       if (!$this->createWorkbenchIngress($session)) {
         throw new Exception("Failed to create workbench ingress");
       }
 
-      // Step 7.5: Wait for ingress to be ready (nginx-ingress propagation delay)
-      $codeUrl = $this->ingressUrlBuilder->buildWorkbenchUrl($session->id);
-      $this->waitForIngressReady($codeUrl, $session->id);
+      // Step 7.5: Wait for ingress to be ready (skip if namespace already existed — ingress is likely active)
+      $user = $session->user;
+      $codeUrl = $this->ingressUrlBuilder->buildWorkbenchUrl($user->username);
+      if (!$namespaceAlreadyExists) {
+        $this->waitForIngressReady($codeUrl, $session->id);
+      } else {
+        Log::info("Skipping ingress wait — namespace pre-existed, ingress should be active");
+      }
 
       // Step 8: Update session with code_url and status
       $session->update([
@@ -88,6 +97,7 @@ class SessionProvisioner
       Log::info("Session provisioned successfully", [
         'session_id' => $session->id,
         'code_url' => $codeUrl,
+        'reused_namespace' => $namespaceAlreadyExists,
       ]);
 
       return true;
@@ -466,9 +476,13 @@ YAML;
     // The Helm chart creates a service named {releaseName}-govkloud-workbench
     $serviceName = $session->workbench_release_name . '-govkloud-workbench';
 
+    // Use the user's username for stable ingress paths (persists across sessions)
+    $user = $session->user;
+    $pathIdentifier = $user->username;
+
     $ingressYaml = $this->ingressUrlBuilder->generateIngressYaml(
       'workbench-ingress',
-      $session->id,
+      $pathIdentifier,
       $serviceName,
       8080
     );
@@ -481,10 +495,11 @@ YAML;
    */
   protected function cleanupOnError(LabSession $session): void
   {
-    try {
-      $this->k8sClient->deleteNamespace($session->host_namespace);
-    } catch (Exception $e) {
-      Log::warning("Cleanup failed", ['error' => $e->getMessage()]);
-    }
+    // With persistent user namespaces, do NOT delete on error.
+    // The namespace may have resources from previous sessions.
+    Log::info("Preserving persistent namespace after provisioning error", [
+      'namespace' => $session->host_namespace,
+      'session_id' => $session->id,
+    ]);
   }
 }

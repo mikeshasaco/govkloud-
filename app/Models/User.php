@@ -24,11 +24,13 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
         'is_admin',
         'google_id',
         'avatar',
+        'k8s_namespace',
     ];
 
     /**
