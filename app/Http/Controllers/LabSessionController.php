@@ -241,4 +241,45 @@ class LabSessionController extends Controller
             ]
         ]);
     }
+
+    /**
+     * API: Probe if the code-server URL is reachable (server-side check)
+     * GET /api/lab-sessions/{id}/probe
+     */
+    public function probe(Request $request, string $id)
+    {
+        $session = LabSession::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        if (!$session->code_url) {
+            return response()->json(['ready' => false, 'reason' => 'no_url']);
+        }
+
+        try {
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'HEAD',
+                    'timeout' => 5,
+                    'ignore_errors' => true,
+                ],
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                ],
+            ]);
+
+            $headers = @get_headers($session->code_url, false, $context);
+
+            if ($headers && isset($headers[0])) {
+                $statusCode = (int) substr($headers[0], 9, 3);
+                $ready = $statusCode !== 404;
+                return response()->json(['ready' => $ready, 'status_code' => $statusCode]);
+            }
+        } catch (\Throwable $e) {
+            // Fall through to not ready
+        }
+
+        return response()->json(['ready' => false, 'reason' => 'unreachable']);
+    }
 }

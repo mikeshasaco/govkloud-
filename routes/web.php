@@ -127,6 +127,8 @@ Route::middleware('auth')->group(function () {
 Route::prefix('api')->middleware('auth')->group(function () {
     Route::get('/lab-sessions/{id}/status', [LabSessionController::class, 'apiStatus'])
         ->name('api.lab-sessions.status');
+    Route::get('/lab-sessions/{id}/probe', [LabSessionController::class, 'probe'])
+        ->name('api.lab-sessions.probe');
     Route::post('/lab-sessions/{id}/stop', [LabSessionController::class, 'stop'])
         ->name('api.lab-sessions.stop');
     Route::post('/lab-sessions/{id}/heartbeat', [LabSessionController::class, 'heartbeat'])

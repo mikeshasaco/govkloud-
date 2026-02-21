@@ -731,7 +731,8 @@
 
                 if (session.status === 'running' && session.code_url) {
                     clearInterval(pollInterval);
-                    onLabReady(session.code_url);
+                    document.getElementById('statusMessage').textContent = 'Verifying lab connection...';
+                    probeAndLoad(session.code_url);
                 } else if (session.status === 'error') {
                     clearInterval(pollInterval);
                     document.getElementById('statusMessage').textContent = session.error_message || 'Error provisioning lab';
@@ -739,6 +740,32 @@
                 }
             } catch (error) {
                 console.error('Poll error:', error);
+            }
+        }
+
+        // Probe the code-server URL via server-side check, then load iframe
+        async function probeAndLoad(codeUrl, attempt = 1) {
+            const maxAttempts = 20;  // 20 × 3s = 60s max
+            try {
+                const response = await fetch(`/api/lab-sessions/${SESSION_ID}/probe`);
+                const data = await response.json();
+
+                if (data.ready) {
+                    onLabReady(codeUrl);
+                    return;
+                }
+            } catch (e) {
+                console.error('Probe error:', e);
+            }
+
+            if (attempt < maxAttempts) {
+                document.getElementById('statusMessage').textContent = 
+                    `Waiting for lab environment... (${attempt}/${maxAttempts})`;
+                setTimeout(() => probeAndLoad(codeUrl, attempt + 1), 3000);
+            } else {
+                // Timeout — try loading iframe anyway (might work)
+                console.warn('Probe timeout — loading iframe anyway');
+                onLabReady(codeUrl);
             }
         }
 
@@ -751,8 +778,7 @@
             badge.classList.add('running');
             document.getElementById('statusText').textContent = 'Running';
             
-            // Load the code-server iframe using the URL from the API
-            // (not the Blade variable, which may be stale from initial page load)
+            // Load the code-server iframe — URL is confirmed reachable by probe
             const panel = document.getElementById('workbenchPanel');
             panel.innerHTML = '<iframe class="workbench-iframe" src="' + codeUrl + '"></iframe>';
             
@@ -940,7 +966,7 @@
         setInterval(updateTimer, 1000);
 
         @if($session->status === 'running' && $session->code_url)
-            onLabReady('{{ $codeUrl }}');
+            probeAndLoad('{{ $codeUrl }}');
         @else
             pollInterval = setInterval(pollStatus, 3000);
             pollStatus();

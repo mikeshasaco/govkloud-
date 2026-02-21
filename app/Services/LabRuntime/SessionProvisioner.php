@@ -74,8 +74,11 @@ class SessionProvisioner
         throw new Exception("Failed to create workbench ingress");
       }
 
-      // Step 8: Update session with code_url and status
+      // Step 7.5: Wait for ingress to be ready (nginx-ingress propagation delay)
       $codeUrl = $this->ingressUrlBuilder->buildWorkbenchUrl($session->id);
+      $this->waitForIngressReady($codeUrl, $session->id);
+
+      // Step 8: Update session with code_url and status
       $session->update([
         'code_url' => $codeUrl,
         'status' => LabSession::STATUS_RUNNING,
@@ -102,6 +105,65 @@ class SessionProvisioner
 
       return false;
     }
+  }
+
+  /**
+   * Wait until the ingress route is actually serving traffic.
+   * There's a delay between creating the K8s Ingress resource and
+   * the nginx-ingress controller configuring the route.
+   */
+  protected function waitForIngressReady(string $url, string $sessionId): void
+  {
+    $maxAttempts = 30;  // 30 × 2s = 60s max
+    $delaySeconds = 2;
+
+    Log::info("Waiting for ingress readiness", [
+      'session_id' => $sessionId,
+      'url' => $url,
+    ]);
+
+    $streamContext = stream_context_create([
+      'http' => [
+        'method' => 'HEAD',
+        'timeout' => 5,
+        'ignore_errors' => true,
+      ],
+      'ssl' => [
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+      ],
+    ]);
+
+    for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+      try {
+        $headers = @get_headers($url, false, $streamContext);
+
+        if ($headers && isset($headers[0])) {
+          $statusLine = $headers[0];  // e.g. "HTTP/1.1 200 OK"
+          $statusCode = (int) substr($statusLine, 9, 3);
+
+          if ($statusCode !== 404) {
+            Log::info("Ingress ready after {$attempt} attempts", [
+              'session_id' => $sessionId,
+              'status_code' => $statusCode,
+            ]);
+            return;
+          }
+        }
+      } catch (\Throwable $e) {
+        // Ignore errors, keep trying
+      }
+
+      if ($attempt < $maxAttempts) {
+        sleep($delaySeconds);
+      }
+    }
+
+    Log::warning("Ingress readiness timeout — proceeding anyway", [
+      'session_id' => $sessionId,
+      'url' => $url,
+      'attempts' => $maxAttempts,
+    ]);
   }
 
   /**
