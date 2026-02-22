@@ -778,18 +778,18 @@
             </a>
             <span class="module-title">{{ $module->title ?? $session->lab->title }}</span>
         </div>
-        <div class="header-center">
-            <button class="layout-btn active" data-layout="split" title="Split View (top/bottom)">
-                <span class="layout-icon">⬜</span> Split
-            </button>
-            <button class="layout-btn" data-layout="side" title="Side by Side">
-                <span class="layout-icon">◫</span> Side
-            </button>
-            <button class="layout-btn" data-layout="focus" title="Focus Mode (toggle)">
-                <span class="layout-icon">⧉</span> Focus
-            </button>
-        </div>
         <div class="header-right">
+            <div class="header-center">
+                <button class="layout-btn active" data-layout="split" title="Split View (top/bottom)">
+                    <span class="layout-icon">⬜</span> Split
+                </button>
+                <button class="layout-btn" data-layout="side" title="Side by Side">
+                    <span class="layout-icon">◫</span> Side
+                </button>
+                <button class="layout-btn" data-layout="focus" title="Focus Mode (toggle)">
+                    <span class="layout-icon">⧉</span> Focus
+                </button>
+            </div>
             <div class="status-badge provisioning" id="statusBadge">
                 <span class="status-dot"></span>
                 <span id="statusText">Provisioning</span>
