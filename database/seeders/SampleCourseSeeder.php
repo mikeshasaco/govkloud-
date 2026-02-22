@@ -270,12 +270,83 @@ class SampleCourseSeeder extends Seeder
             [
                 'title' => 'GitHub Actions Fundamentals',
                 'video_url' => 'https://www.youtube.com/watch?v=R8_veQiYBjI',
-                'reading_md' => "# GitHub Actions\n\nGitHub Actions is a CI/CD platform that allows you to automate your build, test, and deployment pipelines.\n\n## Key Concepts\n\n- **Workflow** — Automated process defined in YAML\n- **Event** — A trigger (push, PR, schedule)\n- **Job** — A set of steps that run on the same runner\n- **Step** — An individual task (action or script)\n- **Action** — A reusable unit of code\n\n## Basic Workflow\n\n```yaml\nname: CI Pipeline\non:\n  push:\n    branches: [main]\n  pull_request:\n    branches: [main]\n\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n    - uses: actions/checkout@v4\n    - uses: actions/setup-node@v4\n      with:\n        node-version: 20\n    - run: npm ci\n    - run: npm test\n    - run: npm run build\n```",
+                'reading_md' => <<<'MD'
+# GitHub Actions
+
+GitHub Actions is a CI/CD platform that allows you to automate your build, test, and deployment pipelines.
+
+## Key Concepts
+
+- **Workflow** — Automated process defined in YAML
+- **Event** — A trigger (push, PR, schedule)
+- **Job** — A set of steps that run on the same runner
+- **Step** — An individual task (action or script)
+- **Action** — A reusable unit of code
+
+## Basic Workflow
+
+```yaml
+name: CI Pipeline
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - run: npm ci
+    - run: npm test
+    - run: npm run build
+```
+MD,
             ],
             [
                 'title' => 'Building Docker Images in CI',
                 'video_url' => 'https://www.youtube.com/watch?v=yfBtjLxn_6k',
-                'reading_md' => "# Building & Pushing Docker Images\n\n## Workflow for Docker Build\n\n```yaml\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n    - uses: actions/checkout@v4\n\n    - uses: docker/login-action@v3\n      with:\n        registry: ghcr.io\n        username: \\${{ github.actor }}\n        password: \\${{ secrets.GITHUB_TOKEN }}\n\n    - uses: docker/build-push-action@v5\n      with:\n        context: .\n        push: true\n        tags: ghcr.io/\\${{ github.repository }}:latest\n```\n\n## Multi-Architecture Builds\n\nUse QEMU and buildx for ARM + AMD64:\n\n```yaml\n    - uses: docker/setup-qemu-action@v3\n    - uses: docker/setup-buildx-action@v3\n    - uses: docker/build-push-action@v5\n      with:\n        platforms: linux/amd64,linux/arm64\n```",
+                'reading_md' => <<<'MD'
+# Building & Pushing Docker Images
+
+## Workflow for Docker Build
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ghcr.io/${{ github.repository }}:latest
+```
+
+## Multi-Architecture Builds
+
+Use QEMU and buildx for ARM + AMD64:
+
+```yaml
+    - uses: docker/setup-qemu-action@v3
+    - uses: docker/setup-buildx-action@v3
+    - uses: docker/build-push-action@v5
+      with:
+        platforms: linux/amd64,linux/arm64
+```
+MD,
                 'quiz_json' => [
                     [
                         'question' => 'Which GitHub Action is used to build and push Docker images?',
@@ -288,12 +359,78 @@ class SampleCourseSeeder extends Seeder
             [
                 'title' => 'Deploying to Kubernetes from CI',
                 'video_url' => 'https://www.youtube.com/watch?v=X3F3El_yvFg',
-                'reading_md' => "# Kubernetes Deployment from CI/CD\n\n## Deploy with kubectl\n\n```yaml\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    needs: build\n    steps:\n    - uses: azure/k8s-set-context@v3\n      with:\n        kubeconfig: \\${{ secrets.KUBECONFIG }}\n\n    - uses: azure/k8s-deploy@v4\n      with:\n        namespace: production\n        manifests: k8s/\n        images: ghcr.io/my-org/my-app:latest\n```\n\n## Deploy with Helm\n\n```yaml\n    - name: Deploy with Helm\n      run: |\n        helm upgrade --install my-app ./charts/my-app \\\n          --namespace production \\\n          --set image.tag=\\${{ github.sha }} \\\n          --wait --timeout 300s\n```",
+                'reading_md' => <<<'MD'
+# Kubernetes Deployment from CI/CD
+
+## Deploy with kubectl
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - uses: azure/k8s-set-context@v3
+      with:
+        kubeconfig: ${{ secrets.KUBECONFIG }}
+
+    - uses: azure/k8s-deploy@v4
+      with:
+        namespace: production
+        manifests: k8s/
+        images: ghcr.io/my-org/my-app:latest
+```
+
+## Deploy with Helm
+
+```yaml
+    - name: Deploy with Helm
+      run: |
+        helm upgrade --install my-app ./charts/my-app \
+          --namespace production \
+          --set image.tag=${{ github.sha }} \
+          --wait --timeout 300s
+```
+MD,
             ],
             [
                 'title' => 'Secrets Management in CI/CD',
                 'video_url' => 'https://www.youtube.com/watch?v=dG_WfaMFHWo',
-                'reading_md' => "# Managing Secrets\n\n## GitHub Secrets\n\nStore sensitive values in GitHub repository or organization secrets:\n\n- Repository Settings → Secrets and variables → Actions\n- Reference with `\\${{ secrets.SECRET_NAME }}`\n\n## Environment-Specific Secrets\n\n```yaml\njobs:\n  deploy-staging:\n    environment: staging\n    runs-on: ubuntu-latest\n    steps:\n    - run: echo \"Deploying to \\${{ vars.DEPLOY_URL }}\"\n      env:\n        DB_PASSWORD: \\${{ secrets.DB_PASSWORD }}\n\n  deploy-production:\n    environment: production\n    needs: deploy-staging\n    runs-on: ubuntu-latest\n```\n\n## Best Practices\n\n1. Never hardcode secrets in workflows\n2. Use environment-level secrets for isolation\n3. Rotate secrets regularly\n4. Use OIDC for cloud provider authentication",
+                'reading_md' => <<<'MD'
+# Managing Secrets
+
+## GitHub Secrets
+
+Store sensitive values in GitHub repository or organization secrets:
+
+- Repository Settings → Secrets and variables → Actions
+- Reference with `${{ secrets.SECRET_NAME }}`
+
+## Environment-Specific Secrets
+
+```yaml
+jobs:
+  deploy-staging:
+    environment: staging
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "Deploying to ${{ vars.DEPLOY_URL }}"
+      env:
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+  deploy-production:
+    environment: production
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+```
+
+## Best Practices
+
+1. Never hardcode secrets in workflows
+2. Use environment-level secrets for isolation
+3. Rotate secrets regularly
+4. Use OIDC for cloud provider authentication
+MD,
             ],
         ]);
 
