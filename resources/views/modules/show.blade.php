@@ -713,10 +713,6 @@
                     <h3>What's Included</h3>
                     <div class="includes-grid">
                         <div class="include-item">
-                            <span class="include-icon">🎓</span>
-                            <span class="include-text">Certificate</span>
-                        </div>
-                        <div class="include-item">
                             <span class="include-icon">🧪</span>
                             <span class="include-text">{{ $module->labs->count() }} Labs</span>
                         </div>
@@ -746,16 +742,7 @@
                         </a>
                     @endauth
                     
-                    <div class="includes-grid" style="margin-top: 1rem;">
-                        <div class="include-item">
-                            <span class="include-icon">♾️</span>
-                            <span class="include-text">Lifetime Access</span>
-                        </div>
-                        <div class="include-item">
-                            <span class="include-icon">💬</span>
-                            <span class="include-text">Community</span>
-                        </div>
-                    </div>
+
                 </div>
             </div>
 
