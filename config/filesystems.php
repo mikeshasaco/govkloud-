@@ -41,7 +41,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => env('APP_URL') . '/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
@@ -56,6 +56,15 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'azure' => [
+            'driver' => 'azure',
+            'connection_string' => env('AZURE_STORAGE_CONNECTION_STRING'),
+            'container' => env('AZURE_STORAGE_CONTAINER', 'videos'),
+            'url' => env('AZURE_STORAGE_URL'),
             'throw' => false,
             'report' => false,
         ],
