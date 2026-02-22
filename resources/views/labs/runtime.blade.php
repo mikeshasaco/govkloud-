@@ -548,7 +548,7 @@
                         </div>
                         <div class="lesson-content">
                             @if($lesson->video_url)
-                                <iframe class="lesson-video" src="{{ $lesson->video_url }}" 
+                                <iframe class="lesson-video" src="{{ $lesson->embed_video_url }}" 
                                     frameborder="0" allowfullscreen></iframe>
                             @endif
                             @if($lesson->reading_md)

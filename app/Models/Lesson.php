@@ -78,12 +78,46 @@ class Lesson extends Model
     }
 
     /**
+     * Convert any YouTube URL to embed format for iframe usage.
+     * Supports: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+     */
+    public function getEmbedVideoUrlAttribute(): ?string
+    {
+        if (empty($this->video_url)) {
+            return null;
+        }
+
+        $url = $this->video_url;
+
+        // Already an embed URL — return as-is
+        if (str_contains($url, 'youtube.com/embed/')) {
+            return $url;
+        }
+
+        // Extract video ID from youtube.com/watch?v=ID or youtu.be/ID
+        $videoId = null;
+
+        if (preg_match('/[?&]v=([a-zA-Z0-9_-]{11})/', $url, $matches)) {
+            $videoId = $matches[1];
+        } elseif (preg_match('/youtu\.be\/([a-zA-Z0-9_-]{11})/', $url, $matches)) {
+            $videoId = $matches[1];
+        }
+
+        if ($videoId) {
+            return "https://www.youtube.com/embed/{$videoId}";
+        }
+
+        // Not a recognized YouTube URL — return as-is (might be Vimeo, etc.)
+        return $url;
+    }
+
+    /**
      * Get the video source (URL or uploaded file path)
      */
     public function getVideoSource(): ?string
     {
         if (!empty($this->video_url)) {
-            return $this->video_url;
+            return $this->embed_video_url;
         }
         if (!empty($this->video_file)) {
             return asset('storage/' . $this->video_file);

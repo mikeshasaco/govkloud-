@@ -83,7 +83,7 @@
 
         @if($lesson->video_url)
             <div class="video-container">
-                <iframe src="{{ $lesson->video_url }}" frameborder="0"
+                <iframe src="{{ $lesson->embed_video_url }}" frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen>
                 </iframe>
