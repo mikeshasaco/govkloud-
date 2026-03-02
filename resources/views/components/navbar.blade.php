@@ -10,7 +10,7 @@
 
 <nav class="nav">
     <a href="/" class="nav-logo">
-        <div class="nav-logo-icon">☁️</div>
+        <img src="/images/govkloud-logo.png" alt="GovKloud" class="nav-logo-icon">
         <span>GovKloud</span>
     </a>
     <div class="nav-links">

@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account - GovKloud</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -70,14 +73,10 @@
         }
 
         .auth-logo-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--gk-cyan), var(--gk-teal));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            border-radius: 8px;
         }
 
         .auth-header h1 {
@@ -279,7 +278,7 @@
     <div class="auth-container">
         <div class="auth-header">
             <a href="/" class="auth-logo">
-                <div class="auth-logo-icon">☁️</div>
+                <img src="/images/govkloud-logo.png" alt="GovKloud" class="auth-logo-icon">
                 <span>GovKloud</span>
             </a>
             <h1>Create Your Account</h1>
