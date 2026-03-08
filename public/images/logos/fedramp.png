@@ -1,0 +1,68 @@
+<!-- app.html -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicons/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- DAP Centrally Hosted URL -->
+    <script
+      async=""
+      type="text/javascript"
+      src="https://dap.digitalgov.gov/Universal-Federated-Analytics-Min.js?agency=GSA"
+      id="_fed_an_ua_tag"
+    ></script>
+    <!-- Google Tag Manager (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HBYXWFP794"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-HBYXWFP794');
+    </script>
+    <!-- Touchpoints -->
+    <script defer src="https://touchpoints.app.cloud.gov/touchpoints/8b8a7cef.js"></script>
+    <link href="/_app/immutable/entry/start.CaHHeHIr.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/CeytuSq-.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/rLgbVnHg.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/DAGaD0fD.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/DIeogL5L.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/DQ3Z9X-6.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/DSO1ViI-.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/CYgJF_JY.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/CsSnD4P8.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/B17Q6ahh.js" rel="modulepreload">
+		<link href="/_app/immutable/entry/app.BaGF1ZwJ.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/ckwbz45p.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/Bzak7iHL.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/CFY02V09.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/DNxK9tQb.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/BbeD4K-L.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/Dx0cmwNt.js" rel="modulepreload">
+		<link href="/_app/immutable/chunks/DiI1ZRHY.js" rel="modulepreload">
+		
+  </head>
+
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">
+			<script>
+				{
+					__sveltekit_1pw2igh = {
+						base: ""
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("/_app/immutable/entry/start.CaHHeHIr.js"),
+						import("/_app/immutable/entry/app.BaGF1ZwJ.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+				}
+			</script>
+		</div>
+  </body>
+</html>

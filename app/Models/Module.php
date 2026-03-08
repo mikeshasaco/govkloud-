@@ -21,6 +21,7 @@ class Module extends Model
         'title',
         'description',
         'category',
+        'level',
         'order_index',
         'is_published',
     ];

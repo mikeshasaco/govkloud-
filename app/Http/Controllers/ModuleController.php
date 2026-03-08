@@ -24,6 +24,11 @@ class ModuleController extends Controller
             });
         }
 
+        // Filter by category (career track) if provided
+        if ($request->has('category') && $request->category) {
+            $query->where('category', $request->category);
+        }
+
         $modules = $query->get();
 
         // Get all technologies for the filter dropdown
@@ -35,7 +40,15 @@ class ModuleController extends Controller
             ->orderBy('subcategory')
             ->get();
 
-        return view('courses.index', compact('modules', 'technologies'));
+        // Get all categories for the filter dropdown
+        $categories = Module::published()
+            ->whereNotNull('category')
+            ->selectRaw('category')
+            ->groupBy('category')
+            ->orderBy('category')
+            ->get();
+
+        return view('courses.index', compact('modules', 'technologies', 'categories'));
     }
 
     /**

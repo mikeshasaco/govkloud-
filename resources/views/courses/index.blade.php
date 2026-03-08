@@ -328,8 +328,17 @@
 
         @if(request('tech'))
             <div class="active-filter">
-                <span>🏷️ Filtered by: <strong>{{ request('tech') }}</strong></span>
-                <a href="{{ route('courses.index') }}" title="Clear filter">✕</a>
+                <span>🏷️ Filtered by tech: <strong>{{ request('tech') }}</strong></span>
+                <a href="{{ route('courses.index') }}{{ request('category') ? '?category=' . urlencode(request('category')) : '' }}"
+                    title="Clear filter">✕</a>
+            </div>
+        @endif
+
+        @if(request('category'))
+            <div class="active-filter">
+                <span>💼 Filtered by career track: <strong>{{ request('category') }}</strong></span>
+                <a href="{{ route('courses.index') }}{{ request('tech') ? '?tech=' . urlencode(request('tech')) : '' }}"
+                    title="Clear filter">✕</a>
             </div>
         @endif
     </div>
@@ -344,11 +353,20 @@
             <input type="text" id="searchInput" placeholder="Search courses..." onkeyup="filterCourses()">
         </div>
 
-        <select class="filter-select" id="techFilter" onchange="applyTechFilter()">
+        <select class="filter-select" id="techFilter" onchange="applyFilters()">
             <option value="">All Technologies</option>
             @foreach($technologies ?? [] as $tech)
                 <option value="{{ $tech->subcategory }}" {{ request('tech') == $tech->subcategory ? 'selected' : '' }}>
                     {{ $tech->subcategory }}
+                </option>
+            @endforeach
+        </select>
+
+        <select class="filter-select" id="categoryFilter" onchange="applyFilters()">
+            <option value="">All Career Tracks</option>
+            @foreach($categories ?? [] as $cat)
+                <option value="{{ $cat->category }}" {{ request('category') == $cat->category ? 'selected' : '' }}>
+                    {{ $cat->category }}
                 </option>
             @endforeach
         </select>
@@ -471,13 +489,14 @@
                 `Showing ${visibleCount} course${visibleCount === 1 ? '' : 's'}`;
         }
 
-        function applyTechFilter() {
+        function applyFilters() {
             const tech = document.getElementById('techFilter').value;
-            if (tech) {
-                window.location.href = '{{ route("courses.index") }}?tech=' + encodeURIComponent(tech);
-            } else {
-                window.location.href = '{{ route("courses.index") }}';
-            }
+            const category = document.getElementById('categoryFilter').value;
+            const params = new URLSearchParams();
+            if (tech) params.set('tech', tech);
+            if (category) params.set('category', category);
+            const qs = params.toString();
+            window.location.href = '{{ route("courses.index") }}' + (qs ? '?' + qs : '');
         }
     </script>
 @endsection

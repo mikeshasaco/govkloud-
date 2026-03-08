@@ -1485,6 +1485,52 @@
                 height: 100px;
             }
         }
+
+        /* Mega Menu */
+        .mega-menu {
+            min-width: 560px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            padding: 0;
+        }
+
+        .mega-menu-column {
+            padding: 0.75rem;
+        }
+
+        .mega-menu-column:first-child {
+            border-right: 1px solid var(--border);
+        }
+
+        .mega-menu-header {
+            padding: 0.5rem 1rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .mega-menu-footer {
+            grid-column: 1 / -1;
+            border-top: 1px solid var(--border);
+            padding: 0.75rem 1rem;
+            text-align: center;
+        }
+
+        .mega-menu-footer-link {
+            color: var(--gk-cyan);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: opacity 0.2s ease;
+        }
+
+        .mega-menu-footer-link:hover {
+            opacity: 0.8;
+        }
     </style>
 </head>
 

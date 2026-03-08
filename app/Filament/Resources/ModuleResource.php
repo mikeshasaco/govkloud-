@@ -51,6 +51,13 @@ class ModuleResource extends Resource
                             ])
                             ->searchable()
                             ->placeholder('Select job category'),
+                        Forms\Components\Select::make('level')
+                            ->options([
+                                'Beginner' => 'Beginner',
+                                'Intermediate' => 'Intermediate',
+                                'Advanced' => 'Advanced',
+                            ])
+                            ->placeholder('Select difficulty level'),
                         Forms\Components\TextInput::make('order_index')
                             ->numeric()
                             ->default(0)
@@ -73,6 +80,14 @@ class ModuleResource extends Resource
                 Tables\Columns\TextColumn::make('category')
                     ->badge()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('level')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'Beginner' => 'success',
+                        'Intermediate' => 'warning',
+                        'Advanced' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('lessons_count')
                     ->counts('lessons')
                     ->label('Lessons')

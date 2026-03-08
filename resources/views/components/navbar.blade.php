@@ -6,6 +6,14 @@
         ->groupBy('subcategory')
         ->orderBy('subcategory')
         ->get();
+
+    // Group modules by category with count
+    $navCategories = \App\Models\Module::published()
+        ->selectRaw('category, COUNT(*) as count')
+        ->whereNotNull('category')
+        ->groupBy('category')
+        ->orderBy('category')
+        ->get();
 @endphp
 
 <nav class="nav">
@@ -14,63 +22,53 @@
         <span>GovKloud</span>
     </a>
     <div class="nav-links">
-        <!-- Modules Dropdown -->
-        <div class="nav-dropdown">
+        <!-- Courses Mega-Menu Dropdown -->
+        <div class="nav-dropdown nav-dropdown--mega">
             <button class="nav-dropdown-trigger">
-                Modules
+                Courses
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                         d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
                         clip-rule="evenodd" />
                 </svg>
             </button>
-            <div class="nav-dropdown-menu">
-                <div class="dropdown-header">Available Courses</div>
-                @forelse($navModules as $module)
-                    <a href="{{ route('courses.show', $module->slug) }}" class="dropdown-item">
-                        <div class="dropdown-item-info">
-                            <span class="dropdown-item-title">{{ $module->title }}</span>
-                            @if($module->category)
-                                <span class="dropdown-item-desc">{{ $module->category }}</span>
-                            @endif
-                        </div>
-                        <span class="dropdown-item-count">{{ $module->lessons_count ?? $module->lessons()->count() }}
-                            lessons</span>
-                    </a>
-                @empty
-                    <span class="dropdown-item">No modules yet</span>
-                @endforelse
-                <div class="dropdown-divider"></div>
-                <a href="{{ route('courses.index') }}" class="dropdown-item">
-                    <span class="dropdown-item-title">View All Courses →</span>
-                </a>
-            </div>
-        </div>
+            <div class="nav-dropdown-menu mega-menu">
+                <!-- Left Column: By Career Track -->
+                <div class="mega-menu-column">
+                    <div class="mega-menu-header">By Career Track</div>
+                    @forelse($navCategories as $cat)
+                        <a href="{{ route('courses.index') }}?category={{ urlencode($cat->category) }}" class="dropdown-item">
+                            <div class="dropdown-item-info">
+                                <span class="dropdown-item-title">{{ $cat->category }}</span>
+                            </div>
+                            <span class="dropdown-item-count">{{ $cat->count }} {{ Str::plural('Course', $cat->count) }}</span>
+                        </a>
+                    @empty
+                        <span class="dropdown-item"><span class="dropdown-item-title" style="color: var(--text-muted);">No career tracks yet</span></span>
+                    @endforelse
+                </div>
 
-        <!-- Courses by Tech Dropdown -->
-        <div class="nav-dropdown">
-            <button class="nav-dropdown-trigger">
-                Browse by Tech
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                        clip-rule="evenodd" />
-                </svg>
-            </button>
-            <div class="nav-dropdown-menu">
-                <a href="{{ route('courses.index') }}" class="dropdown-item"
-                    style="background: rgba(210, 180, 140, 0.1); border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;">
-                    <span class="dropdown-item-title">🔍 View All Courses</span>
-                </a>
-                <div class="dropdown-header">Filter by Technology</div>
-                @forelse($navSubcategories as $sub)
-                    <a href="{{ route('courses.index') }}?tech={{ urlencode($sub->subcategory) }}" class="dropdown-item">
-                        <span class="dropdown-item-title">{{ $sub->subcategory }}</span>
-                        <span class="dropdown-item-count">{{ $sub->count }} lessons</span>
+                <!-- Right Column: By Technology -->
+                <div class="mega-menu-column">
+                    <div class="mega-menu-header">By Technology</div>
+                    @forelse($navSubcategories as $sub)
+                        <a href="{{ route('courses.index') }}?tech={{ urlencode($sub->subcategory) }}" class="dropdown-item">
+                            <div class="dropdown-item-info">
+                                <span class="dropdown-item-title">{{ $sub->subcategory }}</span>
+                            </div>
+                            <span class="dropdown-item-count">{{ $sub->count }} {{ Str::plural('Lesson', $sub->count) }}</span>
+                        </a>
+                    @empty
+                        <span class="dropdown-item"><span class="dropdown-item-title" style="color: var(--text-muted);">No technologies yet</span></span>
+                    @endforelse
+                </div>
+
+                <!-- Footer -->
+                <div class="mega-menu-footer">
+                    <a href="{{ route('courses.index') }}" class="mega-menu-footer-link">
+                        Explore All Courses →
                     </a>
-                @empty
-                    <span class="dropdown-item">No technologies yet</span>
-                @endforelse
+                </div>
             </div>
         </div>
 
