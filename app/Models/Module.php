@@ -22,6 +22,7 @@ class Module extends Model
         'description',
         'category',
         'level',
+        'banner_image',
         'order_index',
         'is_published',
     ];

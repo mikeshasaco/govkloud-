@@ -67,6 +67,22 @@ class ModuleResource extends Resource
                         Forms\Components\Toggle::make('is_published')
                             ->default(false),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Banner Image')
+                    ->description('Upload a banner image for the course card. Recommended size: 800x400px.')
+                    ->schema([
+                        Forms\Components\FileUpload::make('banner_image')
+                            ->label('Course Banner')
+                            ->image()
+                            ->disk('azure')
+                            ->directory('module-banners')
+                            ->visibility('public')
+                            ->imageResizeMode('cover')
+                            ->imageCropAspectRatio('2:1')
+                            ->imageResizeTargetWidth('800')
+                            ->imageResizeTargetHeight('400')
+                            ->helperText('Upload a banner image (JPG, PNG, WebP). Will be cropped to 2:1 ratio.'),
+                    ]),
             ]);
     }
 

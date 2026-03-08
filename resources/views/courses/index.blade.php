@@ -399,34 +399,58 @@
             <div class="course-card" data-title="{{ strtolower($module->title) }}"
                 data-lessons="{{ $module->lessons->count() }}" data-labs="{{ $module->labs->count() }}">
 
-                <div class="course-card-image">
+                <div class="course-card-image" @if($module->banner_image)
+                    style="background: url('{{ Storage::disk('azure')->url($module->banner_image) }}') center/cover no-repeat;"
+                @endif>
                     <div class="course-card-badges">
                         <span class="badge badge-lessons">{{ $module->lessons->count() }} Lessons</span>
                         @if($module->labs->count() > 0)
                             <span class="badge badge-labs">{{ $module->labs->count() }} Labs</span>
                         @endif
                     </div>
-                    <span class="course-card-icon">
-                        @if($module->category == 'Cloud Engineer')
-                            ☁️
-                        @elseif($module->category == 'DevOps Engineer')
-                            🔄
-                        @elseif($module->category == 'Security Analyst')
-                            🔒
-                        @elseif($module->category == 'Platform Engineer')
-                            🏗️
-                        @else
-                            📚
-                        @endif
-                    </span>
+                    @unless($module->banner_image)
+                        <span class="course-card-icon">
+                            @if($module->category == 'Cloud Engineer')
+                                ☁️
+                            @elseif($module->category == 'DevOps Engineer')
+                                🔄
+                            @elseif($module->category == 'Security Analyst')
+                                🔒
+                            @elseif($module->category == 'Platform Engineer')
+                                🏗️
+                            @else
+                                📚
+                            @endif
+                        </span>
+                    @endunless
                 </div>
 
                 <div class="course-card-body">
-                    @if($module->category)
-                        <span class="badge badge-tech"
-                            style="width: fit-content; margin-bottom: 0.5rem;">{{ $module->category }}</span>
+                    {{-- Subcategory tags (technologies from lessons) --}}
+                    @php
+                        $techs = $module->lessons->pluck('subcategory')->filter()->unique()->values();
+                    @endphp
+                    @if($techs->count() > 0)
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem;">
+                            @foreach($techs as $tech)
+                                <span class="badge badge-tech">{{ $tech }}</span>
+                            @endforeach
+                        </div>
                     @endif
+
                     <h3 class="course-title">{{ $module->title }}</h3>
+
+                    {{-- Level and Category row --}}
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
+                        @if($module->level)
+                            <span class="badge"
+                                style="background: {{ $module->level === 'Beginner' ? 'rgba(34,197,94,0.2)' : ($module->level === 'Intermediate' ? 'rgba(251,191,36,0.2)' : 'rgba(239,68,68,0.2)') }}; color: {{ $module->level === 'Beginner' ? '#22c55e' : ($module->level === 'Intermediate' ? '#fbbf24' : '#ef4444') }};">{{ strtoupper($module->level) }}</span>
+                        @endif
+                        @if($module->category)
+                            <span class="badge badge-tech">{{ $module->category }}</span>
+                        @endif
+                    </div>
+
                     <p class="course-description">{{ Str::limit($module->description, 120) }}</p>
 
                     <div class="course-meta">

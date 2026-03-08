@@ -618,21 +618,29 @@
                 <div class="hero-content">
                     <div>
                         <div class="category-pills">
-                            <span class="pill">Kubernetes</span>
-                            <span class="pill">DevOps</span>
-                            <span class="pill">Cloud Native</span>
+                            @php
+                                $techs = $module->lessons->pluck('subcategory')->filter()->unique()->values();
+                            @endphp
+                            @foreach($techs as $tech)
+                                <span class="pill">{{ $tech }}</span>
+                            @endforeach
+                            @if($module->category)
+                                <span class="pill">{{ $module->category }}</span>
+                            @endif
                         </div>
                         
                         <h1>{{ $module->title }}</h1>
                         
-                        <div class="level-indicator">
-                            <span class="level-badge">Beginner</span>
-                            <div class="level-dots">
-                                <span class="level-dot active"></span>
-                                <span class="level-dot"></span>
-                                <span class="level-dot"></span>
+                        @if($module->level)
+                            <div class="level-indicator">
+                                <span class="level-badge" style="background: linear-gradient(135deg, {{ $module->level === 'Beginner' ? '#059669, #10b981' : ($module->level === 'Intermediate' ? '#d97706, #f59e0b' : '#dc2626, #ef4444') }});">{{ $module->level }}</span>
+                                <div class="level-dots">
+                                    <span class="level-dot active"></span>
+                                    <span class="level-dot {{ in_array($module->level, ['Intermediate', 'Advanced']) ? 'active' : '' }}"></span>
+                                    <span class="level-dot {{ $module->level === 'Advanced' ? 'active' : '' }}"></span>
+                                </div>
                             </div>
-                        </div>
+                        @endif
                         
                         @if($module->description)
                             <p class="module-description">{{ $module->description }}</p>
