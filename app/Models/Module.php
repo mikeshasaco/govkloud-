@@ -25,6 +25,7 @@ class Module extends Model
         'banner_image',
         'order_index',
         'is_published',
+        'requires_subscription',
     ];
 
     protected $casts = [

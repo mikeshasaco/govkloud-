@@ -132,6 +132,12 @@ class LabSessionController extends Controller
         abort_if(!$module->is_published, 404);
         $user = $request->user();
 
+        // Check per-module subscription requirement
+        if ($module->requires_subscription && !$user->subscribed()) {
+            return redirect()->route('pricing')
+                ->with('message', 'A subscription is required to access this course. Subscribe to unlock full access!');
+        }
+
         // Check for existing active session for this MODULE
         $existingSession = LabSession::where('user_id', $user->id)
             ->where('module_id', $module->id)

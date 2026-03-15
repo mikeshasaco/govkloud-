@@ -66,6 +66,10 @@ class ModuleResource extends Resource
                             ->columnSpanFull(),
                         Forms\Components\Toggle::make('is_published')
                             ->default(false),
+                        Forms\Components\Toggle::make('requires_subscription')
+                            ->label('Requires Subscription')
+                            ->helperText('When enabled, users must be subscribed to access lessons and labs in this module')
+                            ->default(false),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Banner Image')
@@ -117,6 +121,11 @@ class ModuleResource extends Resource
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_published')
                     ->boolean(),
+                Tables\Columns\IconColumn::make('requires_subscription')
+                    ->label('Sub Required')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-lock-closed')
+                    ->falseIcon('heroicon-o-lock-open'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

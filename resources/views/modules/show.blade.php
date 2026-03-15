@@ -708,11 +708,18 @@
                         </div>
                     @endauth
                     
+                    
                     @if($module->lessons->count() > 0)
-                        <form action="{{ route('modules.start-lab', $module->slug) }}" method="POST" style="margin-top: 1rem;">
-                            @csrf
-                            <button type="submit" class="btn-start">⚡ Begin Course</button>
-                        </form>
+                        @if($module->requires_subscription && (!Auth::check() || !Auth::user()->subscribed()))
+                            <a href="{{ route('pricing') }}" class="btn-start" style="display: block; text-decoration: none; text-align: center; margin-top: 1rem; background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                                🔒 Subscribe to Unlock
+                            </a>
+                        @else
+                            <form action="{{ route('modules.start-lab', $module->slug) }}" method="POST" style="margin-top: 1rem;">
+                                @csrf
+                                <button type="submit" class="btn-start">⚡ Begin Course</button>
+                            </form>
+                        @endif
                     @endif
                 </div>
 

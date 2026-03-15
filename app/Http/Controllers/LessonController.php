@@ -25,6 +25,12 @@ class LessonController extends Controller
         abort_if($lesson->module_id !== $module->id, 404);
         abort_if(!$lesson->is_published, 404);
 
+        // Check per-module subscription requirement
+        if ($module->requires_subscription && !Auth::user()->subscribed()) {
+            return redirect()->route('pricing')
+                ->with('message', 'A subscription is required to access this course. Subscribe to unlock full access!');
+        }
+
         $lesson->load('lab');
 
         // Get navigation context
