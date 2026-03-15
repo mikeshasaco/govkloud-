@@ -15,9 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust Azure's load balancer (SSL termination proxy)
         $middleware->trustProxies(at: '*');
 
-        $middleware->alias([
-            'subscribed' => \App\Http\Middleware\EnsureSubscribed::class,
-        ]);
+        $middleware->alias([]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
