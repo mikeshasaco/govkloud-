@@ -37,14 +37,17 @@
                 <div class="mega-menu-column">
                     <div class="mega-menu-header">By Career Track</div>
                     @forelse($navCategories as $cat)
-                        <a href="{{ route('courses.index') }}?category={{ urlencode($cat->category) }}" class="dropdown-item">
+                        <a href="{{ route('courses.index') }}?category={{ urlencode($cat->category) }}"
+                            class="dropdown-item">
                             <div class="dropdown-item-info">
                                 <span class="dropdown-item-title">{{ $cat->category }}</span>
                             </div>
-                            <span class="dropdown-item-count">{{ $cat->count }} {{ Str::plural('Course', $cat->count) }}</span>
+                            <span class="dropdown-item-count">{{ $cat->count }}
+                                {{ Str::plural('Course', $cat->count) }}</span>
                         </a>
                     @empty
-                        <span class="dropdown-item"><span class="dropdown-item-title" style="color: var(--text-muted);">No career tracks yet</span></span>
+                        <span class="dropdown-item"><span class="dropdown-item-title" style="color: var(--text-muted);">No
+                                career tracks yet</span></span>
                     @endforelse
                 </div>
 
@@ -52,14 +55,17 @@
                 <div class="mega-menu-column">
                     <div class="mega-menu-header">By Technology</div>
                     @forelse($navSubcategories as $sub)
-                        <a href="{{ route('courses.index') }}?tech={{ urlencode($sub->subcategory) }}" class="dropdown-item">
+                        <a href="{{ route('courses.index') }}?tech={{ urlencode($sub->subcategory) }}"
+                            class="dropdown-item">
                             <div class="dropdown-item-info">
                                 <span class="dropdown-item-title">{{ $sub->subcategory }}</span>
                             </div>
-                            <span class="dropdown-item-count">{{ $sub->count }} {{ Str::plural('Lesson', $sub->count) }}</span>
+                            <span class="dropdown-item-count">{{ $sub->count }}
+                                {{ Str::plural('Lesson', $sub->count) }}</span>
                         </a>
                     @empty
-                        <span class="dropdown-item"><span class="dropdown-item-title" style="color: var(--text-muted);">No technologies yet</span></span>
+                        <span class="dropdown-item"><span class="dropdown-item-title" style="color: var(--text-muted);">No
+                                technologies yet</span></span>
                     @endforelse
                 </div>
 
@@ -71,6 +77,8 @@
                 </div>
             </div>
         </div>
+
+        <a href="{{ route('career') }}">Career Paths</a>
 
         @auth
             <a href="{{ route('pricing') }}">Upgrade</a>

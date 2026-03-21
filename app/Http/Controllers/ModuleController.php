@@ -68,6 +68,22 @@ class ModuleController extends Controller
     }
 
     /**
+     * Display the career wheel page with categories and modules by level
+     */
+    public function career()
+    {
+        $modules = Module::published()
+            ->ordered()
+            ->with(['lessons', 'labs'])
+            ->get();
+
+        // Group modules by category
+        $categories = $modules->groupBy('category')->filter(fn($group, $key) => $key !== null);
+
+        return view('career', compact('modules', 'categories'));
+    }
+
+    /**
      * API: List all published modules
      */
     public function apiIndex()

@@ -57,6 +57,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Career Wheel Page
+Route::get('/career', [ModuleController::class, 'career'])->name('career');
+
 // Course routes (public)
 Route::get('/courses', [ModuleController::class, 'index'])->name('courses.index');
 Route::get('/courses/{slug}', [ModuleController::class, 'show'])->name('courses.show');
