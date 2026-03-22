@@ -39,8 +39,12 @@ helm repo update 2>/dev/null || true
 echo "[startup] Helm repos configured"
 
 # Fix storage permissions at runtime (Azure may mount /home with different ownership)
+mkdir -p /var/www/html/storage/framework/{cache/data,sessions,views}
+mkdir -p /var/www/html/storage/logs
+mkdir -p /var/www/html/bootstrap/cache
+touch /var/www/html/storage/logs/laravel.log
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Run Laravel setup (clear stale build-time caches, then re-cache with runtime env)
 cd /var/www/html
