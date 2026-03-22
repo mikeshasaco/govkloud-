@@ -45,7 +45,7 @@ class RegisteredUserController extends Controller
             'username' => $username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'k8s_namespace' => 'gk-user-' . $username,
+            'k8s_namespace' => env('K8S_NAMESPACE_PREFIX', 'gk-user') . '-' . $username,
         ]);
 
         event(new Registered($user));

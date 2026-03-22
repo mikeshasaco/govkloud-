@@ -29,7 +29,7 @@ return new class extends Migration {
 
             DB::table('users')->where('id', $user->id)->update([
                 'username' => $candidate,
-                'k8s_namespace' => 'gk-user-' . $candidate,
+                'k8s_namespace' => env('K8S_NAMESPACE_PREFIX', 'gk-user') . '-' . $candidate,
             ]);
         }
 

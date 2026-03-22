@@ -61,7 +61,7 @@ class SocialAuthController extends Controller
             'email' => $googleUser->getEmail(),
             'google_id' => $googleUser->getId(),
             'avatar' => $googleUser->getAvatar(),
-            'k8s_namespace' => 'gk-user-' . $username,
+            'k8s_namespace' => env('K8S_NAMESPACE_PREFIX', 'gk-user') . '-' . $username,
         ]);
 
         event(new Registered($user));
