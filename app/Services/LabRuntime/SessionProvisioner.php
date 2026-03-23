@@ -362,7 +362,7 @@ class SessionProvisioner
     $tag = $imageParts[1] ?? 'latest';
 
     return <<<YAML
-# Session configuration - password is set via session.token
+# Session configuration
 session:
   id: "{$session->id}"
   token: "{$session->session_token}"
@@ -370,6 +370,11 @@ session:
 image:
   repository: {$repository}
   tag: "{$tag}"
+
+# Disable password auth - users are already authenticated via GovKloud
+args:
+  - "--auth"
+  - "none"
 
 service:
   port: 8080
@@ -423,11 +428,9 @@ spec:
       containers:
       - name: code-server
         image: {$lab->workbench_image}
+        args: ["--auth", "none"]
         ports:
         - containerPort: 8080
-        env:
-        - name: PASSWORD
-          value: "{$session->session_token}"
         resources:
           limits:
             cpu: "{$limits['cpu']}"
