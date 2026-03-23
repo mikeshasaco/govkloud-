@@ -473,8 +473,15 @@ YAML;
    */
   protected function createWorkbenchIngress(LabSession $session): bool
   {
-    // The Helm chart creates a service named {releaseName}-govkloud-workbench
-    $serviceName = $session->workbench_release_name . '-govkloud-workbench';
+    // Determine the correct service name based on deployment method
+    $chartPath = config('govkloud.helm.workbench_chart_path');
+    if (file_exists($chartPath)) {
+      // Helm chart creates a service named {releaseName}-govkloud-workbench
+      $serviceName = $session->workbench_release_name . '-govkloud-workbench';
+    } else {
+      // Direct kubectl deployment creates a service named 'workbench'
+      $serviceName = 'workbench';
+    }
 
     // Use the user's username for stable ingress paths (persists across sessions)
     $user = $session->user;
