@@ -81,7 +81,11 @@
         <a href="{{ route('career') }}">Career Paths</a>
 
         @auth
-            <a href="{{ route('pricing') }}">Upgrade</a>
+            @if(Auth::user()->subscribed() || Auth::user()->onTrial())
+                <a href="{{ route('pricing') }}">Upgrade</a>
+            @else
+                <a href="{{ route('pricing') }}">Pricing</a>
+            @endif
         @else
             <a href="{{ route('pricing') }}">Pricing</a>
         @endauth
