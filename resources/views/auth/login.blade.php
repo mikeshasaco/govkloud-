@@ -282,7 +282,7 @@
     <div class="auth-container">
         <div class="auth-header">
             <a href="/" class="auth-logo">
-                <img src="/images/govkloud-logo.png" alt="GovKloud" class="auth-logo-icon">
+                <img src="https://govkloudstorage.blob.core.windows.net/assets/govkloud-logo.png" alt="GovKloud" class="auth-logo-icon">
                 <span>GovKloud</span>
             </a>
             <h1>Welcome Back</h1>

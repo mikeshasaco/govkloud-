@@ -18,7 +18,7 @@
 
 <nav class="nav">
     <a href="/" class="nav-logo">
-        <img src="/images/govkloud-logo.png" alt="GovKloud" class="nav-logo-icon">
+        <img src="https://govkloudstorage.blob.core.windows.net/assets/govkloud-logo.png" alt="GovKloud" class="nav-logo-icon">
         <span>GovKloud</span>
     </a>
     <div class="nav-links">
