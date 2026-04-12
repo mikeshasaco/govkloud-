@@ -11,6 +11,7 @@ class RequiresSubscription
     /**
      * Handle an incoming request.
      * Redirect to pricing page if user is not subscribed or on trial.
+     * Existing users created before the mandatory subscription cutoff are grandfathered in.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -20,13 +21,19 @@ class RequiresSubscription
             return redirect()->route('login');
         }
 
+        // Grandfather existing users (created before mandatory subscription was enforced)
+        $cutoffDate = '2026-04-12';
+        if ($user->created_at < $cutoffDate) {
+            return $next($request);
+        }
+
         // Allow if subscribed or on trial
-        if ($user->hasLabAccess()) {
+        if ($user->subscribed() || $user->onTrial()) {
             return $next($request);
         }
 
         // Redirect to pricing page with a message
         return redirect()->route('pricing')
-            ->with('message', 'A subscription is required to access the labs. Start your free trial today!');
+            ->with('message', 'Choose a plan to get started — 3-day free trial included!');
     }
 }

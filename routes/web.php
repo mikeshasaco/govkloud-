@@ -26,7 +26,7 @@ Route::get('/', function () {
 })->name('home');
 
 // Account Settings (replaces dashboard)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::get('/account/settings', function () {
         return view('account.settings');
     })->name('account.settings');
@@ -57,6 +57,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+
 // Career Wheel Page
 Route::get('/career', [ModuleController::class, 'career'])->name('career');
 
@@ -80,9 +81,9 @@ Route::get('/billing', [SubscriptionController::class, 'portal'])
     ->middleware('auth')
     ->name('billing');
 
-// Lesson routes (auth required for lab-enabled lessons)
+// Lesson routes (subscription required)
 Route::get('/courses/{module}/lessons/{lesson}', [LessonController::class, 'show'])
-    ->middleware('auth')
+    ->middleware(['auth', 'subscribed'])
     ->name('lessons.show');
 
 // Mark lesson as complete (for lessons without quizzes)
@@ -97,7 +98,7 @@ Route::post('/lessons/{lesson}/complete', function (\App\Models\Lesson $lesson) 
         'completed' => true,
         'completed_at' => $progress->completed_at->toISOString()
     ]);
-})->middleware('auth')->name('lessons.complete');
+})->middleware(['auth', 'subscribed'])->name('lessons.complete');
 
 // Mark lesson as complete via quiz pass
 Route::post('/lessons/{lesson}/complete-quiz', function (\App\Models\Lesson $lesson) {
@@ -114,10 +115,10 @@ Route::post('/lessons/{lesson}/complete-quiz', function (\App\Models\Lesson $les
         'score' => $score,
         'completed_at' => $progress->completed_at->toISOString()
     ]);
-})->middleware('auth')->name('lessons.complete-quiz');
+})->middleware(['auth', 'subscribed'])->name('lessons.complete-quiz');
 
-// Lab session routes (protected)
-Route::middleware('auth')->group(function () {
+// Lab session routes (subscription required)
+Route::middleware(['auth', 'subscribed'])->group(function () {
     Route::get('/lab-sessions/{id}', [LabSessionController::class, 'runtime'])
         ->name('lab-sessions.runtime');
     Route::post('/lab-sessions', [LabSessionController::class, 'start'])

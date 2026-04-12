@@ -68,7 +68,8 @@ class SocialAuthController extends Controller
 
         Auth::login($user, remember: true);
 
-        return redirect()->intended(route('home'));
+        // New users must choose a subscription plan
+        return redirect()->route('pricing');
     }
 
     /**
