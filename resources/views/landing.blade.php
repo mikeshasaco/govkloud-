@@ -7,9 +7,9 @@
     <meta name="description"
         content="GovKloud - Enterprise Cloud & DevOps Training Platform. Hands-on Kubernetes labs with real clusters.">
     <title>GovKloud - Enterprise Cloud Training Platform</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://govkloudstorage.blob.core.windows.net/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://govkloudstorage.blob.core.windows.net/assets/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://govkloudstorage.blob.core.windows.net/assets/apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
