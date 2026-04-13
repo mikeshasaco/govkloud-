@@ -1,10 +1,10 @@
-name: Build & Deploy to Azure Staging
+name: Build & Deploy to Azure
 
 on:
   push:
     branches:
-      - main
-      - master
+      - dev-main   # → Staging
+      - master     # → Production
 
 jobs:
   build-and-deploy:
@@ -21,13 +21,26 @@ jobs:
           username: ${{ secrets.ACR_CLIENT_ID }}
           password: ${{ secrets.ACR_CLIENT_SECRET }}
 
-      - name: Build and push Docker image
+      # ─── STAGING: dev-main branch ───
+      - name: Build and push Docker image (Staging)
+        if: github.ref == 'refs/heads/dev-main'
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
             govkloudacr.azurecr.io/govkloud-app:staging
+            govkloudacr.azurecr.io/govkloud-app:dev-${{ github.sha }}
+
+      # ─── PRODUCTION: master branch ───
+      - name: Build and push Docker image (Production)
+        if: github.ref == 'refs/heads/master'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            govkloudacr.azurecr.io/govkloud-app:production
             govkloudacr.azurecr.io/govkloud-app:${{ github.sha }}
 
       - name: Log in to Azure CLI
@@ -35,15 +48,43 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Restart staging slot
+      # ─── Deploy to STAGING slot ───
+      - name: Deploy to Staging
+        if: github.ref == 'refs/heads/dev-main'
         run: |
+          az webapp config container set \
+            --name govkloud-app \
+            --resource-group govkloud-rg \
+            --slot staging \
+            --container-image-name govkloudacr.azurecr.io/govkloud-app:staging
           az webapp restart \
             --resource-group govkloud-rg \
             --name govkloud-app \
             --slot staging
 
-      - name: Verify deployment
+      # ─── Deploy to PRODUCTION slot ───
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/master'
         run: |
-          echo "✅ Image pushed: govkloudacr.azurecr.io/govkloud-app:staging"
-          echo "✅ Staging restarted: https://govkloud-app-staging.azurewebsites.net"
+          az webapp config container set \
+            --name govkloud-app \
+            --resource-group govkloud-rg \
+            --container-image-name govkloudacr.azurecr.io/govkloud-app:production
+          az webapp restart \
+            --resource-group govkloud-rg \
+            --name govkloud-app
+
+      # ─── Verify ───
+      - name: Verify Staging deployment
+        if: github.ref == 'refs/heads/dev-main'
+        run: |
+          echo "✅ Image: govkloudacr.azurecr.io/govkloud-app:staging"
+          echo "✅ Deployed to: https://govkloud-app-staging.azurewebsites.net"
+          echo "🔗 Commit: ${{ github.sha }}"
+
+      - name: Verify Production deployment
+        if: github.ref == 'refs/heads/master'
+        run: |
+          echo "✅ Image: govkloudacr.azurecr.io/govkloud-app:production"
+          echo "✅ Deployed to: https://govkloud.com"
           echo "🔗 Commit: ${{ github.sha }}"
