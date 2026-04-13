@@ -21,7 +21,7 @@ return [
             ],
             'yearly' => [
                 'price_id' => env('STRIPE_STANDARD_YEARLY_PRICE'),
-                'amount' => 24900, // $249 in cents (save $99)
+                'amount' => 19900, // $199 in cents (save 43%)
             ],
             'features' => [
                 'All courses & lessons',
@@ -39,11 +39,11 @@ return [
             ],
             'yearly' => [
                 'price_id' => env('STRIPE_PRO_YEARLY_PRICE'),
-                'amount' => 39900, // $399 in cents (save $189)
+                'amount' => 29900, // $299 in cents (save 49%)
             ],
             'features' => [
                 'Everything in Standard',
-                '2 hour session time',
+                '3 hour session time',
                 '2 concurrent labs',
                 'Priority support',
                 'Certificate downloads',

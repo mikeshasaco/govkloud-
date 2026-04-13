@@ -238,7 +238,7 @@
                 <span class="toggle-label active" id="monthlyLabel">Monthly</span>
                 <div class="toggle-switch" id="billingToggle" onclick="toggleBilling()"></div>
                 <span class="toggle-label" id="yearlyLabel">Yearly</span>
-                <span class="save-badge">Save 29%</span>
+                <span class="save-badge">Save up to 49%</span>
             </div>
         </div>
 
@@ -316,13 +316,13 @@
 
             // Update prices
             if (isYearly) {
-                document.getElementById('standardPrice').textContent = '$249';
+                document.getElementById('standardPrice').textContent = '$199';
                 document.getElementById('standardPeriod').textContent = '/year';
-                document.getElementById('standardYearly').textContent = 'Save $99 per year';
+                document.getElementById('standardYearly').textContent = 'Save 43% — just $16.58/mo';
 
-                document.getElementById('proPrice').textContent = '$399';
+                document.getElementById('proPrice').textContent = '$299';
                 document.getElementById('proPeriod').textContent = '/year';
-                document.getElementById('proYearly').textContent = 'Save $189 per year';
+                document.getElementById('proYearly').textContent = 'Save 49% — just $24.92/mo';
 
                 document.getElementById('standardForm').action = "{{ route('subscribe', ['plan' => 'standard', 'interval' => 'yearly']) }}";
                 document.getElementById('proForm').action = "{{ route('subscribe', ['plan' => 'pro', 'interval' => 'yearly']) }}";
@@ -336,7 +336,7 @@
                 document.getElementById('proYearly').textContent = 'Billed monthly';
 
                 document.getElementById('standardForm').action = "{{ route('subscribe', ['plan' => 'standard', 'interval' => 'monthly']) }}";
-                document.getElementById('proForm').action = "{{ route('subscribe', ['plan' => 'pro', 'interval' => 'yearly']) }}";
+                document.getElementById('proForm').action = "{{ route('subscribe', ['plan' => 'pro', 'interval' => 'monthly']) }}";
             }
         }
     </script>
