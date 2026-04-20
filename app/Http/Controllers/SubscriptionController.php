@@ -48,11 +48,18 @@ class SubscriptionController extends Controller
     }
 
     /**
-     * Handle successful subscription
+     * Handle successful subscription — redirect straight to courses
      */
     public function success()
     {
-        return view('subscription.success');
+        $message = '🎉 Welcome to GovKloud! Your subscription is active. Start exploring courses below.';
+
+        if (auth()->check() && auth()->user()->onTrial()) {
+            $trialDays = config('stripe-plans.trial_days');
+            $message .= " Your {$trialDays}-day free trial has started!";
+        }
+
+        return redirect()->route('courses.index')->with('success', $message);
     }
 
     /**

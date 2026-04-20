@@ -6,9 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'GovKloud Labs')</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="https://govkloudstorage.blob.core.windows.net/assets/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="https://govkloudstorage.blob.core.windows.net/assets/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://govkloudstorage.blob.core.windows.net/assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32"
+        href="https://govkloudstorage.blob.core.windows.net/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16"
+        href="https://govkloudstorage.blob.core.windows.net/assets/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180"
+        href="https://govkloudstorage.blob.core.windows.net/assets/apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -404,6 +407,55 @@
         .gap-2 {
             gap: 1rem;
         }
+
+        /* Flash Messages */
+        .flash-message {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 500;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .flash-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+        }
+
+        .flash-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .flash-info {
+            background: rgba(210, 180, 140, 0.15);
+            border: 1px solid rgba(210, 180, 140, 0.3);
+            color: var(--gk-cyan);
+        }
+
+        .flash-close {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.25rem;
+            cursor: pointer;
+            opacity: 0.7;
+            padding: 0 0.5rem;
+        }
+
+        .flash-close:hover {
+            opacity: 1;
+        }
     </style>
     @stack('styles')
 </head>
@@ -412,6 +464,24 @@
     @include('components.navbar')
 
     <main class="container">
+        @if(session('success'))
+            <div class="flash-message flash-success" id="flashMessage">
+                {{ session('success') }}
+                <button onclick="document.getElementById('flashMessage').remove()" class="flash-close">&times;</button>
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="flash-message flash-error" id="flashError">
+                {{ session('error') }}
+                <button onclick="document.getElementById('flashError').remove()" class="flash-close">&times;</button>
+            </div>
+        @endif
+        @if(session('message'))
+            <div class="flash-message flash-info" id="flashInfo">
+                {{ session('message') }}
+                <button onclick="document.getElementById('flashInfo').remove()" class="flash-close">&times;</button>
+            </div>
+        @endif
         @yield('content')
     </main>
 
