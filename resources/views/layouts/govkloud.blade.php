@@ -486,6 +486,32 @@
     </main>
 
     @stack('scripts')
+
+    @auth
+    {{-- Idle Session Timeout: auto-logout after 30 minutes of inactivity --}}
+    <script>
+    (function() {
+        const IDLE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+        const EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+        let lastActivity = Date.now();
+
+        EVENTS.forEach(evt => document.addEventListener(evt, function() {
+            lastActivity = Date.now();
+        }, { passive: true }));
+
+        setInterval(function() {
+            if (Date.now() - lastActivity >= IDLE_TIMEOUT) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route("logout") }}';
+                form.innerHTML = '@csrf';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }, 15000);
+    })();
+    </script>
+    @endauth
 </body>
 
 </html>
