@@ -776,7 +776,7 @@
 <body class="layout-split">
     <header class="runtime-header">
         <div class="header-left">
-            <a href="{{ route('courses.show', $module->slug ?? 'k8s-basics') }}" class="back-btn">
+            <a href="#" class="back-btn" id="backBtn" onclick="event.preventDefault(); stopLab('Navigated away');">
                 ← Back
             </a>
             <span class="module-title">{{ $module->title ?? $session->lab->title }}</span>
@@ -1308,9 +1308,9 @@
 
         window.addEventListener('beforeunload', function() {
             if (labRunning && !labStopped) {
-                navigator.sendBeacon(`/api/lab-sessions/${SESSION_ID}/stop`, JSON.stringify({
-                    _token: document.querySelector('meta[name="csrf-token"]').content
-                }));
+                const formData = new FormData();
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                navigator.sendBeacon(`/api/lab-sessions/${SESSION_ID}/stop`, formData);
             }
         });
 
