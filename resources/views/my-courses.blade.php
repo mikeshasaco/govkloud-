@@ -11,7 +11,7 @@
     @if($savedModules->isEmpty())
         <div
             style="text-align: center; padding: 4rem 2rem; background: var(--gk-slate); border-radius: 16px; border: 1px solid var(--border);">
-            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📚</div>
+            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></div>
             <h2 style="margin-bottom: 0.5rem;">No saved courses yet</h2>
             <p class="text-muted" style="margin-bottom: 1.5rem;">Save courses to access them quickly from here</p>
             <a href="{{ route('courses.index') }}" class="btn btn-primary">Browse Courses</a>
@@ -43,15 +43,15 @@
 
                     <!-- Stats -->
                     <div style="display: flex; gap: 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">
-                        <span>📖 {{ $module->lessons->count() }} Lessons</span>
-                        <span>🧪 {{ $module->labs()->count() }} Labs</span>
+                        <span>{{ $module->lessons->count() }} Lessons</span>
+                        <span>{{ $module->labs()->count() }} Labs</span>
                     </div>
 
                     <!-- Actions -->
                     <div style="display: flex; gap: 0.75rem;">
                         <a href="{{ route('courses.show', $module->slug) }}" class="btn btn-primary"
                             style="flex: 1; text-align: center;">
-                            ⚡ Continue Learning
+                            Continue Learning
                         </a>
                         <button onclick="unsaveModule({{ $module->id }}, this)" class="btn"
                             style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">

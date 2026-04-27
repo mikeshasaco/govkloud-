@@ -332,7 +332,7 @@
                 </div>
 
                 <button type="submit" class="btn-submit">
-                    🚀 Create Free Account
+                    Create Free Account
                 </button>
 
                 <p class="terms-text">

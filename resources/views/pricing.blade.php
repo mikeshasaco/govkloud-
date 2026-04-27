@@ -295,7 +295,7 @@
         </div>
 
         <div class="guarantee">
-            <strong>💳 Secure checkout powered by Stripe</strong><br>
+            <strong>Secure checkout powered by Stripe</strong><br>
             Questions? Contact us at support@govkloud.com
         </div>
     </div>

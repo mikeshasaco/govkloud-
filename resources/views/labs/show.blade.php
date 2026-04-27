@@ -120,7 +120,7 @@
 
         @auth
             <button id="start-lab-btn" class="btn btn-success" data-lab-id="{{ $lab->id }}">
-                🚀 Start Lab
+                Start Lab
             </button>
         @else
             <a href="/login" class="btn btn-primary">Sign in to Start</a>
@@ -153,12 +153,12 @@
                 } else {
                     alert(data.error || 'Failed to start lab');
                     btn.disabled = false;
-                    btn.textContent = '🚀 Start Lab';
+                    btn.textContent = 'Start Lab';
                 }
             } catch (error) {
                 alert('Network error. Please try again.');
                 btn.disabled = false;
-                btn.textContent = '🚀 Start Lab';
+                btn.textContent = 'Start Lab';
             }
         });
     </script>

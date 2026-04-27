@@ -345,13 +345,13 @@
 
     @php
         $categoryMeta = [
-            'DevSecOps'         => ['icon' => '🛡️', 'color' => '#6366f1', 'desc' => 'Integrate security into every stage of the DevOps lifecycle'],
-            'Cloud Engineer'    => ['icon' => '☁️', 'color' => '#06b6d4', 'desc' => 'Design, deploy, and manage cloud infrastructure at scale'],
-            'SRE'               => ['icon' => '📈', 'color' => '#10b981', 'desc' => 'Build reliable, scalable systems with site reliability engineering'],
-            'DevOps'            => ['icon' => '🔄', 'color' => '#f59e0b', 'desc' => 'Automate and streamline software delivery pipelines'],
-            'Platform Engineer' => ['icon' => '🏗️', 'color' => '#ef4444', 'desc' => 'Build internal developer platforms and golden paths'],
-            'Security Engineer' => ['icon' => '🔒', 'color' => '#ec4899', 'desc' => 'Protect infrastructure, data, and applications from threats'],
-            'Data Engineer'     => ['icon' => '📊', 'color' => '#8b5cf6', 'desc' => 'Build and maintain data pipelines and analytics platforms'],
+            'DevSecOps'         => ['icon' => '', 'color' => '#6366f1', 'desc' => 'Integrate security into every stage of the DevOps lifecycle'],
+            'Cloud Engineer'    => ['icon' => '', 'color' => '#06b6d4', 'desc' => 'Design, deploy, and manage cloud infrastructure at scale'],
+            'SRE'               => ['icon' => '', 'color' => '#10b981', 'desc' => 'Build reliable, scalable systems with site reliability engineering'],
+            'DevOps'            => ['icon' => '', 'color' => '#f59e0b', 'desc' => 'Automate and streamline software delivery pipelines'],
+            'Platform Engineer' => ['icon' => '', 'color' => '#ef4444', 'desc' => 'Build internal developer platforms and golden paths'],
+            'Security Engineer' => ['icon' => '', 'color' => '#ec4899', 'desc' => 'Protect infrastructure, data, and applications from threats'],
+            'Data Engineer'     => ['icon' => '', 'color' => '#8b5cf6', 'desc' => 'Build and maintain data pipelines and analytics platforms'],
         ];
         $catKeys = $categories->keys()->values();
         $sliceCount = $catKeys->count();
@@ -369,7 +369,7 @@
             <!-- Pie slices -->
             @foreach($pieCategories as $i => $catName)
                 @php
-                    $meta = $categoryMeta[$catName] ?? ['icon' => '📁', 'color' => '#64748b', 'desc' => ''];
+                    $meta = $categoryMeta[$catName] ?? ['icon' => '', 'color' => '#64748b', 'desc' => ''];
                     $startAngle = ($i / $pieCount) * 360 - 90;
                     $endAngle = (($i + 1) / $pieCount) * 360 - 90;
                     $midAngle = ($startAngle + $endAngle) / 2;
@@ -435,7 +435,7 @@
 
             <!-- Center circle -->
             <circle class="pie-center-bg" cx="250" cy="250" r="75" />
-            <text class="pie-center-icon" x="250" y="240">🎯</text>
+            <text class="pie-center-icon" x="250" y="240"></text>
             <text class="pie-center-label" x="250" y="264" id="pieCenterText">Pick a Career</text>
         </svg>
     </div>
@@ -443,7 +443,7 @@
     <!-- Mobile category grid -->
     <div class="mobile-categories">
         @foreach($pieCategories as $catName)
-            @php $meta = $categoryMeta[$catName] ?? ['icon' => '📁', 'color' => '#64748b', 'desc' => '']; @endphp
+            @php $meta = $categoryMeta[$catName] ?? ['icon' => '', 'color' => '#64748b', 'desc' => '']; @endphp
             <div class="mobile-cat-card" data-category="{{ $catName }}"
                  onclick="selectCategory('{{ addslashes($catName) }}')">
                 <div class="cat-icon">{{ $meta['icon'] }}</div>
@@ -455,14 +455,14 @@
 
     <!-- Prompt -->
     <div class="select-prompt" id="selectPrompt">
-        <div class="prompt-icon">👆</div>
+        <div class="prompt-icon"></div>
         <p>Select a career path above to see available modules</p>
     </div>
 
     <!-- Category Detail Sections -->
     @foreach($categories as $catName => $catModules)
         @php
-            $meta = $categoryMeta[$catName] ?? ['icon' => '📁', 'color' => '#64748b', 'desc' => ''];
+            $meta = $categoryMeta[$catName] ?? ['icon' => '', 'color' => '#64748b', 'desc' => ''];
             $levels = ['Beginner', 'Intermediate', 'Advanced'];
         @endphp
         <div class="category-detail" id="cat-{{ Str::slug($catName) }}">
@@ -509,7 +509,7 @@
                                                 <span class="mod-badge mod-badge-videos">{{ $videoCount }} Videos</span>
                                             @endif
                                             @if($module->requires_subscription)
-                                                <span class="mod-badge mod-badge-sub">🔒 PRO</span>
+                                                <span class="mod-badge mod-badge-sub">PRO</span>
                                             @endif
                                         </div>
                                     </div>
@@ -524,9 +524,9 @@
                                         <h3 class="mod-card-title">{{ $module->title }}</h3>
                                         <p class="mod-card-desc">{{ Str::limit($module->description, 100) }}</p>
                                         <div class="mod-card-meta">
-                                            <span>📚 {{ $module->lessons->count() }} lessons</span>
-                                            <span>🧪 {{ $module->labs->count() }} labs</span>
-                                            <span>⏱️ ~{{ round(($module->lessons->count() * 15 + $module->labs->sum('estimated_minutes')) / 60, 1) }}h</span>
+                                            <span>{{ $module->lessons->count() }} lessons</span>
+                                            <span>{{ $module->labs->count() }} labs</span>
+                                            <span>~{{ round(($module->lessons->count() * 15 + $module->labs->sum('estimated_minutes')) / 60, 1) }}h</span>
                                         </div>
                                     </div>
                                     <div class="mod-card-cta">View Course →</div>
@@ -544,7 +544,7 @@
     <!-- Empty category detail for categories with 0 modules -->
     @foreach($pieCategories as $catName)
         @if(!isset($categories[$catName]))
-            @php $meta = $categoryMeta[$catName] ?? ['icon' => '📁', 'color' => '#64748b', 'desc' => '']; @endphp
+            @php $meta = $categoryMeta[$catName] ?? ['icon' => '', 'color' => '#64748b', 'desc' => '']; @endphp
             <div class="category-detail" id="cat-{{ Str::slug($catName) }}">
                 <div class="category-header">
                     <div class="category-header-icon">{{ $meta['icon'] }}</div>
@@ -554,7 +554,7 @@
                     </div>
                 </div>
                 <div class="empty-level" style="margin-top: 1rem;">
-                    No modules available yet for {{ $catName }} — stay tuned! 🚀
+                    No modules available yet for {{ $catName }} — stay tuned!
                 </div>
             </div>
         @endif

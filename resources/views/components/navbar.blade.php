@@ -109,24 +109,24 @@
                 @if(Auth::user()->is_admin)
                     <a href="/admin" class="dropdown-item"
                         style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); margin-bottom: 0.5rem;">
-                        <span class="dropdown-item-title" style="color: #a78bfa;">🛡️ Admin Panel</span>
+                        <span class="dropdown-item-title" style="color: #a78bfa;">Admin Panel</span>
                     </a>
                 @endif
                 <a href="{{ route('account.settings') }}" class="dropdown-item">
-                    <span class="dropdown-item-title">⚙️ Account Settings</span>
+                    <span class="dropdown-item-title">Account Settings</span>
                 </a>
                 <a href="{{ route('my-courses') }}" class="dropdown-item">
-                    <span class="dropdown-item-title">📚 My Courses</span>
+                    <span class="dropdown-item-title">My Courses</span>
                 </a>
                 <a href="{{ route('billing') }}" class="dropdown-item">
-                    <span class="dropdown-item-title">💳 Billing</span>
+                    <span class="dropdown-item-title">Billing</span>
                 </a>
                 <div class="dropdown-divider"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="dropdown-item"
                         style="width: 100%; background: none; border: none; cursor: pointer; text-align: left;">
-                        <span class="dropdown-item-title" style="color: #ef4444;">🚪 Sign Out</span>
+                        <span class="dropdown-item-title" style="color: #ef4444;">Sign Out</span>
                     </button>
                 </form>
             </div>

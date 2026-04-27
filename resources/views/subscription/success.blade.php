@@ -90,16 +90,16 @@
 
         <div class="success-actions">
             <a href="{{ route('courses.index') }}" class="success-btn primary">
-                🚀 Start Learning
+                Start Learning
             </a>
             <a href="{{ route('dashboard') }}" class="success-btn secondary">
-                📊 Go to Dashboard
+                Go to Dashboard
             </a>
         </div>
 
         @if(auth()->user()->onTrial())
             <div class="trial-info">
-                🎉 Your {{ config('stripe-plans.trial_days') }}-day free trial has started!
+                Your {{ config('stripe-plans.trial_days') }}-day free trial has started!
                 You won't be charged until {{ auth()->user()->trialEndsAt()->format('F j, Y') }}.
             </div>
         @endif

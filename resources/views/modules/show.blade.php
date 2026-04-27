@@ -664,7 +664,7 @@
                     
                     <div class="hero-visual">
                         <div class="hero-visual-orb"></div>
-                        <div class="hero-visual-icon">☸️</div>
+                        <div class="hero-visual-icon"></div>
                     </div>
                 </div>
             </div>
@@ -712,7 +712,7 @@
                     @if($module->lessons->count() > 0)
                         <form action="{{ route('modules.start-lab', $module->slug) }}" method="POST" style="margin-top: 1rem;">
                             @csrf
-                            <button type="submit" class="btn-start">⚡ Begin Course</button>
+                            <button type="submit" class="btn-start">Begin Course</button>
                         </form>
                     @endif
                 </div>
@@ -722,15 +722,15 @@
                     <h3>What's Included</h3>
                     <div class="includes-grid">
                         <div class="include-item">
-                            <span class="include-icon">🧪</span>
+                            <span class="include-icon"></span>
                             <span class="include-text">{{ $module->labs->count() }} Labs</span>
                         </div>
                         <div class="include-item">
-                            <span class="include-icon">📚</span>
+                            <span class="include-icon"></span>
                             <span class="include-text">{{ $module->lessons->count() }} Lessons</span>
                         </div>
                         <div class="include-item">
-                            <span class="include-icon">📹</span>
+                            <span class="include-icon"></span>
                             <span class="include-text">{{ $module->lessons->whereNotNull('video_url')->count() }} Videos</span>
                         </div>
                     </div>
@@ -742,12 +742,12 @@
                     @auth
                         @php $isSaved = Auth::user()->hasSavedModule($module); @endphp
                         <button id="saveBtn" onclick="toggleSave()" class="btn-secondary" style="width: 100%; {{ $isSaved ? 'background: rgba(210, 180, 140, 0.2); color: var(--gk-cyan); border-color: var(--gk-cyan);' : '' }}">
-                            <span id="saveIcon">{{ $isSaved ? '✓' : '🔖' }}</span>
+                            <span id="saveIcon">{{ $isSaved ? '✓' : '' }}</span>
                             <span id="saveText">{{ $isSaved ? 'Saved' : 'Save for Later' }}</span>
                         </button>
                     @else
                         <a href="{{ route('login') }}" class="btn-secondary" style="display: block; text-align: center; text-decoration: none; width: 100%;">
-                            🔖 Save for Later
+                            Save for Later
                         </a>
                     @endauth
                     
@@ -757,7 +757,7 @@
 
             <!-- Instructor -->
             <div class="instructor-row">
-                <div class="instructor-avatar">👨‍💻</div>
+                <div class="instructor-avatar"></div>
                 <div class="instructor-info">
                     <h4>GovKloud Training Team</h4>
                     <p>Federal Cloud & DevOps Specialists</p>
@@ -767,7 +767,7 @@
             <!-- Curriculum Section -->
             <section class="curriculum-section">
                 <div class="section-header">
-                    <div class="section-icon">📚</div>
+                    <div class="section-icon"></div>
                     <div>
                         <h2>Course Curriculum</h2>
                         <span>{{ $module->lessons->count() + $module->labs->count() }} chapters • {{ round(($module->lessons->count() * 15 + $module->labs->sum('estimated_minutes')) / 60, 1) }} hours</span>
@@ -791,10 +791,10 @@
                                     <div class="timeline-content">
                                         <div class="timeline-title" style="{{ $lessonCompleted ? 'text-decoration: line-through; opacity: 0.7;' : '' }}">{{ $lesson->title }}</div>
                                         <div class="timeline-meta">
-                                            <span>📖 Lesson</span>
-                                            @if($lesson->video_url)<span>📹 Video</span>@endif
-                                            @if($lesson->hasLab())<span>🧪 Lab Included</span>@endif
-                                            @if($lessonCompleted)<span style="color: #10b981;">✅ Done</span>@endif
+                                            <span>Lesson</span>
+                                            @if($lesson->video_url)<span>Video</span>@endif
+                                            @if($lesson->hasLab())<span>Lab Included</span>@endif
+                                            @if($lessonCompleted)<span style="color: #10b981;">Done</span>@endif
                                         </div>
                                     </div>
                                     <div class="timeline-badges">
@@ -822,8 +822,8 @@
                                     <div class="timeline-content">
                                         <div class="timeline-title">{{ $lab->title }}</div>
                                         <div class="timeline-meta">
-                                            <span>🧪 Hands-on Lab</span>
-                                            @if($lab->estimated_minutes)<span>⏱️ {{ $lab->estimated_minutes }} min</span>@endif
+                                            <span>Hands-on Lab</span>
+                                            @if($lab->estimated_minutes)<span>{{ $lab->estimated_minutes }} min</span>@endif
                                         </div>
                                     </div>
                                     <div class="timeline-badges">

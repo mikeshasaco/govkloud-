@@ -798,12 +798,12 @@
                 <span id="statusText">Provisioning</span>
             </div>
             <div class="password-badge" id="headerPassword">
-                <span style="color: var(--text-muted);">🔐</span>
+                <span style="color: var(--text-muted);"></span>
                 <code style="color: #10b981; font-family: monospace; margin: 0 0.3rem;">{{ $session->session_token }}</code>
-                <button onclick="copyPassword()" style="background: transparent; border: none; cursor: pointer; font-size: 0.75rem;" title="Copy password">📋</button>
+                <button onclick="copyPassword()" style="background: transparent; border: none; cursor: pointer; font-size: 0.75rem;" title="Copy password">Copy</button>
             </div>
             <span class="timer" id="timer">Loading...</span>
-            <button class="btn-stop" id="stopBtn">⏹ Stop</button>
+            <button class="btn-stop" id="stopBtn">Stop</button>
         </div>
     </header>
 
@@ -811,7 +811,7 @@
         <!-- Lessons Sidebar (always visible, compact navigation) -->
         <div class="lessons-panel">
             <div class="lessons-header">
-                <div class="lessons-header-icon">📚</div>
+                <div class="lessons-header-icon"></div>
                 <h2>Lessons</h2>
             </div>
             <div class="lessons-list">
@@ -822,9 +822,9 @@
                         <div class="lesson-nav-info">
                             <div class="lesson-nav-title">{{ $lesson->title }}</div>
                             <div class="lesson-nav-badges">
-                                @if($lesson->video_url)<span class="badge-sm video">📹</span>@endif
-                                @if($lesson->reading_md)<span class="badge-sm reading">📖</span>@endif
-                                @if($lesson->hasQuiz())<span class="badge-sm quiz">❓</span>@endif
+                                @if($lesson->video_url)<span class="badge-sm video">VID</span>@endif
+                                @if($lesson->reading_md)<span class="badge-sm reading">READ</span>@endif
+                                @if($lesson->hasQuiz())<span class="badge-sm quiz">QUIZ</span>@endif
                             </div>
                         </div>
                     </div>
@@ -865,7 +865,7 @@
                         @if($lesson->hasQuiz())
                             <div class="quiz-section" id="quiz_{{ $lesson->id }}">
                                 <div class="quiz-header">
-                                    <span>❓</span>
+                                    <span>?</span>
                                     <span>Knowledge Check</span>
                                 </div>
                                 @foreach($lesson->getQuizQuestions() as $qIndex => $quiz)
@@ -889,8 +889,8 @@
                                             </div>
                                         @endif
                                         <div class="quiz-feedback" style="display: none;">
-                                            <div class="quiz-correct">✅ Correct!</div>
-                                            <div class="quiz-incorrect">❌ Incorrect</div>
+                                            <div class="quiz-correct">Correct!</div>
+                                            <div class="quiz-incorrect">Incorrect</div>
                                             @if(!empty($quiz['explanation']))
                                                 <div class="quiz-explanation">{{ $quiz['explanation'] }}</div>
                                             @endif
@@ -910,7 +910,7 @@
                             <div class="completion-section">
                                 @if($isCompleted)
                                     <div class="completion-done">
-                                        <span style="font-size: 1.1rem;">✅</span>
+                                        <span style="font-size: 1.1rem;"></span>
                                         <div>
                                             <strong>Lesson Completed!</strong>
                                             <div style="font-size: 0.75rem; opacity: 0.8;">Great job! Continue to the next lesson.</div>
@@ -918,7 +918,7 @@
                                     </div>
                                 @elseif($lesson->hasQuiz())
                                     <div class="completion-quiz-pending" id="quizCompletionBtn_{{ $lesson->id }}">
-                                        <span style="font-size: 1.1rem;">❓</span>
+                                        <span style="font-size: 1.1rem;">?</span>
                                         <div>
                                             <strong>Complete the quiz above</strong>
                                             <div style="font-size: 0.75rem; opacity: 0.8;">Answer questions correctly to complete.</div>
@@ -959,13 +959,13 @@
                     <h3>Starting Lab Environment</h3>
                     <p id="statusMessage">Provisioning your Kubernetes environment...</p>
                     <div id="passwordInfo" style="display: none; margin-top: 1.25rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; text-align: left; max-width: 400px;">
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">🔐 Lab Password:</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">Lab Password:</div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
                             <code style="flex: 1; background: var(--gk-navy); padding: 0.4rem 0.6rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--gk-cyan); word-break: break-all;">{{ $session->session_token }}</code>
-                            <button onclick="copyPassword()" style="padding: 0.4rem 0.6rem; background: var(--gk-cyan); color: var(--gk-navy); border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem;">📋 Copy</button>
+                            <button onclick="copyPassword()" style="padding: 0.4rem 0.6rem; background: var(--gk-cyan); color: var(--gk-navy); border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem;">Copy</button>
                         </div>
                         <button onclick="openLabInNewTab()" style="width: 100%; padding: 0.6rem; background: linear-gradient(135deg, var(--gk-cyan), var(--gk-teal)); color: var(--gk-navy); border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.9rem;">
-                            🚀 Open Lab in New Tab
+                            Open Lab in New Tab
                         </button>
                     </div>
                 </div>
@@ -973,14 +973,14 @@
 
             <!-- Focus Mode Toggle Button -->
             <button class="focus-toggle" id="focusToggle" onclick="toggleFocus()">
-                📹 Switch to Lesson
+                Switch to Lesson
             </button>
         </div>
     </div>
 
     <!-- Idle Warning -->
     <div class="idle-warning" id="idleWarning">
-        ⚠️ Lab will stop in <span id="idleCountdown">30</span>s
+        Lab will stop in <span id="idleCountdown">30</span>s
         <button onclick="resetIdleTimer()" style="background:#0f172a;color:#fbbf24;border:none;padding:0.4rem 0.8rem;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.8rem;">
             I'm Here!
         </button>
@@ -1041,7 +1041,7 @@
             focusOnContent = !focusOnContent;
             document.body.classList.toggle('focus-content', focusOnContent);
             const btn = document.getElementById('focusToggle');
-            btn.textContent = focusOnContent ? '💻 Switch to IDE' : '📹 Switch to Lesson';
+            btn.textContent = focusOnContent ? 'Switch to IDE' : 'Switch to Lesson';
         }
 
         // Layout button clicks
@@ -1381,7 +1381,7 @@
 
             resultDiv.style.display = 'block';
             resultDiv.innerHTML = `
-                <div style="font-size: 1.3rem; margin-bottom: 0.4rem;">${passed ? '🎉' : '📝'}</div>
+                <div style="font-size: 1.3rem; margin-bottom: 0.4rem;">${passed ? '' : ''}</div>
                 <div style="font-weight: 700; color: ${passed ? '#10b981' : '#ef4444'};">
                     ${correctCount} of ${totalQuestions} correct (${percentage}%)
                 </div>
@@ -1396,7 +1396,7 @@
                 const completionBtn = document.getElementById(`quizCompletionBtn_${lessonId}`);
                 if (completionBtn) {
                     completionBtn.innerHTML = `
-                        <span style="font-size: 1.1rem;">✅</span>
+                        <span style="font-size: 1.1rem;"></span>
                         <div><strong>Quiz Passed!</strong><div style="font-size: 0.75rem; opacity: 0.8;">Lesson marked as complete.</div></div>
                     `;
                     completionBtn.style.background = 'rgba(16, 185, 129, 0.1)';
@@ -1419,7 +1419,7 @@
         /* ========== MARK LESSON COMPLETE ========== */
         async function markLessonComplete(lessonId, btn) {
             btn.disabled = true;
-            btn.innerHTML = '⏳ Saving...';
+            btn.innerHTML = 'Saving...';
 
             try {
                 const response = await fetch(`/lessons/${lessonId}/complete`, {
@@ -1433,7 +1433,7 @@
                 if (response.ok) {
                     btn.outerHTML = `
                         <div class="completion-done">
-                            <span style="font-size: 1.1rem;">✅</span>
+                            <span style="font-size: 1.1rem;"></span>
                             <div><strong>Lesson Completed!</strong><div style="font-size: 0.75rem; opacity: 0.8;">Great job!</div></div>
                         </div>
                     `;

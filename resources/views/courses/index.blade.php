@@ -328,7 +328,7 @@
 
         @if(request('tech'))
             <div class="active-filter">
-                <span>🏷️ Filtered by tech: <strong>{{ request('tech') }}</strong></span>
+                <span>Filtered by tech: <strong>{{ request('tech') }}</strong></span>
                 <a href="{{ route('courses.index') }}{{ request('category') ? '?category=' . urlencode(request('category')) : '' }}"
                     title="Clear filter">✕</a>
             </div>
@@ -336,7 +336,7 @@
 
         @if(request('category'))
             <div class="active-filter">
-                <span>💼 Filtered by career track: <strong>{{ request('category') }}</strong></span>
+                <span>Filtered by career track: <strong>{{ request('category') }}</strong></span>
                 <a href="{{ route('courses.index') }}{{ request('tech') ? '?tech=' . urlencode(request('tech')) : '' }}"
                     title="Clear filter">✕</a>
             </div>
@@ -411,15 +411,15 @@
                     @unless($module->banner_image)
                         <span class="course-card-icon">
                             @if($module->category == 'Cloud Engineer')
-                                ☁️
+                                
                             @elseif($module->category == 'DevOps Engineer')
-                                🔄
+                                
                             @elseif($module->category == 'Security Analyst')
-                                🔒
+                                
                             @elseif($module->category == 'Platform Engineer')
-                                🏗️
+                                
                             @else
-                                📚
+                                
                             @endif
                         </span>
                     @endunless
@@ -454,10 +454,9 @@
                     <p class="course-description">{{ Str::limit($module->description, 120) }}</p>
 
                     <div class="course-meta">
-                        <span>📚 {{ $module->lessons->count() }} lessons</span>
-                        <span>🧪 {{ $module->labs->count() }} labs</span>
-                        <span>⏱️
-                            ~{{ round(($module->lessons->count() * 15 + $module->labs->sum('estimated_minutes')) / 60, 1) }}h</span>
+                        <span>{{ $module->lessons->count() }} lessons</span>
+                        <span>{{ $module->labs->count() }} labs</span>
+                        <span>~{{ round(($module->lessons->count() * 15 + $module->labs->sum('estimated_minutes')) / 60, 1) }}h</span>
                     </div>
                 </div>
 
@@ -469,7 +468,7 @@
             </div>
         @empty
             <div class="empty-state">
-                <div class="empty-state-icon">📚</div>
+                <div class="empty-state-icon"></div>
                 <h3>No courses found</h3>
                 <p>Try adjusting your filters or check back later for new content</p>
             </div>
