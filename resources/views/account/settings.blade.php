@@ -419,7 +419,7 @@
         <section class="settings-section">
             <div class="section-header">
                 <div class="section-title">
-                    <div class="section-icon">📧</div>
+                    <div class="section-icon"></div>
                     <div>
                         <h2>Email Address</h2>
                         <p>Your primary email for notifications</p>
@@ -442,7 +442,7 @@
             <section class="settings-section">
                 <div class="section-header">
                     <div class="section-title">
-                        <div class="section-icon">🔒</div>
+                        <div class="section-icon"></div>
                         <div>
                             <h2>Password</h2>
                             <p>Keep your account secure</p>
@@ -479,7 +479,7 @@
             <section class="settings-section">
                 <div class="section-header">
                     <div class="section-title">
-                        <div class="section-icon">🔒</div>
+                        <div class="section-icon"></div>
                         <div>
                             <h2>Sign-In Method</h2>
                             <p>How you access your account</p>
@@ -512,7 +512,7 @@
         <section class="settings-section" style="border-color: rgba(239, 68, 68, 0.3);">
             <div class="section-header">
                 <div class="section-title">
-                    <div class="section-icon" style="background: rgba(239, 68, 68, 0.1);">⚠️</div>
+                    <div class="section-icon" style="background: rgba(239, 68, 68, 0.1);"></div>
                     <div>
                         <h2 style="color: #ef4444;">Danger Zone</h2>
                         <p>Irreversible actions</p>

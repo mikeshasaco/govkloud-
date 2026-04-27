@@ -98,7 +98,6 @@
                 <div class="user-avatar">
                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                 </div>
-                <span>{{ Auth::user()->name }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
                         d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
@@ -106,6 +105,10 @@
                 </svg>
             </button>
             <div class="nav-dropdown-menu" style="right: 0; left: auto; min-width: 200px;">
+                <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.25rem;">
+                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--text);">{{ Auth::user()->name }}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ Auth::user()->email }}</div>
+                </div>
                 @if(Auth::user()->is_admin)
                     <a href="/admin" class="dropdown-item"
                         style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); margin-bottom: 0.5rem;">
