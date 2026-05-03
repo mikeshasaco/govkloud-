@@ -52,7 +52,7 @@ class SubscriptionController extends Controller
      */
     public function success()
     {
-        $message = '🎉 Welcome to GovKloud! Your subscription is active. Start exploring courses below.';
+        $message = ' Welcome to GovKloud! Your subscription is active. Start exploring courses below.';
 
         if (auth()->check() && auth()->user()->onTrial()) {
             $trialDays = config('stripe-plans.trial_days');
