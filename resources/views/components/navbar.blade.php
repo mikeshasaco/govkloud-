@@ -125,13 +125,10 @@
                     <span class="dropdown-item-title">Billing</span>
                 </a>
                 <div class="dropdown-divider"></div>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="dropdown-item"
-                        style="width: 100%; background: none; border: none; cursor: pointer; text-align: left;">
-                        <span class="dropdown-item-title" style="color: #ef4444;">Sign Out</span>
-                    </button>
-                </form>
+                <a href="{{ route('logout.get') }}" class="dropdown-item"
+                    style="width: 100%; text-align: left;">
+                    <span class="dropdown-item-title" style="color: #ef4444;">Sign Out</span>
+                </a>
             </div>
         </div>
     @else
