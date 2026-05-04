@@ -100,19 +100,51 @@ Route::post('/lessons/{lesson}/complete', function (\App\Models\Lesson $lesson) 
     ]);
 })->middleware(['auth', 'subscribed'])->name('lessons.complete');
 
-// Mark lesson as complete via quiz pass
+// Mark lesson as complete via quiz pass (server-side grading)
 Route::post('/lessons/{lesson}/complete-quiz', function (\App\Models\Lesson $lesson) {
-    $score = request()->input('score', 0);
+    if (!$lesson->hasQuiz()) {
+        return response()->json(['error' => 'This lesson has no quiz'], 400);
+    }
+
+    $answers = request()->input('answers', []);
+    $questions = $lesson->getQuizQuestions();
+
+    if (empty($questions)) {
+        return response()->json(['error' => 'No quiz questions found'], 400);
+    }
+
+    // Grade on the server using stored correct answers
+    $correct = 0;
+    foreach ($questions as $index => $question) {
+        $correctAnswer = $question['correct_answer'] ?? null;
+        $userAnswer = $answers[$index] ?? null;
+
+        if ($correctAnswer !== null && $userAnswer !== null) {
+            // Case-insensitive comparison, trim whitespace
+            if (strtolower(trim($userAnswer)) === strtolower(trim($correctAnswer))) {
+                $correct++;
+            }
+        }
+    }
+
+    $score = round(($correct / count($questions)) * 100);
 
     // Only allow if quiz passed (70%+)
     if ($score < 70) {
-        return response()->json(['error' => 'Quiz not passed'], 400);
+        return response()->json([
+            'error' => 'Quiz not passed',
+            'score' => $score,
+            'correct' => $correct,
+            'total' => count($questions),
+        ], 400);
     }
 
     $progress = Auth::user()->completeLesson($lesson, $score);
     return response()->json([
         'completed' => true,
         'score' => $score,
+        'correct' => $correct,
+        'total' => count($questions),
         'completed_at' => $progress->completed_at->toISOString()
     ]);
 })->middleware(['auth', 'subscribed'])->name('lessons.complete-quiz');

@@ -1320,6 +1320,22 @@
             const questions = quizSection.querySelectorAll('.quiz-question');
             const resultDiv = document.getElementById(`quiz_result_${lessonId}`);
 
+            // Collect answers to send to server for grading
+            let answers = {};
+
+            questions.forEach((question) => {
+                const qIndex = question.dataset.questionIndex;
+                let selectedAnswer = '';
+                const selectedRadio = question.querySelector('input[type="radio"]:checked');
+                const textInput = question.querySelector('.quiz-input');
+
+                if (selectedRadio) selectedAnswer = selectedRadio.value;
+                else if (textInput) selectedAnswer = textInput.value.trim();
+
+                answers[qIndex] = selectedAnswer;
+            });
+
+            // Show visual feedback locally (still use data-correct for immediate UI)
             let correctCount = 0;
             let totalQuestions = questions.length;
 
@@ -1329,14 +1345,9 @@
                 const correctEl = feedback.querySelector('.quiz-correct');
                 const incorrectEl = feedback.querySelector('.quiz-incorrect');
                 const options = question.querySelectorAll('.quiz-option');
+                const qIndex = question.dataset.questionIndex;
 
-                let selectedAnswer = '';
-                const selectedRadio = question.querySelector('input[type="radio"]:checked');
-                const textInput = question.querySelector('.quiz-input');
-
-                if (selectedRadio) selectedAnswer = selectedRadio.value;
-                else if (textInput) selectedAnswer = textInput.value.trim();
-
+                const selectedAnswer = answers[qIndex] || '';
                 const isCorrect = selectedAnswer.toLowerCase() === correctAnswer.toLowerCase();
 
                 options.forEach(opt => {
@@ -1392,28 +1403,36 @@
             resultDiv.style.background = passed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
             resultDiv.style.border = `1px solid ${passed ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`;
 
-            if (passed) {
-                const completionBtn = document.getElementById(`quizCompletionBtn_${lessonId}`);
-                if (completionBtn) {
-                    completionBtn.innerHTML = `
-                        <span style="font-size: 1.1rem;"></span>
-                        <div><strong>Quiz Passed!</strong><div style="font-size: 0.75rem; opacity: 0.8;">Lesson marked as complete.</div></div>
-                    `;
-                    completionBtn.style.background = 'rgba(16, 185, 129, 0.1)';
-                    completionBtn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-                    completionBtn.style.color = '#10b981';
-                    completionBtn.className = 'completion-done';
-                }
+            // Send answers to server for authoritative grading
+            fetch(`/lessons/${lessonId}/complete-quiz`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ answers: answers })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.completed) {
+                    const completionBtn = document.getElementById(`quizCompletionBtn_${lessonId}`);
+                    if (completionBtn) {
+                        completionBtn.innerHTML = `
+                            <span style="font-size: 1.1rem;"></span>
+                            <div><strong>Quiz Passed!</strong><div style="font-size: 0.75rem; opacity: 0.8;">Lesson marked as complete.</div></div>
+                        `;
+                        completionBtn.style.background = 'rgba(16, 185, 129, 0.1)';
+                        completionBtn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                        completionBtn.style.color = '#10b981';
+                        completionBtn.className = 'completion-done';
+                    }
 
-                fetch(`/lessons/${lessonId}/complete-quiz`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({ score: percentage })
-                }).catch(e => console.error('Error saving progress:', e));
-            }
+                    // Update sidebar
+                    const navItem = document.querySelector(`.lesson-nav-item[data-lesson-id="${lessonId}"]`);
+                    if (navItem) navItem.classList.add('completed');
+                }
+            })
+            .catch(e => console.error('Error saving progress:', e));
         }
 
         /* ========== MARK LESSON COMPLETE ========== */

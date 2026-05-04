@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust Azure's load balancer (SSL termination proxy)
         $middleware->trustProxies(at: '*');
 
+        // Add security headers to all responses
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
         $middleware->alias([
             'subscribed' => \App\Http\Middleware\EnsureSubscribed::class,
         ]);
