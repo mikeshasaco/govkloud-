@@ -13,4 +13,4 @@ Artisan::command('inspire', function () {
 | Scheduled Tasks
 |--------------------------------------------------------------------------
 */
-Schedule::command('labs:cleanup-stale')->everyTwoMinutes();
+Schedule::command('labs:cleanup-stale')->everyMinute();

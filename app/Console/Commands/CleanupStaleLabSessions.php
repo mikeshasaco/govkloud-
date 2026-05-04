@@ -15,8 +15,8 @@ class CleanupStaleLabSessions extends Command
     {
         // Sessions stuck in "provisioning" for more than 5 minutes — retry them
         $staleProvisioningSessions = LabSession::where('status', LabSession::STATUS_PROVISIONING)
-            ->where('created_at', '<', now()->subMinutes(5))
-            ->where('created_at', '>', now()->subMinutes(30)) // Don't retry ancient ones
+            ->where('created_at', '<', now()->subMinutes(2))
+            ->where('created_at', '>', now()->subMinutes(10)) // Don't retry ancient ones
             ->get();
 
         foreach ($staleProvisioningSessions as $session) {
@@ -26,9 +26,9 @@ class CleanupStaleLabSessions extends Command
             ProvisionLabSessionJob::dispatch($session->id);
         }
 
-        // Sessions stuck for more than 30 minutes — mark as error (give up)
+        // Sessions stuck for more than 10 minutes — mark as error (give up)
         $abandonedSessions = LabSession::where('status', LabSession::STATUS_PROVISIONING)
-            ->where('created_at', '<', now()->subMinutes(30))
+            ->where('created_at', '<', now()->subMinutes(10))
             ->get();
 
         foreach ($abandonedSessions as $session) {
