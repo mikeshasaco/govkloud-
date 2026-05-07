@@ -30,11 +30,13 @@ class SessionDestroyer
         ]);
 
         try {
-            // Delete the entire namespace (this removes everything)
-            if (!$this->k8sClient->deleteNamespace($namespace)) {
-                Log::warning("Namespace deletion may have failed", [
+            // Uninstall the specific workbench Helm release (not the whole namespace)
+            if ($session->workbench_release_name) {
+                Log::info("Uninstalling workbench Helm release", [
+                    'release' => $session->workbench_release_name,
                     'namespace' => $namespace,
                 ]);
+                $this->helmClient->uninstall($session->workbench_release_name, $namespace);
             }
 
             // Update session status based on reason
