@@ -803,7 +803,7 @@
                 <button onclick="copyPassword()" style="background: transparent; border: none; cursor: pointer; font-size: 0.75rem;" title="Copy password">Copy</button>
             </div>
             <span class="timer" id="timer">Loading...</span>
-            <button class="btn-stop" id="stopBtn">Stop</button>
+            <button class="btn-stop" id="stopBtn" onclick="if(confirm('Are you sure you want to stop this lab?')) stopLab()">Stop</button>
         </div>
     </header>
 
@@ -1302,9 +1302,7 @@
             window.location.href = '{{ route("courses.show", $module->slug ?? "k8s-basics") }}';
         }
 
-        document.getElementById('stopBtn').addEventListener('click', function() {
-            if (confirm('Are you sure you want to stop this lab?')) stopLab();
-        });
+        // Stop button handler is now inline onclick on the button element
 
         window.addEventListener('beforeunload', function() {
             if (labRunning && !labStopped) {
