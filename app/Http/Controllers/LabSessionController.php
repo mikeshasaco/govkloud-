@@ -95,11 +95,16 @@ class LabSessionController extends Controller
             ]);
         }
 
-        // Mark as destroyed immediately so user isn't blocked
-        $session->update(['status' => LabSession::STATUS_DESTROYED]);
-
-        // Clean up K8s resources in the background
-        DestroyLabSessionJob::dispatch($session->id, 'manual');
+        // Run destruction synchronously so K8s resources are actually cleaned up
+        try {
+            $destroyer = app(\App\Services\LabRuntime\SessionDestroyer::class);
+            $destroyer->destroy($session, 'manual');
+        } catch (\Exception $e) {
+            // Mark as destroyed even if K8s cleanup fails
+            $session->update(['status' => LabSession::STATUS_DESTROYED]);
+            // Queue cleanup as fallback
+            DestroyLabSessionJob::dispatch($session->id, 'manual');
+        }
 
         return response()->json([
             'message' => 'Session stopped',
