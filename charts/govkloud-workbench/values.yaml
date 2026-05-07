@@ -5,6 +5,7 @@
 session:
   id: ""
   token: ""
+  ttlSeconds: 3900  # 65 min — slightly longer than app TTL (60 min) to avoid race conditions
 
 # Image configuration
 image:

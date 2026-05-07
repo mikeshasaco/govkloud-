@@ -95,11 +95,17 @@ class LabSessionController extends Controller
             ]);
         }
 
-        // Dispatch destruction job
-        DestroyLabSessionJob::dispatch($session->id, 'manual');
+        // Run destruction synchronously — don't rely on Redis queue for critical cleanup
+        try {
+            $destroyer = app(\App\Services\LabRuntime\SessionDestroyer::class);
+            $destroyer->destroy($session, 'manual');
+        } catch (\Exception $e) {
+            // If sync destroy fails, fall back to async as safety net
+            DestroyLabSessionJob::dispatch($session->id, 'manual');
+        }
 
         return response()->json([
-            'message' => 'Session stop initiated',
+            'message' => 'Session stopped',
             'session_id' => $session->id,
         ]);
     }

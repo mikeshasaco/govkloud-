@@ -14,6 +14,7 @@ spec:
       labels:
         {{- include "workbench.selectorLabels" . | nindent 8 }}
     spec:
+      activeDeadlineSeconds: {{ .Values.session.ttlSeconds | default 3900 }}
       {{- with .Values.securityContext }}
       securityContext:
         runAsUser: {{ .runAsUser }}
