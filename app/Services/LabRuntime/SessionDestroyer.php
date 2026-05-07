@@ -30,7 +30,7 @@ class SessionDestroyer
         ]);
 
         try {
-            // Uninstall the specific workbench Helm release (not the whole namespace)
+            // Uninstall the specific workbench Helm release
             if ($session->workbench_release_name) {
                 Log::info("Uninstalling workbench Helm release", [
                     'release' => $session->workbench_release_name,
@@ -38,6 +38,10 @@ class SessionDestroyer
                 ]);
                 $this->helmClient->uninstall($session->workbench_release_name, $namespace);
             }
+
+            // Delete the entire namespace to free vcluster resources and save cost
+            Log::info("Deleting namespace to free resources", ['namespace' => $namespace]);
+            $this->k8sClient->deleteNamespace($namespace);
 
             // Update session status based on reason
             $newStatus = match ($reason) {
