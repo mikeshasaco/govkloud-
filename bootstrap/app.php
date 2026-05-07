@@ -25,6 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Redirect to home on CSRF token expiration instead of showing ugly 419 page
         $exceptions->renderable(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            \Illuminate\Support\Facades\Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
             return redirect()->route('home');
         });
     })->create();
