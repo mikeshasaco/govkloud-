@@ -28,7 +28,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('courses.index', absolute: false));
+        $user = $request->user();
+        $destination = ($user->subscribed() || $user->onTrial())
+            ? route('courses.index', absolute: false)
+            : route('pricing', absolute: false);
+
+        return redirect()->intended($destination);
     }
 
     /**

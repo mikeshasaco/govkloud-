@@ -15,6 +15,14 @@ use Illuminate\Support\Facades\Route;
 
 // Home - Landing Page
 Route::get('/', function () {
+    // If logged in, redirect based on subscription status
+    if (Auth::check()) {
+        $user = Auth::user();
+        return ($user->subscribed() || $user->onTrial())
+            ? redirect()->route('courses.index')
+            : redirect()->route('pricing');
+    }
+
     $modules = \App\Models\Module::published()->ordered()->get();
     $subcategories = \App\Models\Lesson::selectRaw('subcategory, COUNT(*) as count')
         ->whereNotNull('subcategory')
