@@ -30,4 +30,13 @@ return Application::configure(basePath: dirname(__DIR__))
             $request->session()->regenerateToken();
             return redirect()->route('home');
         });
+
+        $exceptions->renderable(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) {
+            if ($e->getStatusCode() === 419) {
+                \Illuminate\Support\Facades\Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return redirect()->route('home');
+            }
+        });
     })->create();
