@@ -40,8 +40,10 @@ class SubscriptionController extends Controller
         $subscriptionName = config('stripe-plans.subscription_name');
 
         // If user already has an active subscription, swap to the new plan
+        // End any active trial so they get charged immediately on the new plan
         if ($user->subscribed($subscriptionName)) {
-            $user->subscription($subscriptionName)->swap($priceId);
+            $subscription = $user->subscription($subscriptionName);
+            $subscription->skipTrial()->swap($priceId);
 
             return redirect()->route('courses.index')
                 ->with('success', 'Your plan has been updated!');
