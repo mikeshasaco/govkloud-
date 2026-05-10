@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HelpCenterController;
 use App\Http\Controllers\LabSessionController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\ModuleController;
@@ -68,6 +69,10 @@ Route::middleware('auth')->group(function () {
 
 // Career Wheel Page
 Route::get('/career', [ModuleController::class, 'career'])->name('career');
+
+// Help Center
+Route::get('/help-center', [HelpCenterController::class, 'index'])->name('help-center');
+Route::post('/help-center', [HelpCenterController::class, 'submit'])->name('help-center.submit');
 
 // Course routes (public)
 Route::get('/courses', [ModuleController::class, 'index'])->name('courses.index');

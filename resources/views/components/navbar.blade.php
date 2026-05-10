@@ -79,6 +79,7 @@
         </div>
 
         <a href="{{ route('career') }}">Career Paths</a>
+        <a href="{{ route('help-center') }}">Help Center</a>
 
         @auth
             @if(Auth::user()->subscribed() || Auth::user()->onTrial())
