@@ -242,6 +242,14 @@
             </div>
         </div>
 
+        @php
+            $isSubscribed = auth()->check() && auth()->user()->subscribed();
+            $currentPriceId = null;
+            if ($isSubscribed) {
+                $currentPriceId = auth()->user()->subscription(config('stripe-plans.subscription_name'))?->stripe_price;
+            }
+        @endphp
+
         <div class="pricing-cards">
             <!-- Standard Plan -->
             <div class="pricing-card">
@@ -261,11 +269,25 @@
                 <form action="{{ route('subscribe', ['plan' => 'standard', 'interval' => 'monthly']) }}" method="POST"
                     id="standardForm">
                     @csrf
-                    <button type="submit" class="subscribe-btn secondary">
-                        Start Free Trial
-                    </button>
+                    @if($isSubscribed && in_array($currentPriceId, [$plans['standard']['monthly']['price_id'], $plans['standard']['yearly']['price_id']]))
+                        <button type="button" class="subscribe-btn secondary" disabled style="opacity: 0.5; cursor: not-allowed;">
+                            Current Plan
+                        </button>
+                    @elseif($isSubscribed)
+                        <button type="submit" class="subscribe-btn secondary">
+                            Switch to Standard
+                        </button>
+                    @else
+                        <button type="submit" class="subscribe-btn secondary">
+                            Start Free Trial
+                        </button>
+                    @endif
                 </form>
-                <div class="trial-note">{{ $trialDays }}-day free trial • Cancel anytime</div>
+                @if(!$isSubscribed)
+                    <div class="trial-note">{{ $trialDays }}-day free trial • Cancel anytime</div>
+                @elseif($isSubscribed && !in_array($currentPriceId, [$plans['standard']['monthly']['price_id'], $plans['standard']['yearly']['price_id']]))
+                    <div class="trial-note">Plan changes take effect immediately</div>
+                @endif
             </div>
 
             <!-- Pro Plan -->
@@ -286,11 +308,25 @@
                 <form action="{{ route('subscribe', ['plan' => 'pro', 'interval' => 'monthly']) }}" method="POST"
                     id="proForm">
                     @csrf
-                    <button type="submit" class="subscribe-btn primary">
-                        Start Free Trial
-                    </button>
+                    @if($isSubscribed && in_array($currentPriceId, [$plans['pro']['monthly']['price_id'], $plans['pro']['yearly']['price_id']]))
+                        <button type="button" class="subscribe-btn primary" disabled style="opacity: 0.5; cursor: not-allowed;">
+                            Current Plan
+                        </button>
+                    @elseif($isSubscribed)
+                        <button type="submit" class="subscribe-btn primary">
+                            Upgrade to Pro
+                        </button>
+                    @else
+                        <button type="submit" class="subscribe-btn primary">
+                            Start Free Trial
+                        </button>
+                    @endif
                 </form>
-                <div class="trial-note">{{ $trialDays }}-day free trial • Cancel anytime</div>
+                @if(!$isSubscribed)
+                    <div class="trial-note">{{ $trialDays }}-day free trial • Cancel anytime</div>
+                @elseif($isSubscribed && !in_array($currentPriceId, [$plans['pro']['monthly']['price_id'], $plans['pro']['yearly']['price_id']]))
+                    <div class="trial-note">Plan changes take effect immediately</div>
+                @endif
             </div>
         </div>
 
