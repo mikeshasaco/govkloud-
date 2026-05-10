@@ -508,6 +508,101 @@
 
 
 
+        <!-- Subscription & Billing -->
+        <section class="settings-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-icon">💳</div>
+                    <div>
+                        <h2>Subscription & Billing</h2>
+                        <p>Manage your plan and payment</p>
+                    </div>
+                </div>
+            </div>
+            <div class="section-body">
+                @php
+                    $user = Auth::user();
+                    $subscription = $user->subscriptions()->latest()->first();
+                    $isSubscribed = $user->subscribed();
+                    $isOnTrial = $subscription && $subscription->onTrial();
+                    $isOnGracePeriod = $subscription && $subscription->onGracePeriod();
+                    $isGrandfathered = $user->created_at < '2026-04-12';
+                @endphp
+
+                @if($isSubscribed)
+                    <div class="plan-card">
+                        <div class="plan-info">
+                            <h3>
+                                @if($isOnTrial)
+                                    Free Trial
+                                    <span class="plan-badge">Trial</span>
+                                @elseif($isOnGracePeriod)
+                                    Subscription Ending
+                                    <span class="plan-badge" style="background: linear-gradient(135deg, #ef4444, #dc2626);">Canceling</span>
+                                @else
+                                    Active Subscription
+                                    <span class="plan-badge">Active</span>
+                                @endif
+                            </h3>
+                            <div class="plan-features">
+                                @if($isOnTrial)
+                                    <div class="plan-feature">
+                                        <span>⏳</span> Trial ends {{ $subscription->trial_ends_at->format('M d, Y') }}
+                                    </div>
+                                @elseif($isOnGracePeriod)
+                                    <div class="plan-feature">
+                                        <span>📅</span> Access until {{ $subscription->ends_at->format('M d, Y') }}
+                                    </div>
+                                @else
+                                    <div class="plan-feature">
+                                        <span>✓</span> Full access to all courses & labs
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        <a href="{{ route('billing') }}" class="btn btn-outline">Manage Billing</a>
+                    </div>
+
+                    @if($isOnGracePeriod)
+                        <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px;">
+                            <p style="font-size: 0.85rem; color: #fbbf24;">
+                                ⚠️ Your subscription has been canceled but you still have full access until <strong>{{ $subscription->ends_at->format('F d, Y') }}</strong>. After this date, you'll need to re-subscribe to continue accessing courses and labs.
+                            </p>
+                        </div>
+                    @endif
+
+                    <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: rgba(210, 180, 140, 0.05); border: 1px solid var(--border); border-radius: 8px;">
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">
+                            💡 If you cancel your subscription, you'll keep full access for the remainder of your billing period. No refunds are issued for partial months.
+                        </p>
+                    </div>
+
+                @elseif($isGrandfathered)
+                    <div class="plan-card">
+                        <div class="plan-info">
+                            <h3>
+                                Legacy Access
+                                <span class="plan-badge" style="background: linear-gradient(135deg, var(--gk-gold), #f59e0b);">Grandfathered</span>
+                            </h3>
+                            <div class="plan-features">
+                                <div class="plan-feature">
+                                    <span>✓</span> Full access as an early member
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>You don't have an active subscription</p>
+                        <p style="font-size: 0.8rem; margin-top: 0.5rem;">Subscribe to access all courses, labs, and learning materials.</p>
+                        <a href="{{ route('pricing') }}" class="btn btn-primary" style="display: inline-block; margin-top: 1rem; text-decoration: none;">View Plans & Subscribe</a>
+                    </div>
+                @endif
+            </div>
+        </section>
+
+
         <!-- Danger Zone -->
         <section class="settings-section" style="border-color: rgba(239, 68, 68, 0.3);">
             <div class="section-header">
