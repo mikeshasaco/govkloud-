@@ -37,9 +37,20 @@ class SubscriptionController extends Controller
             abort(500, 'Stripe price not configured. Please set up your Stripe prices.');
         }
 
+        $subscriptionName = config('stripe-plans.subscription_name');
+
+        // If user already has an active subscription, swap to the new plan
+        if ($user->subscribed($subscriptionName)) {
+            $user->subscription($subscriptionName)->swap($priceId);
+
+            return redirect()->route('courses.index')
+                ->with('success', 'Your plan has been updated!');
+        }
+
+        // New subscription — include trial days
         $trialDays = config('stripe-plans.trial_days');
 
-        return $user->newSubscription(config('stripe-plans.subscription_name'), $priceId)
+        return $user->newSubscription($subscriptionName, $priceId)
             ->trialDays($trialDays)
             ->checkout([
                 'success_url' => route('subscription.success'),
