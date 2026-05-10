@@ -48,6 +48,21 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        // Cancel all active Stripe subscriptions immediately
+        foreach ($user->subscriptions as $subscription) {
+            if ($subscription->active()) {
+                try {
+                    $subscription->cancelNow();
+                } catch (\Exception $e) {
+                    \Log::error('Failed to cancel subscription during account deletion', [
+                        'user_id' => $user->id,
+                        'subscription_id' => $subscription->stripe_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
         Auth::logout();
 
         $user->delete();

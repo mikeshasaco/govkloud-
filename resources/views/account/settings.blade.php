@@ -607,7 +607,7 @@
         <section class="settings-section" style="border-color: rgba(239, 68, 68, 0.3);">
             <div class="section-header">
                 <div class="section-title">
-                    <div class="section-icon" style="background: rgba(239, 68, 68, 0.1);"></div>
+                    <div class="section-icon" style="background: rgba(239, 68, 68, 0.1);">⚠️</div>
                     <div>
                         <h2 style="color: #ef4444;">Danger Zone</h2>
                         <p>Irreversible actions</p>
@@ -618,10 +618,32 @@
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <strong>Delete Account</strong>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">Permanently delete your account and all
-                            data</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Permanently delete your account, cancel any active subscriptions, and remove all data</p>
                     </div>
-                    <button class="btn btn-danger">Delete Account</button>
+                    <button class="btn btn-danger" onclick="document.getElementById('deleteConfirm').style.display='block'">Delete Account</button>
+                </div>
+
+                <!-- Confirmation form (hidden by default) -->
+                <div id="deleteConfirm" style="display:none; margin-top: 1.5rem; padding: 1.25rem; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
+                    <p style="font-size: 0.85rem; color: #ef4444; margin-bottom: 1rem;">
+                        ⚠️ This action cannot be undone. Your account, all progress, and any active subscriptions will be permanently deleted and canceled.
+                    </p>
+                    <form method="POST" action="{{ route('profile.destroy') }}">
+                        @csrf
+                        @method('DELETE')
+                        <div class="form-group">
+                            <label class="form-label">Enter your password to confirm</label>
+                            <input type="password" name="password" class="form-input" placeholder="Your password" required
+                                style="max-width: 300px;">
+                            @if($errors->userDeletion->has('password'))
+                                <p style="color: #ef4444; font-size: 0.8rem; margin-top: 0.5rem;">{{ $errors->userDeletion->first('password') }}</p>
+                            @endif
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                            <button type="submit" class="btn btn-danger">Yes, Delete My Account</button>
+                            <button type="button" class="btn btn-outline" onclick="document.getElementById('deleteConfirm').style.display='none'">Cancel</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </section>
