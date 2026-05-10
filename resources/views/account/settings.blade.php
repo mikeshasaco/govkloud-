@@ -153,7 +153,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            overflow: hidden;
+        }
+
+        .section-icon img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
         }
 
         .section-title h2 {
@@ -419,7 +425,7 @@
         <section class="settings-section">
             <div class="section-header">
                 <div class="section-title">
-                    <div class="section-icon"></div>
+                    <div class="section-icon"><img src="https://govkloudstorage.blob.core.windows.net/assets/govkloud-logo.png" alt=""></div>
                     <div>
                         <h2>Email Address</h2>
                         <p>Your primary email for notifications</p>
@@ -442,7 +448,7 @@
             <section class="settings-section">
                 <div class="section-header">
                     <div class="section-title">
-                        <div class="section-icon"></div>
+                        <div class="section-icon"><img src="https://govkloudstorage.blob.core.windows.net/assets/govkloud-logo.png" alt=""></div>
                         <div>
                             <h2>Password</h2>
                             <p>Keep your account secure</p>
@@ -479,7 +485,7 @@
             <section class="settings-section">
                 <div class="section-header">
                     <div class="section-title">
-                        <div class="section-icon"></div>
+                        <div class="section-icon"><img src="https://govkloudstorage.blob.core.windows.net/assets/govkloud-logo.png" alt=""></div>
                         <div>
                             <h2>Sign-In Method</h2>
                             <p>How you access your account</p>
@@ -512,7 +518,7 @@
         <section class="settings-section">
             <div class="section-header">
                 <div class="section-title">
-                    <div class="section-icon">💳</div>
+                    <div class="section-icon"><img src="https://govkloudstorage.blob.core.windows.net/assets/govkloud-logo.png" alt=""></div>
                     <div>
                         <h2>Subscription & Billing</h2>
                         <p>Manage your plan and payment</p>
@@ -607,7 +613,7 @@
         <section class="settings-section" style="border-color: rgba(239, 68, 68, 0.3);">
             <div class="section-header">
                 <div class="section-title">
-                    <div class="section-icon" style="background: rgba(239, 68, 68, 0.1);">⚠️</div>
+                    <div class="section-icon" style="background: rgba(239, 68, 68, 0.1);"><img src="https://govkloudstorage.blob.core.windows.net/assets/govkloud-logo.png" alt=""></div>
                     <div>
                         <h2 style="color: #ef4444;">Danger Zone</h2>
                         <p>Irreversible actions</p>
