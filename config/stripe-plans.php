@@ -26,8 +26,6 @@ return [
             'features' => [
                 'All courses & lessons',
                 'Lab environments',
-                '1 hour session time',
-                '1 concurrent lab',
                 'Progress tracking',
             ],
         ],
@@ -42,11 +40,14 @@ return [
                 'amount' => 29900, // $299 in cents (save 49%)
             ],
             'features' => [
-                'Everything in Standard',
-                '3 hour session time',
-                '2 concurrent labs',
+                'All courses & lessons',
+                'Lab environments',
+                'Progress tracking',
+                'Resume review',
+                'Recruiter connections',
+                'Weekly video group calls',
+                'Internship opportunities with GovKloud',
                 'Priority support',
-                'Certificate downloads',
             ],
         ],
     ],
