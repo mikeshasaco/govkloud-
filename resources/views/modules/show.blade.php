@@ -166,15 +166,30 @@
         line-height: 1.7;
         margin-bottom: 1.5rem;
         max-width: 520px;
+        max-height: 120px;
+        overflow-y: auto;
         background: rgba(15, 23, 42, 0.4);
         padding: 1rem 1.25rem;
         border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.06);
-        display: -webkit-box;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    }
+
+    .module-description::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .module-description::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }
+
+    .module-description::-webkit-scrollbar-thumb {
+        background: rgba(210, 180, 140, 0.3);
+        border-radius: 4px;
+    }
+
+    .module-description::-webkit-scrollbar-thumb:hover {
+        background: rgba(210, 180, 140, 0.5);
     }
 
     .hero-stats {
@@ -203,18 +218,103 @@
 
     .hero-visual {
         width: 300px;
-        height: 220px;
+        height: 260px;
         position: relative;
-        border-radius: 14px;
+        border-radius: 18px;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(210, 180, 140, 0.15);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .hero-visual::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 30% 20%, rgba(210, 180, 140, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 70% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    .hero-visual-icon {
+        font-size: 4.5rem;
+        position: relative;
+        z-index: 1;
+        filter: drop-shadow(0 0 30px rgba(210, 180, 140, 0.4));
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    .hero-visual-label {
+        position: relative;
+        z-index: 1;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--gk-cyan);
+        background: rgba(210, 180, 140, 0.1);
+        padding: 0.4rem 1.2rem;
+        border-radius: 50px;
+        border: 1px solid rgba(210, 180, 140, 0.2);
+    }
+
+    .hero-visual-techs {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 240px;
+    }
+
+    .hero-visual-tech {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.6rem;
+        background: rgba(139, 92, 246, 0.15);
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: 4px;
+        color: #a78bfa;
+        font-weight: 600;
+    }
+
+    .hero-visual-particles {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
         overflow: hidden;
     }
 
-    .hero-visual img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 14px;
-        border: 1px solid rgba(210, 180, 140, 0.2);
+    .hero-visual-particles span {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: var(--gk-cyan);
+        border-radius: 50%;
+        opacity: 0.4;
+        animation: sparkle 3s ease-in-out infinite;
+    }
+
+    .hero-visual-particles span:nth-child(1) { top: 15%; left: 20%; animation-delay: 0s; }
+    .hero-visual-particles span:nth-child(2) { top: 30%; left: 75%; animation-delay: 0.5s; }
+    .hero-visual-particles span:nth-child(3) { top: 60%; left: 15%; animation-delay: 1s; }
+    .hero-visual-particles span:nth-child(4) { top: 80%; left: 65%; animation-delay: 1.5s; }
+    .hero-visual-particles span:nth-child(5) { top: 45%; left: 85%; animation-delay: 2s; }
+    .hero-visual-particles span:nth-child(6) { top: 70%; left: 40%; animation-delay: 0.8s; }
+
+    @keyframes sparkle {
+        0%, 100% { opacity: 0.2; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.8); }
     }
 
     @media (max-width: 768px) {
@@ -652,10 +752,41 @@
                     </div>
                     
                     <div class="hero-visual">
-                        @if($module->banner_image)
-                            <img src="{{ Storage::disk('azure')->url($module->banner_image) }}" alt="{{ $module->title }}">
-                        @else
-                            <div class="hero-visual-orb" style="position:absolute;width:180px;height:180px;background:linear-gradient(135deg,rgba(210,180,140,0.3),rgba(139,92,246,0.2));border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 60px rgba(210,180,140,0.3),inset 0 0 60px rgba(210,180,140,0.1);"></div>
+                        <div class="hero-visual-particles">
+                            <span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
+                        </div>
+                        <div class="hero-visual-icon">
+                            @if($module->category == 'Cloud Engineer')
+                                ☁️
+                            @elseif($module->category == 'DevOps' || $module->category == 'DevOps Engineer')
+                                ⚙️
+                            @elseif($module->category == 'DevSecOps')
+                                🔐
+                            @elseif($module->category == 'Security Engineer')
+                                🛡️
+                            @elseif($module->category == 'Platform Engineer')
+                                🏗️
+                            @elseif($module->category == 'SRE')
+                                📡
+                            @elseif($module->category == 'Data Engineer')
+                                📊
+                            @else
+                                🚀
+                            @endif
+                        </div>
+                        @if($module->category)
+                            <div class="hero-visual-label">{{ $module->category }}</div>
+                        @endif
+                        @php
+                            $techs = $module->lessons->pluck('subcategory')->filter()->unique()->values();
+                        @endphp
+                        @if($techs->count() > 0)
+                            <div class="hero-visual-techs">
+                                @foreach($techs->take(4) as $tech)
+                                    <span class="hero-visual-tech">{{ $tech }}</span>
+                                @endforeach
+                            </div>
                         @endif
                     </div>
                 </div>
