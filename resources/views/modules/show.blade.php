@@ -653,7 +653,7 @@
                     
                     <div class="hero-visual">
                         @if($module->banner_image)
-                            <img src="{{ Storage::disk('azure')->url($module->banner_image) }}" alt="{{ $module->title }}">
+                            <img src="https://govkloudstorage.blob.core.windows.net/videos/{{ $module->banner_image }}" alt="{{ $module->title }}">
                         @else
                             <div class="hero-visual-orb" style="position:absolute;width:180px;height:180px;background:linear-gradient(135deg,rgba(210,180,140,0.3),rgba(139,92,246,0.2));border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 60px rgba(210,180,140,0.3),inset 0 0 60px rgba(210,180,140,0.1);"></div>
                         @endif
