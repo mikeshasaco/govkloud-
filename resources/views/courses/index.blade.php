@@ -149,13 +149,19 @@
         }
 
         .course-card-image {
-            height: 160px;
+            height: 180px;
             background: linear-gradient(135deg, rgba(210, 180, 140, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             overflow: hidden;
+        }
+
+        .course-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .course-card-image::before {
@@ -224,6 +230,11 @@
             line-height: 1.6;
             margin-bottom: 1rem;
             flex: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .course-meta {
@@ -399,30 +410,30 @@
             <div class="course-card" data-title="{{ strtolower($module->title) }}"
                 data-lessons="{{ $module->lessons->count() }}" data-labs="{{ $module->labs->count() }}">
 
-                <div class="course-card-image" @if($module->banner_image)
-                    style="background: url('{{ Storage::disk('azure')->url($module->banner_image) }}') center/cover no-repeat;"
-                @endif>
+                <div class="course-card-image">
                     <div class="course-card-badges">
                         <span class="badge badge-lessons">{{ $module->lessons->count() }} Lessons</span>
                         @if($module->labs->count() > 0)
                             <span class="badge badge-labs">{{ $module->labs->count() }} Labs</span>
                         @endif
                     </div>
-                    @unless($module->banner_image)
+                    @if($module->banner_image)
+                        <img src="{{ Storage::disk('azure')->url($module->banner_image) }}" alt="{{ $module->title }}">
+                    @else
                         <span class="course-card-icon">
                             @if($module->category == 'Cloud Engineer')
-                                
+                                ☁️
                             @elseif($module->category == 'DevOps Engineer')
-                                
+                                ⚙️
                             @elseif($module->category == 'Security Analyst')
-                                
+                                🛡️
                             @elseif($module->category == 'Platform Engineer')
-                                
+                                🏗️
                             @else
-                                
+                                📚
                             @endif
                         </span>
-                    @endunless
+                    @endif
                 </div>
 
                 <div class="course-card-body">

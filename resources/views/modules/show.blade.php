@@ -162,10 +162,19 @@
 
     .module-description {
         color: #94a3b8;
-        font-size: 1rem;
+        font-size: 0.95rem;
         line-height: 1.7;
         margin-bottom: 1.5rem;
-        max-width: 480px;
+        max-width: 520px;
+        background: rgba(15, 23, 42, 0.4);
+        padding: 1rem 1.25rem;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .hero-stats {
@@ -192,40 +201,20 @@
         letter-spacing: 0.5px;
     }
 
-    /* Hero Visual */
     .hero-visual {
-        width: 280px;
-        height: 200px;
+        width: 300px;
+        height: 220px;
         position: relative;
+        border-radius: 14px;
+        overflow: hidden;
     }
 
-    .hero-visual-orb {
-        position: absolute;
-        width: 180px;
-        height: 180px;
-        background: linear-gradient(135deg, rgba(210, 180, 140, 0.3), rgba(139, 92, 246, 0.2));
-        border-radius: 50%;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        box-shadow: 
-            0 0 60px rgba(210, 180, 140, 0.3),
-            inset 0 0 60px rgba(210, 180, 140, 0.1);
-        animation: pulse 4s ease-in-out infinite;
-    }
-
-    .hero-visual-icon {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 4rem;
-        filter: drop-shadow(0 0 20px var(--gk-glow));
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.8; }
+    .hero-visual img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 14px;
+        border: 1px solid rgba(210, 180, 140, 0.2);
     }
 
     @media (max-width: 768px) {
@@ -663,8 +652,11 @@
                     </div>
                     
                     <div class="hero-visual">
-                        <div class="hero-visual-orb"></div>
-                        <div class="hero-visual-icon"></div>
+                        @if($module->banner_image)
+                            <img src="{{ Storage::disk('azure')->url($module->banner_image) }}" alt="{{ $module->title }}">
+                        @else
+                            <div class="hero-visual-orb" style="position:absolute;width:180px;height:180px;background:linear-gradient(135deg,rgba(210,180,140,0.3),rgba(139,92,246,0.2));border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 60px rgba(210,180,140,0.3),inset 0 0 60px rgba(210,180,140,0.1);"></div>
+                        @endif
                     </div>
                 </div>
             </div>
