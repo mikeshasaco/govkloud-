@@ -419,7 +419,7 @@
                         @endif
                     </div>
                     @if($module->banner_image)
-                        <img src="https://govkloudstorage.blob.core.windows.net/videos/{{ $module->banner_image }}" alt="{{ $module->title }}">
+                        <img src="{{ Storage::disk('azure')->url($module->banner_image) }}" alt="{{ $module->title }}">
                     @else
                         <span class="course-card-icon">
                             @if($module->category == 'Cloud Engineer')
