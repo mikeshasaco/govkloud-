@@ -143,7 +143,7 @@ class LabSessionController extends Controller
         // Check for existing active session for this MODULE
         $existingSession = LabSession::where('user_id', $user->id)
             ->where('module_id', $module->id)
-            ->whereIn('status', [LabSession::STATUS_PROVISIONING, LabSession::STATUS_RUNNING])
+            ->whereIn('status', [LabSession::STATUS_PROVISIONING, LabSession::STATUS_RUNNING, LabSession::STATUS_ERROR])
             ->first();
 
         if ($existingSession) {
@@ -156,8 +156,17 @@ class LabSessionController extends Controller
                     'session_id' => $existingSession->id,
                     'age_minutes' => $existingSession->created_at->diffInMinutes(now()),
                 ]);
-                $existingSession->markError('Provisioning timed out (stale session auto-cleanup)');
+                $existingSession->update(['status' => LabSession::STATUS_DESTROYED]);
                 // Fall through to create a new session
+
+            // Auto-cleanup errored sessions so user can retry
+            } elseif ($existingSession->status === LabSession::STATUS_ERROR) {
+                \Log::info("Auto-cleaning errored session for retry", [
+                    'session_id' => $existingSession->id,
+                ]);
+                $existingSession->update(['status' => LabSession::STATUS_DESTROYED]);
+                // Fall through to create a new session
+
             } else {
                 return redirect()->route('lab-sessions.runtime', $existingSession->id);
             }

@@ -1,0 +1,6 @@
+<step title="Incoming Request" date="2026-04-12T23:40:07.365" instance="9b8d90" url="/logstream/http" method="GET" type="request" pid="768,1,19" Host="govkloud-app.scm.azurewebsites.net" User-Agent="AZURECLI/2.82.0 (HOMEBREW)" Accept-Encoding="identity" Authorization="Bea..." x-ms-client-request-id="ecad6eb4-36c8-11f1-974d-0e2fc4508f4a" X-ARR-LOG-ID="ecad6eb4-36c8-11f1-974d-0e2fc4508f4a" CLIENT-IP="73.233.183.24:63830" X-SITE-DEPLOYMENT-ID="govkloud-app" WAS-DEFAULT-HOSTNAME="govkloud-app.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/logstream/http" X-Client-IP="73.233.183.24" X-Client-Port="63830" >
+  <step title="Cleanup Xml Logs" date="2026-04-12T23:40:07.367" /><!-- duration: 7ms -->
+  <step title="LogStreamHandlerMiddleware.Invoke" date="2026-04-12T23:40:07.399" /><!-- duration: 10ms -->
+  <step title="Error occurred" date="2026-04-12T23:41:07.413" type="error" text="LogStreamManager: ProcessRequest end" /><!-- duration: 2ms -->
+  <step title="Outgoing response" date="2026-04-12T23:41:07.419" type="response" statusCode="200" statusText="OK" /><!-- duration: 2ms -->
+</step><!-- duration: 60057ms -->

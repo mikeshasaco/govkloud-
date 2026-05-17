@@ -1,0 +1,4 @@
+<step title="Incoming Request" date="2026-02-17T09:59:39.678" instance="64bc73" url="/api/settings" method="GET" type="request" pid="768,1,80" Accept="*/*" Host="govkloud-app.scm.azurewebsites.net" User-Agent="AZURECLI/2.82.0 (HOMEBREW)" Accept-Encoding="gzip, deflate" Authorization="Bea..." x-ms-client-request-id="5a88add4-0be7-11f1-97f6-0e2fc4508f4a" X-ARR-LOG-ID="5a88add4-0be7-11f1-97f6-0e2fc4508f4a" CLIENT-IP="73.233.183.24:56299" X-SITE-DEPLOYMENT-ID="govkloud-app" WAS-DEFAULT-HOSTNAME="govkloud-app.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/settings" X-Client-IP="73.233.183.24" X-Client-Port="56299" >
+  <step title="Cleanup Xml Logs" date="2026-02-17T09:59:39.680" /><!-- duration: 4ms -->
+  <step title="Outgoing response" date="2026-02-17T09:59:39.707" type="response" statusCode="200" statusText="OK" /><!-- duration: 11ms -->
+</step><!-- duration: 42ms -->
