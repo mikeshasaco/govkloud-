@@ -1205,7 +1205,7 @@
             document.getElementById('statusText').textContent = 'Running';
 
             const panel = document.getElementById('workbenchPanel');
-            panel.innerHTML = '<iframe class="workbench-iframe" src="' + codeUrl + '"></iframe>';
+            panel.innerHTML = '<iframe class="workbench-iframe" src="' + codeUrl + '" allow="clipboard-read; clipboard-write"></iframe>';
 
             startHeartbeat();
             startIdleTracking();
