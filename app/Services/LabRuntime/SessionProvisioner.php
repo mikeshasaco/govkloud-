@@ -210,11 +210,23 @@ class SessionProvisioner
       config('govkloud.helm.vcluster_repo')
     );
 
-    // vcluster v0.21+ uses new values format
-    // Use upgradeInstallNoWait to avoid blocking, we poll for readiness separately
+    // vcluster v0.34+ values format
+    // Security hardening:
+    //   - Disable real node syncing so users can't see AKS node names
+    //   - Use fake nodes so kubectl get nodes still works for exercises
+    //   - Limit what syncs from host to keep users sandboxed
     $values = [
       'controlPlane.statefulSet.resources.limits.memory' => '512Mi',
       'controlPlane.statefulSet.resources.limits.cpu' => '500m',
+
+      // Hide real nodes — use fake/virtual nodes instead
+      'sync.fromHost.nodes.enabled' => 'false',
+
+      // Disable syncing host storage classes (users don't need them)
+      'sync.fromHost.storageClasses.enabled' => 'false',
+
+      // Disable syncing host ingress classes
+      'sync.fromHost.ingressClasses.enabled' => 'false',
     ];
 
     return $this->helmClient->upgradeInstallNoWait(
