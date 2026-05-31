@@ -422,26 +422,10 @@ YAML;
       $kubeconfigData
     );
 
-    Log::info("Extracted and rewrote vcluster kubeconfig", [
-      'server_url' => $vclusterServiceUrl,
-    ]);
-
-    // Try to extract lab-user token from inside the vcluster via kubectl exec.
-    // init.manifests creates the lab-user SA + token at vcluster startup.
-    // We exec into the vcluster pod because the App Service can't reach
-    // the vcluster API via K8s internal DNS.
-    $restrictedKubeconfig = $this->buildLabUserKubeconfig(
-      $session, $kubeconfigData, $vclusterServiceUrl
-    );
-
-    if ($restrictedKubeconfig) {
-      Log::info("Using restricted lab-user kubeconfig (nodes hidden)");
-      $kubeconfigData = $restrictedKubeconfig;
-    } else {
-      Log::warning("Falling back to admin kubeconfig — lab-user token not yet available");
-    }
 
     // Store as a new secret for the workbench pod to mount
+    // (admin kubeconfig — the init container in the workbench will
+    //  replace it with the restricted lab-user kubeconfig)
     return $this->k8sClient->createSecretFromFile(
       $namespace,
       'vcluster-kubeconfig',
@@ -449,195 +433,6 @@ YAML;
       $kubeconfigData
     );
   }
-
-  /**
-   * Extract the lab-user service account token from inside the vcluster
-   * and build a restricted kubeconfig that hides nodes from users.
-   *
-   * Uses a short-lived K8s Job that runs inside the cluster — it can
-   * reach the vcluster API via internal DNS, unlike the App Service.
-   * The Job mounts the admin kubeconfig, extracts the lab-user token,
-   * and writes the restricted kubeconfig to a new secret.
-   *
-   * Returns null if the token extraction fails.
-   */
-  protected function buildLabUserKubeconfig(
-    LabSession $session,
-    string $adminKubeconfig,
-    string $vclusterServiceUrl
-  ): ?string {
-    $namespace = $session->host_namespace;
-    $jobName = 'extract-lab-token';
-
-    // The Job script:
-    // 1. Wait for the lab-user-token secret inside the vcluster
-    // 2. Extract the token and CA cert
-    // 3. Build a restricted kubeconfig
-    // 4. Create a K8s secret with the restricted kubeconfig
-    $script = <<<'SCRIPT'
-#!/bin/sh
-set -e
-
-export KUBECONFIG=/admin-kc/config
-
-# Wait for lab-user-token to be populated (init.manifests creates it)
-MAX_WAIT=60
-WAITED=0
-while [ $WAITED -lt $MAX_WAIT ]; do
-  TOKEN_B64=$(kubectl get secret lab-user-token -n default -o jsonpath='{.data.token}' 2>/dev/null || echo "")
-  if [ -n "$TOKEN_B64" ]; then
-    break
-  fi
-  echo "Waiting for lab-user-token... ($WAITED s)"
-  sleep 3
-  WAITED=$((WAITED + 3))
-done
-
-if [ -z "$TOKEN_B64" ]; then
-  echo "ERROR: Timed out waiting for lab-user-token"
-  exit 1
-fi
-
-# Decode the token
-TOKEN=$(echo "$TOKEN_B64" | base64 -d)
-
-# Get the CA cert (base64-encoded)
-CA_B64=$(kubectl get secret lab-user-token -n default -o jsonpath='{.data.ca\.crt}')
-
-# Get the server URL from current kubeconfig
-SERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
-
-# Build the restricted kubeconfig
-cat > /tmp/restricted-kubeconfig << EOF
-apiVersion: v1
-kind: Config
-clusters:
-- cluster:
-    certificate-authority-data: ${CA_B64}
-    server: ${SERVER}
-  name: vcluster
-contexts:
-- context:
-    cluster: vcluster
-    user: lab-user
-    namespace: default
-  name: lab-user@vcluster
-current-context: lab-user@vcluster
-users:
-- name: lab-user
-  user:
-    token: ${TOKEN}
-EOF
-
-echo "Restricted kubeconfig built successfully"
-cat /tmp/restricted-kubeconfig
-SCRIPT;
-
-    // Create a ConfigMap with the script
-    $scriptConfigMapYaml = sprintf(
-      "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: %s-script\ndata:\n  extract.sh: |\n%s",
-      $jobName,
-      implode("\n", array_map(fn($line) => "    {$line}", explode("\n", $script)))
-    );
-
-    $this->k8sClient->applyYaml($namespace, $scriptConfigMapYaml);
-
-    // Create the Job that runs inside the cluster
-    $jobYaml = <<<YAML
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: {$jobName}
-spec:
-  ttlSecondsAfterFinished: 30
-  backoffLimit: 0
-  template:
-    spec:
-      restartPolicy: Never
-      containers:
-      - name: extract
-        image: bitnami/kubectl:latest
-        command: ["/bin/sh", "/scripts/extract.sh"]
-        volumeMounts:
-        - name: admin-kubeconfig
-          mountPath: /admin-kc
-          readOnly: true
-        - name: script
-          mountPath: /scripts
-          readOnly: true
-      volumes:
-      - name: admin-kubeconfig
-        secret:
-          secretName: vcluster-kubeconfig
-      - name: script
-        configMap:
-          name: {$jobName}-script
-          defaultMode: 0755
-YAML;
-
-    // Delete any existing job first
-    $this->k8sClient->runCommand(['delete', 'job', $jobName, '-n', $namespace, '--ignore-not-found']);
-    $this->k8sClient->applyYaml($namespace, $jobYaml);
-
-    // Wait for the Job to complete
-    $maxWait = 90;
-    $waited = 0;
-    $jobOutput = null;
-
-    while ($waited < $maxWait) {
-      $result = $this->k8sClient->runCommand([
-        'get', 'job', $jobName, '-n', $namespace,
-        '-o', 'jsonpath={.status.succeeded}'
-      ]);
-
-      if ($result['success'] && trim($result['output']) === '1') {
-        // Job completed — get the output (the restricted kubeconfig)
-        $logsResult = $this->k8sClient->runCommand([
-          'logs', "job/{$jobName}", '-n', $namespace
-        ]);
-
-        if ($logsResult['success']) {
-          $jobOutput = $logsResult['output'];
-        }
-        break;
-      }
-
-      // Check if the Job failed
-      $failResult = $this->k8sClient->runCommand([
-        'get', 'job', $jobName, '-n', $namespace,
-        '-o', 'jsonpath={.status.failed}'
-      ]);
-      if ($failResult['success'] && trim($failResult['output']) === '1') {
-        $logsResult = $this->k8sClient->runCommand([
-          'logs', "job/{$jobName}", '-n', $namespace
-        ]);
-        Log::error("Token extraction job failed", [
-          'output' => $logsResult['output'] ?? 'no logs',
-        ]);
-        break;
-      }
-
-      sleep(3);
-      $waited += 3;
-    }
-
-    // Cleanup
-    $this->k8sClient->runCommand(['delete', 'job', $jobName, '-n', $namespace, '--ignore-not-found']);
-    $this->k8sClient->runCommand(['delete', 'configmap', "{$jobName}-script", '-n', $namespace, '--ignore-not-found']);
-
-    if (empty($jobOutput)) {
-      return null;
-    }
-
-    // Extract just the kubeconfig YAML from the Job output
-    // (skip the log lines, find the YAML block)
-    if (preg_match('/^(apiVersion: v1\nkind: Config\n.+)$/ms', $jobOutput, $matches)) {
-      return $matches[1];
-    }
-
-    return null;
-  }
-
 
   /**
    * Install workbench (code-server) deployment
@@ -744,6 +539,60 @@ spec:
         app: workbench
         session: {$session->id}
     spec:
+      initContainers:
+      - name: setup-kubeconfig
+        image: {$lab->workbench_image}
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo "Waiting for lab-user-token inside vcluster..."
+          export KUBECONFIG=/admin-kc/config
+          MAX_WAIT=60
+          WAITED=0
+          while [ \$WAITED -lt \$MAX_WAIT ]; do
+            TOKEN_B64=\$(kubectl get secret lab-user-token -n default -o jsonpath='{.data.token}' 2>/dev/null || echo "")
+            if [ -n "\$TOKEN_B64" ]; then
+              echo "Token found after \${WAITED}s"
+              break
+            fi
+            sleep 3
+            WAITED=\$((WAITED + 3))
+          done
+          if [ -z "\$TOKEN_B64" ]; then
+            echo "WARN: lab-user-token not found, using admin kubeconfig"
+            cp /admin-kc/config /kubeconfig-out/config
+            exit 0
+          fi
+          TOKEN=\$(echo "\$TOKEN_B64" | base64 -d)
+          CA_B64=\$(kubectl get secret lab-user-token -n default -o jsonpath='{.data.ca\.crt}')
+          SERVER=\$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+          cat > /kubeconfig-out/config << KUBEEOF
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - cluster:
+              certificate-authority-data: \${CA_B64}
+              server: \${SERVER}
+            name: vcluster
+          contexts:
+          - context:
+              cluster: vcluster
+              user: lab-user
+              namespace: default
+            name: lab-user@vcluster
+          current-context: lab-user@vcluster
+          users:
+          - name: lab-user
+            user:
+              token: \${TOKEN}
+          KUBEEOF
+          echo "Restricted kubeconfig written"
+        volumeMounts:
+        - name: admin-kubeconfig
+          mountPath: /admin-kc
+          readOnly: true
+        - name: kubeconfig
+          mountPath: /kubeconfig-out
       containers:
       - name: code-server
         image: {$lab->workbench_image}
@@ -764,9 +613,11 @@ spec:
         - name: workspace
           mountPath: /workspace
       volumes:
-      - name: kubeconfig
+      - name: admin-kubeconfig
         secret:
           secretName: vcluster-kubeconfig
+      - name: kubeconfig
+        emptyDir: {}
       - name: workspace
         emptyDir: {}
 ---
