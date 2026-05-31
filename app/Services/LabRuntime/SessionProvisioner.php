@@ -66,14 +66,6 @@ class SessionProvisioner
         throw new Exception("Failed to store vcluster kubeconfig");
       }
 
-      // Step 5b: Apply RBAC inside vcluster to hide nodes from users
-      // Pseudo nodes expose real AKS node names even with sync disabled.
-      // Create a restricted service account and rewrite the kubeconfig.
-      Log::info("Applying vcluster RBAC to restrict node access");
-      if (!$this->applyVclusterRbac($session)) {
-        Log::warning("Failed to apply vcluster RBAC — users may see node names");
-      }
-
       // Step 6: Install workbench (helm upgrade --install is idempotent)
       Log::info("Installing/upgrading workbench: {$session->workbench_release_name}");
       if (!$this->installWorkbench($session)) {
@@ -218,31 +210,147 @@ class SessionProvisioner
       config('govkloud.helm.vcluster_repo')
     );
 
-    // vcluster v0.34+ values format
-    // Security hardening:
-    //   - Disable real node syncing so users can't see AKS node names
-    //   - Use fake nodes so kubectl get nodes still works for exercises
-    //   - Limit what syncs from host to keep users sandboxed
-    $values = [
-      'controlPlane.statefulSet.resources.limits.memory' => '512Mi',
-      'controlPlane.statefulSet.resources.limits.cpu' => '500m',
+    // Build values YAML with init.manifests for RBAC bootstrapping
+    // vcluster applies init.manifests inside the virtual cluster at startup,
+    // so RBAC is enforced before any user can interact with it.
+    $valuesYaml = $this->generateVclusterValues();
 
-      // Hide real nodes — use fake/virtual nodes instead
-      'sync.fromHost.nodes.enabled' => 'false',
-
-      // Disable syncing host storage classes (users don't need them)
-      'sync.fromHost.storageClasses.enabled' => 'false',
-
-      // Disable syncing host ingress classes
-      'sync.fromHost.ingressClasses.enabled' => 'false',
-    ];
-
-    return $this->helmClient->upgradeInstallNoWait(
+    return $this->helmClient->upgradeInstallWithValuesFileNoWait(
       $session->vcluster_release_name,
       config('govkloud.helm.vcluster_chart'),
       $session->host_namespace,
-      $values
+      $valuesYaml
     );
+  }
+
+  /**
+   * Generate vcluster Helm values YAML including security hardening
+   * and init.manifests for RBAC bootstrapping inside the vcluster
+   */
+  protected function generateVclusterValues(): string
+  {
+    return <<<'YAML'
+controlPlane:
+  statefulSet:
+    resources:
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+sync:
+  fromHost:
+    nodes:
+      enabled: false
+    storageClasses:
+      enabled: false
+    ingressClasses:
+      enabled: false
+
+# Bootstrap RBAC inside the vcluster at startup.
+# This creates a restricted service account that has access to
+# everything EXCEPT nodes — hiding real AKS infrastructure names.
+# The admin kubeconfig (kubernetes-super-admin) is still used by
+# the workbench, but this RBAC layer is ready if we switch to
+# the lab-user identity in the future.
+init:
+  manifests: |-
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: lab-user
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: lab-user-token
+      namespace: default
+      annotations:
+        kubernetes.io/service-account.name: lab-user
+    type: kubernetes.io/service-account-token
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: lab-user-role
+    rules:
+    # Namespaced core resources (full CRUD)
+    - apiGroups: [""]
+      resources:
+      - pods
+      - pods/log
+      - pods/exec
+      - pods/portforward
+      - services
+      - endpoints
+      - configmaps
+      - secrets
+      - persistentvolumeclaims
+      - serviceaccounts
+      - events
+      - replicationcontrollers
+      - resourcequotas
+      - limitranges
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    # Workload controllers (full CRUD)
+    - apiGroups: ["apps"]
+      resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    - apiGroups: ["batch"]
+      resources: ["jobs", "cronjobs"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    # Networking (full CRUD)
+    - apiGroups: ["networking.k8s.io"]
+      resources: ["ingresses", "networkpolicies"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    # Autoscaling
+    - apiGroups: ["autoscaling"]
+      resources: ["horizontalpodautoscalers"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    # Policy
+    - apiGroups: ["policy"]
+      resources: ["poddisruptionbudgets"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    # Namespace-scoped RBAC (users can practice RBAC within namespaces)
+    - apiGroups: ["rbac.authorization.k8s.io"]
+      resources: ["roles", "rolebindings"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    # Cluster-scoped: read-only where needed
+    - apiGroups: [""]
+      resources: ["namespaces"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    - apiGroups: [""]
+      resources: ["persistentvolumes"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["storage.k8s.io"]
+      resources: ["storageclasses"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["rbac.authorization.k8s.io"]
+      resources: ["clusterroles", "clusterrolebindings"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["apiextensions.k8s.io"]
+      resources: ["customresourcedefinitions"]
+      verbs: ["get", "list", "watch"]
+    # BLOCKED (no rules = denied by default):
+    # - nodes (hides AKS infrastructure)
+    # - clusterroles/clusterrolebindings write (prevents privilege escalation)
+    # - CRDs write (prevents API server destabilization)
+    # - webhook configs (prevents API interception)
+    # - apiservices, csidrivers, certificatesigningrequests
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: lab-user-binding
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: lab-user-role
+    subjects:
+    - kind: ServiceAccount
+      name: lab-user
+      namespace: default
+YAML;
   }
 
   /**
@@ -268,10 +376,11 @@ class SessionProvisioner
   protected function storeVclusterKubeconfig(LabSession $session): bool
   {
     $kubeconfigPath = config('govkloud.host_k8s.kubeconfig_path');
+    $kubectlPath = config('govkloud.kubectl.binary_path');
     $namespace = $session->host_namespace;
     $releaseName = $session->vcluster_release_name;
 
-    // The vcluster creates a secret named "vc-vc-{release}" containing
+    // The vcluster creates a secret named "vc-{release}" containing
     // the admin kubeconfig (key: "config", base64-encoded)
     $secretName = "vc-{$releaseName}";
 
@@ -283,7 +392,7 @@ class SessionProvisioner
     while ($waited < $maxWait) {
       $command = sprintf(
         '%s get secret %s -n %s --kubeconfig %s -o jsonpath={.data.config} 2>&1',
-        escapeshellarg(config('govkloud.kubectl.binary_path')),
+        escapeshellarg($kubectlPath),
         escapeshellarg($secretName),
         escapeshellarg($namespace),
         escapeshellarg($kubeconfigPath)
@@ -331,6 +440,21 @@ class SessionProvisioner
       'server_url' => $vclusterServiceUrl,
     ]);
 
+    // Try to extract lab-user token from inside the vcluster via kubectl exec.
+    // init.manifests creates the lab-user SA + token at vcluster startup.
+    // We exec into the vcluster pod because the App Service can't reach
+    // the vcluster API via K8s internal DNS.
+    $restrictedKubeconfig = $this->buildLabUserKubeconfig(
+      $session, $kubeconfigData, $vclusterServiceUrl
+    );
+
+    if ($restrictedKubeconfig) {
+      Log::info("Using restricted lab-user kubeconfig (nodes hidden)");
+      $kubeconfigData = $restrictedKubeconfig;
+    } else {
+      Log::warning("Falling back to admin kubeconfig — lab-user token not yet available");
+    }
+
     // Store as a new secret for the workbench pod to mount
     return $this->k8sClient->createSecretFromFile(
       $namespace,
@@ -341,208 +465,78 @@ class SessionProvisioner
   }
 
   /**
-   * Apply RBAC inside the vcluster to create a restricted user.
-   * This prevents users from seeing real AKS node names via pseudo nodes.
-   * Creates a service account with full access EXCEPT nodes, then rewrites
-   * the stored kubeconfig to use that restricted identity.
+   * Extract the lab-user service account token from inside the vcluster pod
+   * and build a restricted kubeconfig that hides nodes from users.
+   * Returns null if the token isn't available yet.
    */
-  protected function applyVclusterRbac(LabSession $session): bool
-  {
-    $namespace = $session->host_namespace;
+  protected function buildLabUserKubeconfig(
+    LabSession $session,
+    string $adminKubeconfig,
+    string $vclusterServiceUrl
+  ): ?string {
     $kubeconfigPath = config('govkloud.host_k8s.kubeconfig_path');
     $kubectlPath = config('govkloud.kubectl.binary_path');
-    $releaseName = $session->vcluster_release_name;
-    $vclusterServiceUrl = "https://{$releaseName}.{$namespace}:443";
+    $namespace = $session->host_namespace;
+    $podName = "{$session->vcluster_release_name}-0";
 
-    // Get the admin kubeconfig from the secret we just stored
-    $adminKubeconfig = $this->k8sClient->getSecretData($namespace, 'vcluster-kubeconfig', 'config');
-    if (empty($adminKubeconfig)) {
-      Log::error('Cannot read vcluster-kubeconfig secret for RBAC setup');
-      return false;
-    }
+    // Wait for the lab-user-token to be populated inside the vcluster
+    // (init.manifests runs at startup, but token generation takes a moment)
+    $maxWait = 30;
+    $waited = 0;
+    $token = null;
+    $caCertB64 = null;
 
-    // Write admin kubeconfig to temp file for kubectl commands against the vcluster
-    $adminKubeconfigFile = tempnam(sys_get_temp_dir(), 'vc_admin_kc_');
-    file_put_contents($adminKubeconfigFile, $adminKubeconfig);
-
-    try {
-      // RBAC resources to apply inside the vcluster
-      $rbacYaml = <<<YAML
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: lab-user
-  namespace: default
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: lab-user-token
-  namespace: default
-  annotations:
-    kubernetes.io/service-account.name: lab-user
-type: kubernetes.io/service-account-token
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: lab-user-role
-rules:
-# ── Namespaced core resources (full CRUD) ──
-- apiGroups: [""]
-  resources:
-  - pods
-  - pods/log
-  - pods/exec
-  - pods/portforward
-  - services
-  - endpoints
-  - configmaps
-  - secrets
-  - persistentvolumeclaims
-  - serviceaccounts
-  - events
-  - replicationcontrollers
-  - resourcequotas
-  - limitranges
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-# ── Workload controllers (full CRUD) ──
-- apiGroups: ["apps"]
-  resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-- apiGroups: ["batch"]
-  resources: ["jobs", "cronjobs"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-# ── Networking (full CRUD) ──
-- apiGroups: ["networking.k8s.io"]
-  resources: ["ingresses", "networkpolicies"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-# ── Autoscaling ──
-- apiGroups: ["autoscaling"]
-  resources: ["horizontalpodautoscalers"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-# ── Policy ──
-- apiGroups: ["policy"]
-  resources: ["poddisruptionbudgets"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-# ── Namespace-scoped RBAC (users can practice RBAC within namespaces) ──
-- apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["roles", "rolebindings"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-# ── Cluster-scoped: read-only where needed ──
-- apiGroups: [""]
-  resources: ["namespaces"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-- apiGroups: [""]
-  resources: ["persistentvolumes"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["storage.k8s.io"]
-  resources: ["storageclasses"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["clusterroles", "clusterrolebindings"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["apiextensions.k8s.io"]
-  resources: ["customresourcedefinitions"]
-  verbs: ["get", "list", "watch"]
-# ── BLOCKED (no rules = denied by default) ──
-# - nodes                          → hides AKS infrastructure
-# - clusterroles (write)           → prevents privilege escalation
-# - clusterrolebindings (write)    → prevents privilege escalation
-# - customresourcedefinitions (write) → prevents API server destabilization
-# - mutatingwebhookconfigurations  → prevents API interception
-# - validatingwebhookconfigurations → prevents API blocking
-# - apiservices                    → prevents malicious API registration
-# - csidrivers / csinodes          → storage infrastructure
-# - certificatesigningrequests     → prevents unauthorized cert generation
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: lab-user-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: lab-user-role
-subjects:
-- kind: ServiceAccount
-  name: lab-user
-  namespace: default
-YAML;
-
-      // Apply RBAC inside the vcluster using the admin kubeconfig
-      $rbacFile = tempnam(sys_get_temp_dir(), 'vc_rbac_');
-      file_put_contents($rbacFile, $rbacYaml);
-
-      $applyCmd = sprintf(
-        '%s apply -f %s --kubeconfig %s 2>&1',
+    while ($waited < $maxWait) {
+      // Extract token via kubectl exec into the vcluster pod
+      // Inside the pod, kubectl is available with admin access to the vcluster API
+      $tokenCmd = sprintf(
+        '%s exec %s -n %s --kubeconfig %s -- ' .
+        'kubectl get secret lab-user-token -n default -o jsonpath={.data.token} 2>&1',
         escapeshellarg($kubectlPath),
-        escapeshellarg($rbacFile),
-        escapeshellarg($adminKubeconfigFile)
+        escapeshellarg($podName),
+        escapeshellarg($namespace),
+        escapeshellarg($kubeconfigPath)
       );
 
-      $output = [];
-      $returnCode = 0;
-      exec($applyCmd, $output, $returnCode);
-      unlink($rbacFile);
+      $tokenOutput = [];
+      $tokenRc = 0;
+      exec($tokenCmd, $tokenOutput, $tokenRc);
+      $tokenB64 = implode('', $tokenOutput);
 
-      if ($returnCode !== 0) {
-        Log::error('Failed to apply RBAC inside vcluster', [
-          'output' => implode("\n", $output),
-        ]);
-        return false;
-      }
+      if ($tokenRc === 0 && !empty($tokenB64) && !str_contains($tokenB64, 'NotFound') && !str_contains($tokenB64, 'error')) {
+        $token = base64_decode($tokenB64);
 
-      Log::info('Applied RBAC inside vcluster', ['output' => implode("\n", $output)]);
-
-      // Wait for the service account token secret to be populated
-      $maxWait = 30;
-      $waited = 0;
-      $token = null;
-      $caCert = null;
-
-      while ($waited < $maxWait) {
-        // Get the token from the secret
-        $tokenCmd = sprintf(
-          '%s get secret lab-user-token -n default --kubeconfig %s -o jsonpath={.data.token} 2>&1',
+        // Extract CA cert
+        $caCmd = sprintf(
+          '%s exec %s -n %s --kubeconfig %s -- ' .
+          'kubectl get secret lab-user-token -n default -o jsonpath={.data.ca\\.crt} 2>&1',
           escapeshellarg($kubectlPath),
-          escapeshellarg($adminKubeconfigFile)
+          escapeshellarg($podName),
+          escapeshellarg($namespace),
+          escapeshellarg($kubeconfigPath)
         );
-        $tokenOutput = [];
-        exec($tokenCmd, $tokenOutput, $tokenRc);
-        $tokenB64 = implode('', $tokenOutput);
-
-        if ($tokenRc === 0 && !empty($tokenB64) && !str_contains($tokenB64, 'NotFound')) {
-          $token = base64_decode($tokenB64);
-
-          // Get CA cert
-          $caCmd = sprintf(
-            '%s get secret lab-user-token -n default --kubeconfig %s -o jsonpath={.data.ca\\.crt} 2>&1',
-            escapeshellarg($kubectlPath),
-            escapeshellarg($adminKubeconfigFile)
-          );
-          $caOutput = [];
-          exec($caCmd, $caOutput, $caRc);
-          $caCert = implode('', $caOutput);
-          break;
-        }
-
-        sleep(2);
-        $waited += 2;
+        $caOutput = [];
+        exec($caCmd, $caOutput, $caRc);
+        $caCertB64 = implode('', $caOutput);
+        break;
       }
 
-      if (empty($token)) {
-        Log::error('Timed out waiting for lab-user service account token');
-        return false;
-      }
+      Log::debug("Waiting for lab-user-token inside vcluster...", ['waited' => $waited]);
+      sleep(3);
+      $waited += 3;
+    }
 
-      // Build restricted kubeconfig using the service account token
-      $restrictedKubeconfig = <<<KUBECONFIG
+    if (empty($token) || empty($caCertB64)) {
+      return null;
+    }
+
+    // Build restricted kubeconfig using the service account token
+    return <<<KUBECONFIG
 apiVersion: v1
 kind: Config
 clusters:
 - cluster:
-    certificate-authority-data: {$caCert}
+    certificate-authority-data: {$caCertB64}
     server: {$vclusterServiceUrl}
   name: vcluster
 contexts:
@@ -557,24 +551,8 @@ users:
   user:
     token: {$token}
 KUBECONFIG;
-
-      // Overwrite the stored kubeconfig secret with the restricted one
-      $stored = $this->k8sClient->createSecretFromFile(
-        $namespace,
-        'vcluster-kubeconfig',
-        'config',
-        $restrictedKubeconfig
-      );
-
-      if ($stored) {
-        Log::info('Replaced vcluster kubeconfig with restricted lab-user kubeconfig');
-      }
-
-      return $stored;
-    } finally {
-      unlink($adminKubeconfigFile);
-    }
   }
+
 
   /**
    * Install workbench (code-server) deployment

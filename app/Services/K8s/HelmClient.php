@@ -175,6 +175,46 @@ class HelmClient
     }
 
     /**
+     * Upgrade or install a Helm release with a values file (without waiting)
+     * Supports both --set values and a -f values file for complex nested values
+     * like init.manifests that can't be passed via --set
+     */
+    public function upgradeInstallWithValuesFileNoWait(
+        string $release,
+        string $chart,
+        string $namespace,
+        string $valuesYaml,
+        array $setValues = []
+    ): bool {
+        $tempFile = tempnam(sys_get_temp_dir(), 'helm_values_');
+        file_put_contents($tempFile, $valuesYaml);
+
+        try {
+            $args = [
+                'upgrade',
+                '--install',
+                $release,
+                $chart,
+                '-n',
+                $namespace,
+                '--create-namespace',
+                '-f',
+                $tempFile,
+            ];
+
+            foreach ($setValues as $key => $value) {
+                $args[] = '--set';
+                $args[] = "{$key}={$value}";
+            }
+
+            $result = $this->runCommand($args);
+            return $result['success'];
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    /**
      * Uninstall a Helm release
      */
     public function uninstall(string $release, string $namespace): bool
