@@ -240,7 +240,7 @@ class K8sClient
     /**
      * Run a kubectl command
      */
-    protected function runCommand(array $args): array
+    public function runCommand(array $args): array
     {
         $command = [$this->kubectlPath];
 
