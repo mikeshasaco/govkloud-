@@ -249,107 +249,93 @@ sync:
 # Bootstrap RBAC inside the vcluster at startup.
 # This creates a restricted service account that has access to
 # everything EXCEPT nodes — hiding real AKS infrastructure names.
-# The admin kubeconfig (kubernetes-super-admin) is still used by
-# the workbench, but this RBAC layer is ready if we switch to
-# the lab-user identity in the future.
-init:
-  manifests: |-
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: lab-user
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: lab-user-token
-      namespace: default
-      annotations:
-        kubernetes.io/service-account.name: lab-user
-    type: kubernetes.io/service-account-token
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      name: lab-user-role
-    rules:
-    # Namespaced core resources (full CRUD)
-    - apiGroups: [""]
-      resources:
-      - pods
-      - pods/log
-      - pods/exec
-      - pods/portforward
-      - services
-      - endpoints
-      - configmaps
-      - secrets
-      - persistentvolumeclaims
-      - serviceaccounts
-      - events
-      - replicationcontrollers
-      - resourcequotas
-      - limitranges
-      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-    # Workload controllers (full CRUD)
-    - apiGroups: ["apps"]
-      resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
-      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-    - apiGroups: ["batch"]
-      resources: ["jobs", "cronjobs"]
-      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-    # Networking (full CRUD)
-    - apiGroups: ["networking.k8s.io"]
-      resources: ["ingresses", "networkpolicies"]
-      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-    # Autoscaling
-    - apiGroups: ["autoscaling"]
-      resources: ["horizontalpodautoscalers"]
-      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-    # Policy
-    - apiGroups: ["policy"]
-      resources: ["poddisruptionbudgets"]
-      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-    # Namespace-scoped RBAC (users can practice RBAC within namespaces)
-    - apiGroups: ["rbac.authorization.k8s.io"]
-      resources: ["roles", "rolebindings"]
-      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-    # Cluster-scoped: read-only where needed
-    - apiGroups: [""]
-      resources: ["namespaces"]
-      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-    - apiGroups: [""]
-      resources: ["persistentvolumes"]
-      verbs: ["get", "list", "watch"]
-    - apiGroups: ["storage.k8s.io"]
-      resources: ["storageclasses"]
-      verbs: ["get", "list", "watch"]
-    - apiGroups: ["rbac.authorization.k8s.io"]
-      resources: ["clusterroles", "clusterrolebindings"]
-      verbs: ["get", "list", "watch"]
-    - apiGroups: ["apiextensions.k8s.io"]
-      resources: ["customresourcedefinitions"]
-      verbs: ["get", "list", "watch"]
-    # BLOCKED (no rules = denied by default):
-    # - nodes (hides AKS infrastructure)
-    # - clusterroles/clusterrolebindings write (prevents privilege escalation)
-    # - CRDs write (prevents API server destabilization)
-    # - webhook configs (prevents API interception)
-    # - apiservices, csidrivers, certificatesigningrequests
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      name: lab-user-binding
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
-      kind: ClusterRole
-      name: lab-user-role
-    subjects:
-    - kind: ServiceAccount
-      name: lab-user
-      namespace: default
+experimental:
+  deploy:
+    vcluster:
+      manifests: |-
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: lab-user
+          namespace: default
+        ---
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: lab-user-token
+          namespace: default
+          annotations:
+            kubernetes.io/service-account.name: lab-user
+        type: kubernetes.io/service-account-token
+        ---
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRole
+        metadata:
+          name: lab-user-role
+        rules:
+        - apiGroups: [""]
+          resources:
+          - pods
+          - pods/log
+          - pods/exec
+          - pods/portforward
+          - services
+          - endpoints
+          - configmaps
+          - secrets
+          - persistentvolumeclaims
+          - serviceaccounts
+          - events
+          - replicationcontrollers
+          - resourcequotas
+          - limitranges
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - apiGroups: ["apps"]
+          resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - apiGroups: ["batch"]
+          resources: ["jobs", "cronjobs"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - apiGroups: ["networking.k8s.io"]
+          resources: ["ingresses", "networkpolicies"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - apiGroups: ["autoscaling"]
+          resources: ["horizontalpodautoscalers"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - apiGroups: ["policy"]
+          resources: ["poddisruptionbudgets"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - apiGroups: ["rbac.authorization.k8s.io"]
+          resources: ["roles", "rolebindings"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - apiGroups: [""]
+          resources: ["namespaces"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - apiGroups: [""]
+          resources: ["persistentvolumes"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: ["storage.k8s.io"]
+          resources: ["storageclasses"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: ["rbac.authorization.k8s.io"]
+          resources: ["clusterroles", "clusterrolebindings"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: ["apiextensions.k8s.io"]
+          resources: ["customresourcedefinitions"]
+          verbs: ["get", "list", "watch"]
+        ---
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: lab-user-binding
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: lab-user-role
+        subjects:
+        - kind: ServiceAccount
+          name: lab-user
+          namespace: default
 YAML;
   }
 
