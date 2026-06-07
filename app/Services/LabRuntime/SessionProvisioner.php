@@ -236,6 +236,15 @@ controlPlane:
       limits:
         memory: "512Mi"
         cpu: "500m"
+  coredns:
+    deployment:
+      resources:
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+        requests:
+          cpu: "10m"
+          memory: "64Mi"
 
 sync:
   fromHost:
