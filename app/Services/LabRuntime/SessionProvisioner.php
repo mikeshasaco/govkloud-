@@ -187,7 +187,7 @@ class SessionProvisioner
     // Quota limits are set higher to accommodate vcluster + workbench + overhead
     // Do NOT use workbench limits here - those are just for the workbench pod
     $quotaLimits = [
-      'cpu' => config('govkloud.resources.namespace_cpu_quota', '2'),
+      'cpu' => config('govkloud.resources.namespace_cpu_quota', '4'),
       'memory' => config('govkloud.resources.namespace_memory_quota', '4Gi'),
       'storage' => config('govkloud.resources.default_storage_limit', '10Gi'),
     ];
