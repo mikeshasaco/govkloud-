@@ -14,6 +14,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Generate deploy timestamp
+        id: timestamp
+        run: echo "tag=$(date -u +'%Y-%m-%d-%H%M')" >> $GITHUB_OUTPUT
+
       - name: Log in to Azure Container Registry
         uses: docker/login-action@v3
         with:
@@ -30,7 +34,7 @@ jobs:
           push: true
           tags: |
             govkloudacr.azurecr.io/govkloud-app:staging
-            govkloudacr.azurecr.io/govkloud-app:dev-${{ github.sha }}
+            govkloudacr.azurecr.io/govkloud-app:staging-${{ steps.timestamp.outputs.tag }}
 
       # ─── PRODUCTION: master branch ───
       - name: Build and push Docker image (Production)
@@ -41,7 +45,7 @@ jobs:
           push: true
           tags: |
             govkloudacr.azurecr.io/govkloud-app:production
-            govkloudacr.azurecr.io/govkloud-app:${{ github.sha }}
+            govkloudacr.azurecr.io/govkloud-app:prod-${{ steps.timestamp.outputs.tag }}
 
       - name: Log in to Azure CLI
         uses: azure/login@v2
@@ -56,7 +60,7 @@ jobs:
             --name govkloud-app \
             --resource-group govkloud-rg \
             --slot staging \
-            --container-image-name govkloudacr.azurecr.io/govkloud-app:dev-${{ github.sha }}
+            --container-image-name govkloudacr.azurecr.io/govkloud-app:staging-${{ steps.timestamp.outputs.tag }}
           az webapp restart \
             --resource-group govkloud-rg \
             --name govkloud-app \
@@ -70,7 +74,7 @@ jobs:
           az webapp config container set \
             --name govkloud-app \
             --resource-group govkloud-rg \
-            --container-image-name govkloudacr.azurecr.io/govkloud-app:${{ github.sha }}
+            --container-image-name govkloudacr.azurecr.io/govkloud-app:prod-${{ steps.timestamp.outputs.tag }}
           az webapp restart \
             --resource-group govkloud-rg \
             --name govkloud-app
@@ -80,13 +84,13 @@ jobs:
       - name: Verify Staging deployment
         if: github.ref == 'refs/heads/dev-main'
         run: |
-          echo "✅ Image: govkloudacr.azurecr.io/govkloud-app:dev-${{ github.sha }}"
+          echo "✅ Image: govkloudacr.azurecr.io/govkloud-app:staging-${{ steps.timestamp.outputs.tag }}"
           echo "✅ Deployed to: https://govkloud-app-staging.azurewebsites.net"
           echo "🔗 Commit: ${{ github.sha }}"
 
       - name: Verify Production deployment
         if: github.ref == 'refs/heads/master'
         run: |
-          echo "✅ Image: govkloudacr.azurecr.io/govkloud-app:${{ github.sha }}"
+          echo "✅ Image: govkloudacr.azurecr.io/govkloud-app:prod-${{ steps.timestamp.outputs.tag }}"
           echo "✅ Deployed to: https://govkloud.com"
           echo "🔗 Commit: ${{ github.sha }}"
