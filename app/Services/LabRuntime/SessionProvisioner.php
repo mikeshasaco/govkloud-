@@ -184,12 +184,17 @@ class SessionProvisioner
   {
     $namespace = $session->host_namespace;
 
-    // Quota limits are set higher to accommodate vcluster + workbench + overhead
-    // Do NOT use workbench limits here - those are just for the workbench pod
+    // Quota can be overridden per-lab via lab_config_json for heavier exercises
+    // e.g. {"resources": {"namespace_cpu_quota": "8", "namespace_memory_quota": "8Gi"}}
+    $labConfig = $session->lab->lab_config_json ?? [];
+
     $quotaLimits = [
-      'cpu' => config('govkloud.resources.namespace_cpu_quota', '4'),
-      'memory' => config('govkloud.resources.namespace_memory_quota', '4Gi'),
-      'storage' => config('govkloud.resources.default_storage_limit', '10Gi'),
+      'cpu' => $labConfig['resources']['namespace_cpu_quota']
+        ?? config('govkloud.resources.namespace_cpu_quota', '4'),
+      'memory' => $labConfig['resources']['namespace_memory_quota']
+        ?? config('govkloud.resources.namespace_memory_quota', '4Gi'),
+      'storage' => $labConfig['resources']['namespace_storage_quota']
+        ?? config('govkloud.resources.default_storage_limit', '10Gi'),
     ];
 
     $quotaYaml = $this->k8sClient->generateResourceQuotaYaml('session-quota', $quotaLimits);
