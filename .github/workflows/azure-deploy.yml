@@ -56,11 +56,12 @@ jobs:
             --name govkloud-app \
             --resource-group govkloud-rg \
             --slot staging \
-            --container-image-name govkloudacr.azurecr.io/govkloud-app:staging
+            --container-image-name govkloudacr.azurecr.io/govkloud-app:dev-${{ github.sha }}
           az webapp restart \
             --resource-group govkloud-rg \
             --name govkloud-app \
             --slot staging
+          sleep 15
 
       # ─── Deploy to PRODUCTION slot ───
       - name: Deploy to Production
@@ -69,22 +70,23 @@ jobs:
           az webapp config container set \
             --name govkloud-app \
             --resource-group govkloud-rg \
-            --container-image-name govkloudacr.azurecr.io/govkloud-app:production
+            --container-image-name govkloudacr.azurecr.io/govkloud-app:${{ github.sha }}
           az webapp restart \
             --resource-group govkloud-rg \
             --name govkloud-app
+          sleep 15
 
       # ─── Verify ───
       - name: Verify Staging deployment
         if: github.ref == 'refs/heads/dev-main'
         run: |
-          echo "✅ Image: govkloudacr.azurecr.io/govkloud-app:staging"
+          echo "✅ Image: govkloudacr.azurecr.io/govkloud-app:dev-${{ github.sha }}"
           echo "✅ Deployed to: https://govkloud-app-staging.azurewebsites.net"
           echo "🔗 Commit: ${{ github.sha }}"
 
       - name: Verify Production deployment
         if: github.ref == 'refs/heads/master'
         run: |
-          echo "✅ Image: govkloudacr.azurecr.io/govkloud-app:production"
+          echo "✅ Image: govkloudacr.azurecr.io/govkloud-app:${{ github.sha }}"
           echo "✅ Deployed to: https://govkloud.com"
           echo "🔗 Commit: ${{ github.sha }}"
