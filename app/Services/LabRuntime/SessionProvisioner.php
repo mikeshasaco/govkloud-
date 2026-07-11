@@ -613,6 +613,9 @@ spec:
         args: ["--auth", "none"]
         ports:
         - containerPort: 8080
+        env:
+        - name: DOCKER_HOST
+          value: unix:///var/run/docker.sock
         resources:
           limits:
             cpu: "{$limits['cpu']}"
@@ -626,6 +629,27 @@ spec:
           readOnly: true
         - name: workspace
           mountPath: /workspace
+        - name: docker-socket
+          mountPath: /var/run
+      - name: dind
+        image: docker:27-dind
+        securityContext:
+          privileged: true
+        env:
+        - name: DOCKER_TLS_CERTDIR
+          value: ""
+        volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run
+        - name: docker-storage
+          mountPath: /var/lib/docker
+        resources:
+          limits:
+            cpu: "250m"
+            memory: "512Mi"
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
       volumes:
       - name: admin-kubeconfig
         secret:
@@ -634,6 +658,11 @@ spec:
         emptyDir: {}
       - name: workspace
         emptyDir: {}
+      - name: docker-socket
+        emptyDir: {}
+      - name: docker-storage
+        emptyDir:
+          sizeLimit: "5Gi"
 ---
 apiVersion: v1
 kind: Service
