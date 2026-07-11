@@ -633,6 +633,8 @@ spec:
           mountPath: /var/run
       - name: dind
         image: docker:27-dind
+        command: ["sh", "-c"]
+        args: ["dockerd-entrypoint.sh dockerd --host=unix:///var/run/docker.sock & while [ ! -S /var/run/docker.sock ]; do sleep 1; done; chmod 666 /var/run/docker.sock; wait"]
         securityContext:
           privileged: true
         env:
