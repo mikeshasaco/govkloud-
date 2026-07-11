@@ -55,6 +55,13 @@ RUN python3 -m pip install --no-cache-dir --break-system-packages \
     ansible \
     ansible-lint
 
+# Install Docker CLI (daemon runs in a DinD sidecar, not here)
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
+    > /etc/apt/sources.list.d/docker.list \
+    && apt-get update && apt-get install -y --no-install-recommends docker-ce-cli \
+    && rm -rf /var/lib/apt/lists/*
+
 # Remove sudo access — users should NOT have root
 RUN rm -f /etc/sudoers.d/* \
     && sed -i '/coder/d' /etc/sudoers 2>/dev/null || true \

@@ -43,6 +43,10 @@ spec:
             #   value: {{ .Values.session.token | quote }}
             - name: HOME
               value: /home/coder
+            {{- if .Values.dind.enabled }}
+            - name: DOCKER_HOST
+              value: unix:///var/run/docker.sock
+            {{- end }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -53,6 +57,10 @@ spec:
               readOnly: true
             - name: workspace
               mountPath: {{ .Values.workspace.mountPath }}
+            {{- if .Values.dind.enabled }}
+            - name: docker-socket
+              mountPath: /var/run
+            {{- end }}
           {{- if .Values.probes.startup.enabled }}
           startupProbe:
             httpGet:
@@ -78,6 +86,26 @@ spec:
             initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
             periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
           {{- end }}
+        {{- if .Values.dind.enabled }}
+        # Docker-in-Docker sidecar — gives users a real Docker daemon
+        - name: dind
+          image: "{{ .Values.dind.image.repository }}:{{ .Values.dind.image.tag }}"
+          imagePullPolicy: {{ .Values.dind.image.pullPolicy | default "IfNotPresent" }}
+          securityContext:
+            privileged: true
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""  # Disable TLS — socket is pod-local, no need
+          volumeMounts:
+            - name: docker-socket
+              mountPath: /var/run
+            - name: docker-storage
+              mountPath: /var/lib/docker
+          {{- with .Values.dind.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
       volumes:
         - name: kubeconfig
           secret:
@@ -88,6 +116,13 @@ spec:
         - name: workspace
           emptyDir:
             sizeLimit: {{ .Values.workspace.sizeLimit }}
+        {{- if .Values.dind.enabled }}
+        - name: docker-socket
+          emptyDir: {}
+        - name: docker-storage
+          emptyDir:
+            sizeLimit: {{ .Values.dind.storageSizeLimit | default "20Gi" }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

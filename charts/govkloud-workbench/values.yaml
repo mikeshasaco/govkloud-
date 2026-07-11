@@ -38,6 +38,22 @@ workspace:
   mountPath: /workspace
   sizeLimit: "10Gi"
 
+# Docker-in-Docker sidecar (gives users a real Docker daemon)
+dind:
+  enabled: true
+  image:
+    repository: docker
+    tag: "27-dind"
+    pullPolicy: IfNotPresent
+  storageSizeLimit: "5Gi"  # Ephemeral storage for pulled images / containers
+  resources:
+    limits:
+      cpu: "250m"
+      memory: "512Mi"
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+
 # Environment variables
 env:
   - name: PASSWORD
