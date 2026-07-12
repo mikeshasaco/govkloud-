@@ -76,7 +76,7 @@ return [
         'default_storage_limit' => env('GOVKLOUD_DEFAULT_STORAGE', '10Gi'),
 
         // Namespace quota limits (must accommodate vcluster + workbench + overhead)
-        'namespace_cpu_quota' => env('GOVKLOUD_NAMESPACE_CPU_QUOTA', '4'),
-        'namespace_memory_quota' => env('GOVKLOUD_NAMESPACE_MEMORY_QUOTA', '4Gi'),
+        'namespace_cpu_quota' => env('GOVKLOUD_NAMESPACE_CPU_QUOTA', '6'),
+        'namespace_memory_quota' => env('GOVKLOUD_NAMESPACE_MEMORY_QUOTA', '6Gi'),
     ],
 ];
