@@ -990,7 +990,7 @@
         /* ========== STATE ========== */
         const SESSION_ID = '{{ $session->id }}';
         const EXPIRES_AT = new Date('{{ $session->expires_at->toIso8601String() }}');
-        const IDLE_TIMEOUT_MS = 2 * 60 * 1000;
+        const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
         const IDLE_WARNING_BEFORE_MS = 30 * 1000;
         const HEARTBEAT_INTERVAL_MS = 30 * 1000;
 
