@@ -22,7 +22,7 @@ return [
             'mov', 'avi', 'wmv', 'mp3', 'm4a',
             'jpg', 'jpeg', 'mpga', 'webp', 'wma',
         ],
-        'max_upload_time' => 30, // Max duration (in minutes) before upload is cleaned up.
+        'max_upload_time' => 60, // Max duration (in minutes) before upload is cleaned up.
         'cleanup' => true,
     ],
 
