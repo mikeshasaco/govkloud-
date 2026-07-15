@@ -186,7 +186,9 @@ class SessionProvisioner
 
     // Quota can be overridden per-lab via lab_config_json for heavier exercises
     // e.g. {"resources": {"namespace_cpu_quota": "8", "namespace_memory_quota": "8Gi"}}
-    $labConfig = $session->lab->lab_config_json ?? [];
+    $labConfig = $session->lesson?->lab_config_json
+      ?? $session->lab?->lab_config_json
+      ?? [];
 
     $quotaLimits = [
       'cpu' => $labConfig['resources']['namespace_cpu_quota']
@@ -449,6 +451,39 @@ YAML;
   }
 
   /**
+   * Get lab configuration (image + resource limits) from lesson or legacy lab
+   * Returns [workbenchImage, resourceLimits]
+   */
+  protected function getLabConfig(LabSession $session): array
+  {
+    $defaultImage = 'govkloudacr.azurecr.io/code-server-k8s:latest';
+    $defaultLimits = [
+      'cpu' => config('govkloud.resources.default_cpu_limit'),
+      'memory' => config('govkloud.resources.default_memory_limit'),
+      'storage' => config('govkloud.resources.default_storage_limit'),
+    ];
+
+    // New approach: lesson has inline lab config
+    if ($session->lesson && $session->lesson->has_lab) {
+      return [
+        $session->lesson->getWorkbenchImage(),
+        $session->lesson->getResourceLimits(),
+      ];
+    }
+
+    // Legacy approach: separate lab record
+    if ($session->lab) {
+      return [
+        $session->lab->workbench_image ?? $defaultImage,
+        $session->lab->getResourceLimits(),
+      ];
+    }
+
+    // Fallback defaults
+    return [$defaultImage, $defaultLimits];
+  }
+
+  /**
    * Install workbench (code-server) deployment
    */
   protected function installWorkbench(LabSession $session): bool
@@ -481,11 +516,10 @@ YAML;
    */
   protected function generateWorkbenchValues(LabSession $session): string
   {
-    $lab = $session->lab;
-    $limits = $lab->getResourceLimits();
+    [$workbenchImage, $limits] = $this->getLabConfig($session);
 
     // Parse image into repository and tag (handle "repo:tag" or just "repo")
-    $imageParts = explode(':', $lab->workbench_image, 2);
+    $imageParts = explode(':', $workbenchImage, 2);
     $repository = $imageParts[0];
     $tag = $imageParts[1] ?? 'latest';
 
@@ -531,8 +565,7 @@ YAML;
    */
   protected function createWorkbenchDirectly(LabSession $session): bool
   {
-    $lab = $session->lab;
-    $limits = $lab->getResourceLimits();
+    [$workbenchImage, $limits] = $this->getLabConfig($session);
     $namespace = $session->host_namespace;
     $name = 'workbench';
 
@@ -555,7 +588,7 @@ spec:
     spec:
       initContainers:
       - name: setup-kubeconfig
-        image: {$lab->workbench_image}
+        image: {$workbenchImage}
         command: ["/bin/sh", "-c"]
         args:
         - |
@@ -609,7 +642,7 @@ spec:
           mountPath: /kubeconfig-out
       containers:
       - name: code-server
-        image: {$lab->workbench_image}
+        image: {$workbenchImage}
         args: ["--auth", "none"]
         ports:
         - containerPort: 8080

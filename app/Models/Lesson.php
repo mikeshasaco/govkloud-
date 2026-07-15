@@ -27,12 +27,21 @@ class Lesson extends Model
         'quiz_json',
         'order_index',
         'is_published',
+        'has_lab',
+        'workbench_image',
+        'ttl_minutes',
+        'estimated_minutes',
+        'lab_config_json',
     ];
 
     protected $casts = [
         'is_published' => 'boolean',
+        'has_lab' => 'boolean',
         'order_index' => 'integer',
+        'ttl_minutes' => 'integer',
+        'estimated_minutes' => 'integer',
         'quiz_json' => 'array',
+        'lab_config_json' => 'array',
     ];
 
     public function module(): BelongsTo
@@ -46,11 +55,53 @@ class Lesson extends Model
     }
 
     /**
-     * Check if this lesson has an associated lab
+     * Check if this lesson has an associated lab environment
      */
     public function hasLab(): bool
     {
-        return $this->lab_id !== null;
+        // New inline lab config takes priority, fall back to legacy lab_id
+        return $this->has_lab || $this->lab_id !== null;
+    }
+
+    /**
+     * Get resource limits from lab_config_json or defaults
+     */
+    public function getResourceLimits(): array
+    {
+        $config = $this->lab_config_json ?? [];
+
+        return [
+            'cpu' => $config['resources']['cpu'] ?? config('govkloud.resources.default_cpu_limit'),
+            'memory' => $config['resources']['memory'] ?? config('govkloud.resources.default_memory_limit'),
+            'storage' => $config['resources']['storage'] ?? config('govkloud.resources.default_storage_limit'),
+        ];
+    }
+
+    /**
+     * Get the workbench image, falling back to legacy lab or default
+     */
+    public function getWorkbenchImage(): string
+    {
+        if (!empty($this->workbench_image)) {
+            return $this->workbench_image;
+        }
+
+        // Fall back to legacy linked lab
+        if ($this->lab) {
+            return $this->lab->workbench_image ?? 'govkloudacr.azurecr.io/code-server-k8s:latest';
+        }
+
+        return 'govkloudacr.azurecr.io/code-server-k8s:latest';
+    }
+
+    /**
+     * Get TTL minutes, falling back to legacy lab or config default
+     */
+    public function getTtlMinutes(): int
+    {
+        return $this->ttl_minutes
+            ?? $this->lab?->ttl_minutes
+            ?? config('govkloud.session.ttl_default_minutes', 180);
     }
 
     /**

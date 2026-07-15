@@ -14,6 +14,7 @@ class LabSession extends Model
         'user_id',
         'module_id',
         'lab_id',
+        'lesson_id',
         'status',
         'host_namespace',
         'vcluster_release_name',
@@ -64,6 +65,11 @@ class LabSession extends Model
     public function lab(): BelongsTo
     {
         return $this->belongsTo(Lab::class);
+    }
+
+    public function lesson(): BelongsTo
+    {
+        return $this->belongsTo(Lesson::class);
     }
 
     /**

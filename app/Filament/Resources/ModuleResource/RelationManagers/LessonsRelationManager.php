@@ -47,9 +47,6 @@ class LessonsRelationManager extends RelationManager
                             ->numeric()
                             ->default(0)
                             ->helperText('Auto-assigned if left empty'),
-                        Forms\Components\Select::make('lab_id')
-                            ->relationship('lab', 'title')
-                            ->placeholder('No lab attached'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Video Content')
@@ -119,6 +116,36 @@ class LessonsRelationManager extends RelationManager
                             ->defaultItems(0)
                             ->columnSpanFull(),
                     ]),
+
+                Forms\Components\Section::make('Lab Environment')
+                    ->description('Enable a hands-on lab workbench for this lesson')
+                    ->schema([
+                        Forms\Components\Toggle::make('has_lab')
+                            ->label('Enable Lab Environment')
+                            ->live()
+                            ->helperText('When enabled, students get an interactive VS Code workbench with Kubernetes access'),
+                        Forms\Components\TextInput::make('workbench_image')
+                            ->placeholder('govkloudacr.azurecr.io/code-server-k8s:latest')
+                            ->helperText('Docker image for the lab workbench. Leave empty for default.')
+                            ->visible(fn(Forms\Get $get) => $get('has_lab')),
+                        Forms\Components\TextInput::make('estimated_minutes')
+                            ->numeric()
+                            ->default(30)
+                            ->suffix('minutes')
+                            ->helperText('Estimated time to complete the lab')
+                            ->visible(fn(Forms\Get $get) => $get('has_lab')),
+                        Forms\Components\TextInput::make('ttl_minutes')
+                            ->numeric()
+                            ->default(180)
+                            ->suffix('minutes')
+                            ->label('Session TTL')
+                            ->helperText('Max time before auto-cleanup')
+                            ->visible(fn(Forms\Get $get) => $get('has_lab')),
+                        Forms\Components\KeyValue::make('lab_config_json')
+                            ->label('Lab Config (JSON)')
+                            ->helperText('Resource limits, environment variables, etc.')
+                            ->visible(fn(Forms\Get $get) => $get('has_lab')),
+                    ]),
             ]);
     }
 
@@ -141,14 +168,15 @@ class LessonsRelationManager extends RelationManager
                     ->boolean()
                     ->trueIcon('heroicon-o-video-camera')
                     ->falseIcon('heroicon-o-x-mark'),
+                Tables\Columns\IconColumn::make('has_lab')
+                    ->label('Lab')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-beaker')
+                    ->falseIcon('heroicon-o-x-mark'),
                 Tables\Columns\TextColumn::make('quiz_json')
                     ->label('Quiz')
                     ->formatStateUsing(fn($state) => $state ? count($state) . ' Q' : '-')
                     ->badge(),
-                Tables\Columns\TextColumn::make('lab.title')
-                    ->label('Lab')
-                    ->limit(20)
-                    ->placeholder('None'),
             ])
             ->defaultSort('order_index')
             ->reorderable('order_index')

@@ -118,10 +118,6 @@ class ModuleResource extends Resource
                     ->counts('lessons')
                     ->label('Lessons')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('labs_count')
-                    ->counts('labs')
-                    ->label('Labs')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('order_index')
                     ->numeric()
                     ->sortable(),
@@ -155,7 +151,6 @@ class ModuleResource extends Resource
     {
         return [
             RelationManagers\LessonsRelationManager::class,
-            RelationManagers\LabsRelationManager::class,
         ];
     }
 
