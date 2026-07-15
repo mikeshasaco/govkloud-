@@ -679,6 +679,20 @@
 
         .focus-toggle:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0,0,0,0.5); }
 
+        /* Glow animation for first-time users */
+        @keyframes glow-pulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(0, 210, 211, 0.3); }
+            50% { box-shadow: 0 0 18px rgba(0, 210, 211, 0.7), 0 0 30px rgba(0, 210, 211, 0.3); }
+        }
+
+        .glow-hint {
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+
+        .focus-toggle.glow-hint {
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+
         /* ========== FLOATING PIP ========== */
         .pip-window {
             display: none;
@@ -822,7 +836,7 @@
                         <div class="lesson-nav-info">
                             <div class="lesson-nav-title">{{ $lesson->title }}</div>
                             <div class="lesson-nav-badges">
-                                @if($lesson->video_url)<span class="badge-sm video">VID</span>@endif
+                                @if($lesson->hasVideo())<span class="badge-sm video">VID</span>@endif
                                 @if($lesson->reading_md)<span class="badge-sm reading">READ</span>@endif
                                 @if($lesson->hasQuiz())<span class="badge-sm quiz">QUIZ</span>@endif
                             </div>
@@ -853,6 +867,13 @@
                                 <iframe src="{{ $lesson->embed_video_url }}" 
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                                     allowfullscreen></iframe>
+                            </div>
+                        @elseif($lesson->video_file)
+                            <div class="content-video-wrapper">
+                                <video controls style="width: 100%; max-height: 500px; border-radius: 8px; background: #000;">
+                                    <source src="{{ $lesson->getVideoSource() }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
                             </div>
                         @endif
 
@@ -1042,15 +1063,31 @@
             document.body.classList.toggle('focus-content', focusOnContent);
             const btn = document.getElementById('focusToggle');
             btn.textContent = focusOnContent ? 'Switch to IDE' : 'Switch to Lesson';
+            // Remove glow after first use
+            btn.classList.remove('glow-hint');
+            localStorage.setItem('gk_focus_clicked', '1');
         }
 
         // Layout button clicks
         document.querySelectorAll('.layout-btn').forEach(btn => {
-            btn.addEventListener('click', () => setLayout(btn.dataset.layout));
+            btn.addEventListener('click', () => {
+                setLayout(btn.dataset.layout);
+                // Remove glow from all layout buttons after first use
+                document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('glow-hint'));
+                localStorage.setItem('gk_layout_clicked', '1');
+            });
         });
 
         // Initialize layout
         setLayout(currentLayout);
+
+        // Glow hint for first-time users — stops after first click
+        if (!localStorage.getItem('gk_layout_clicked')) {
+            document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.add('glow-hint'));
+        }
+        if (!localStorage.getItem('gk_focus_clicked')) {
+            document.getElementById('focusToggle')?.classList.add('glow-hint');
+        }
 
         /* ========== LESSON NAVIGATION ========== */
         function selectLesson(lessonId) {

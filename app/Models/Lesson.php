@@ -171,7 +171,7 @@ class Lesson extends Model
             return $this->embed_video_url;
         }
         if (!empty($this->video_file)) {
-            return asset('storage/' . $this->video_file);
+            return \Storage::disk('azure')->url($this->video_file);
         }
         return null;
     }

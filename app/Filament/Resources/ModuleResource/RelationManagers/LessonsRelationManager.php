@@ -57,8 +57,9 @@ class LessonsRelationManager extends RelationManager
                             ->helperText('Paste YouTube or Vimeo embed URL'),
                         Forms\Components\FileUpload::make('video_file')
                             ->label('Or Upload Video File')
-                            ->disk('public')
+                            ->disk('azure')
                             ->directory('lesson-videos')
+                            ->visibility('public')
                             ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
                             ->maxSize(512000)
                             ->helperText('Max 500MB. MP4, WebM, or OGG format.'),
