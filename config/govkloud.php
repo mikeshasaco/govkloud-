@@ -78,5 +78,6 @@ return [
         // Namespace quota limits (must accommodate vcluster + workbench + overhead)
         'namespace_cpu_quota' => env('GOVKLOUD_NAMESPACE_CPU_QUOTA', '6'),
         'namespace_memory_quota' => env('GOVKLOUD_NAMESPACE_MEMORY_QUOTA', '6Gi'),
+        'namespace_storage_quota' => env('GOVKLOUD_NAMESPACE_STORAGE_QUOTA', '6Gi'), // 5Gi vcluster + 1Gi student
     ],
 ];
