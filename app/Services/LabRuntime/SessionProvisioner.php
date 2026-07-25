@@ -258,9 +258,12 @@ sync:
     nodes:
       enabled: false
     storageClasses:
-      enabled: false
+      enabled: true
     ingressClasses:
       enabled: false
+  toHost:
+    persistentVolumes:
+      enabled: true
 
 # Bootstrap RBAC inside the vcluster at startup.
 # This creates a restricted service account that has access to
