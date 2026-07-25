@@ -73,7 +73,7 @@ return [
         // Workbench pod defaults (must fit within namespace quota after vcluster)
         'default_cpu_limit' => env('GOVKLOUD_DEFAULT_CPU', '500m'),
         'default_memory_limit' => env('GOVKLOUD_DEFAULT_MEMORY', '1Gi'),
-        'default_storage_limit' => env('GOVKLOUD_DEFAULT_STORAGE', '10Gi'),
+        'default_storage_limit' => env('GOVKLOUD_DEFAULT_STORAGE', '1Gi'),
 
         // Namespace quota limits (must accommodate vcluster + workbench + overhead)
         'namespace_cpu_quota' => env('GOVKLOUD_NAMESPACE_CPU_QUOTA', '6'),

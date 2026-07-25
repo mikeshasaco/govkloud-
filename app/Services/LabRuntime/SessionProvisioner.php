@@ -196,7 +196,7 @@ class SessionProvisioner
       'memory' => $labConfig['resources']['namespace_memory_quota']
         ?? config('govkloud.resources.namespace_memory_quota', '4Gi'),
       'storage' => $labConfig['resources']['namespace_storage_quota']
-        ?? config('govkloud.resources.default_storage_limit', '10Gi'),
+        ?? config('govkloud.resources.default_storage_limit', '1Gi'),
     ];
 
     $quotaYaml = $this->k8sClient->generateResourceQuotaYaml('session-quota', $quotaLimits);
