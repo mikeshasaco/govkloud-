@@ -104,6 +104,7 @@ class ModuleResource extends Resource
                             ->visibility('public')
                             ->multiple()
                             ->reorderable()
+                            ->preserveFilenames()
                             ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed', 'application/octet-stream'])
                             ->maxSize(102400) // 100MB per file
                             ->helperText('Upload .zip files (max 100MB each). Students can download these from the course sidebar.'),

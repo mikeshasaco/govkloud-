@@ -923,13 +923,12 @@
             @if($module && !empty($module->resource_files))
                 <div class="resources-section">
                     <div class="resources-header">
-                        <span>📦</span> Resources
+                        Resources
                     </div>
                     @foreach($module->getResourceFileUrls() as $file)
                         <a href="{{ $file['url'] }}" class="resource-item" download target="_blank">
-                            <span class="resource-icon">📁</span>
                             <span class="resource-name" title="{{ $file['name'] }}">{{ $file['name'] }}</span>
-                            <span class="resource-download">⬇</span>
+                            <span class="resource-download">↓</span>
                         </a>
                     @endforeach
                 </div>
