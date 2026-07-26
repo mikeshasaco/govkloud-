@@ -82,13 +82,18 @@
             display: flex;
             align-items: center;
             gap: 0;
+            border: 1.5px solid var(--gk-cyan);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 8px rgba(210, 180, 140, 0.15);
         }
 
         .layout-btn {
             padding: 0.4rem 0.7rem;
             background: transparent;
             color: var(--text-muted);
-            border: 1px solid var(--border);
+            border: none;
+            border-right: 1px solid rgba(210, 180, 140, 0.25);
             cursor: pointer;
             font-size: 0.75rem;
             font-weight: 600;
@@ -98,9 +103,7 @@
             transition: all 0.2s ease;
         }
 
-        .layout-btn:first-child { border-radius: 6px 0 0 6px; }
-        .layout-btn:last-child { border-radius: 0 6px 6px 0; }
-        .layout-btn:not(:last-child) { border-right: none; }
+        .layout-btn:last-child { border-right: none; }
 
         .layout-btn:hover {
             background: rgba(210, 180, 140, 0.1);
@@ -110,10 +113,7 @@
         .layout-btn.active {
             background: rgba(210, 180, 140, 0.2);
             color: var(--gk-cyan);
-            border-color: var(--gk-cyan);
         }
-
-        .layout-btn.active + .layout-btn { border-left-color: var(--gk-cyan); }
 
         .layout-icon {
             font-size: 1rem;
@@ -303,6 +303,12 @@
         .badge-sm.quiz { background: rgba(139, 92, 246, 0.15); color: var(--gk-purple); }
         .badge-sm.reading { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
 
+        .lesson-video-icon {
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.4));
+        }
+
         /* ========== CONTENT PANEL ========== */
         .content-panel {
             display: flex;
@@ -319,14 +325,16 @@
 
         .content-video-wrapper {
             width: 100%;
-            aspect-ratio: 16/9;
+            flex: 1;
+            min-height: 300px;
             background: #000;
             border-radius: 10px;
             overflow: hidden;
             margin-bottom: 1.5rem;
         }
 
-        .content-video-wrapper iframe {
+        .content-video-wrapper iframe,
+        .content-video-wrapper video {
             width: 100%;
             height: 100%;
             border: none;
@@ -668,16 +676,16 @@
             padding: 0.6rem 1rem;
             background: linear-gradient(135deg, var(--gk-cyan), var(--gk-teal));
             color: var(--gk-navy);
-            border: none;
+            border: 2px solid var(--gk-gold);
             border-radius: 10px;
             font-weight: 700;
             font-size: 0.85rem;
             cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 12px rgba(251, 191, 36, 0.3);
             transition: all 0.2s;
         }
 
-        .focus-toggle:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0,0,0,0.5); }
+        .focus-toggle:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0,0,0,0.5), 0 0 18px rgba(251, 191, 36, 0.4); }
 
         /* Glow animation for first-time users */
         @keyframes glow-pulse {
@@ -841,6 +849,7 @@
                                 @if($lesson->hasQuiz())<span class="badge-sm quiz">QUIZ</span>@endif
                             </div>
                         </div>
+                        @if($lesson->hasVideo())<span class="lesson-video-icon" title="Has video">🎬</span>@endif
                     </div>
                 @empty
                     @foreach($session->lab->steps as $step)
