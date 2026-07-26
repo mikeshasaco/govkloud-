@@ -93,6 +93,21 @@ class ModuleResource extends Resource
                             ->imageResizeTargetHeight('400')
                             ->helperText('Upload a banner image (JPG, PNG, WebP). Click the edit button to crop and adjust.'),
                     ]),
+
+                Forms\Components\Section::make('Resource Files')
+                    ->description('Upload zip files (starter code, lab resources, reference materials) for students to download during the course.')
+                    ->schema([
+                        Forms\Components\FileUpload::make('resource_files')
+                            ->label('Downloadable Resources')
+                            ->disk('azure')
+                            ->directory('module-resources')
+                            ->visibility('public')
+                            ->multiple()
+                            ->reorderable()
+                            ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed', 'application/octet-stream'])
+                            ->maxSize(102400) // 100MB per file
+                            ->helperText('Upload .zip files (max 100MB each). Students can download these from the course sidebar.'),
+                    ]),
             ]);
     }
 

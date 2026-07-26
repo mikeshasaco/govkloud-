@@ -23,6 +23,7 @@ class Module extends Model
         'category',
         'level',
         'banner_image',
+        'resource_files',
         'order_index',
         'is_published',
         'requires_subscription',
@@ -31,6 +32,7 @@ class Module extends Model
     protected $casts = [
         'is_published' => 'boolean',
         'order_index' => 'integer',
+        'resource_files' => 'array',
     ];
 
     public function lessons(): HasMany
@@ -51,5 +53,22 @@ class Module extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('order_index');
+    }
+
+    /**
+     * Get download URLs for all resource files
+     */
+    public function getResourceFileUrls(): array
+    {
+        if (empty($this->resource_files)) {
+            return [];
+        }
+
+        return collect($this->resource_files)->map(function ($path) {
+            return [
+                'name' => basename($path),
+                'url' => \Storage::disk('azure')->url($path),
+            ];
+        })->toArray();
     }
 }

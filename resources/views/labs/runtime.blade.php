@@ -303,6 +303,70 @@
         .badge-sm.quiz { background: rgba(139, 92, 246, 0.15); color: var(--gk-purple); }
         .badge-sm.reading { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
 
+        /* ========== RESOURCES SECTION ========== */
+        .resources-section {
+            border-top: 1px solid var(--border);
+            padding: 0.5rem;
+        }
+
+        .resources-header {
+            padding: 0.5rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.15s ease;
+            margin-bottom: 2px;
+            border: 1px solid transparent;
+        }
+
+        .resource-item:hover {
+            background: rgba(210, 180, 140, 0.08);
+            border-color: rgba(210, 180, 140, 0.15);
+            color: var(--gk-cyan);
+        }
+
+        .resource-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .resource-name {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.78rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .resource-download {
+            font-size: 0.7rem;
+            color: var(--gk-cyan);
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .resource-item:hover .resource-download {
+            opacity: 1;
+        }
+
         /* ========== CONTENT PANEL ========== */
         .content-panel {
             display: flex;
@@ -855,6 +919,21 @@
                     @endforeach
                 @endforelse
             </div>
+
+            @if($module && !empty($module->resource_files))
+                <div class="resources-section">
+                    <div class="resources-header">
+                        <span>📦</span> Resources
+                    </div>
+                    @foreach($module->getResourceFileUrls() as $file)
+                        <a href="{{ $file['url'] }}" class="resource-item" download target="_blank">
+                            <span class="resource-icon">📁</span>
+                            <span class="resource-name" title="{{ $file['name'] }}">{{ $file['name'] }}</span>
+                            <span class="resource-download">⬇</span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
         </div>
 
         <!-- Main Area (content + resizer + workbench) -->
