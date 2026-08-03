@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\HelpCenterController;
 use App\Http\Controllers\LabSessionController;
 use App\Http\Controllers\LessonController;
@@ -89,6 +90,16 @@ Route::get('/courses/{slug}', [ModuleController::class, 'show'])->name('courses.
 // Redirect old /modules URLs to /courses
 Route::get('/modules', fn() => redirect()->route('courses.index'));
 Route::get('/modules/{slug}', fn($slug) => redirect()->route('courses.show', $slug));
+
+// Problems (LeetCode-style challenges)
+Route::get('/problems', [ChallengeController::class, 'index'])->name('problems.index');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/problems/{slug}', [ChallengeController::class, 'show'])->name('problems.show');
+    Route::post('/problems/{slug}/save', [ChallengeController::class, 'saveProgress'])->name('problems.save');
+    Route::post('/problems/{slug}/complete', [ChallengeController::class, 'complete'])->name('problems.complete');
+    Route::post('/problems/{slug}/hint', [ChallengeController::class, 'hint'])->name('problems.hint');
+});
 
 // Subscription / Billing routes
 Route::get('/pricing', [SubscriptionController::class, 'index'])->name('pricing');

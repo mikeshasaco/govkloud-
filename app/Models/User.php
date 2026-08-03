@@ -230,4 +230,72 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->isSubscribed() || $this->onTrial();
     }
+
+    // ── Challenge Methods ──────────────────────────────────────
+
+    /**
+     * Get the user's challenge attempts
+     */
+    public function challengeAttempts(): HasMany
+    {
+        return $this->hasMany(ChallengeAttempt::class);
+    }
+
+    /**
+     * Check if user has completed a challenge
+     */
+    public function hasCompletedChallenge(Challenge $challenge): bool
+    {
+        return $this->challengeAttempts()
+            ->where('challenge_id', $challenge->id)
+            ->where('status', 'completed')
+            ->exists();
+    }
+
+    /**
+     * Get or create an attempt for a challenge
+     */
+    public function getOrCreateChallengeAttempt(Challenge $challenge): ChallengeAttempt
+    {
+        $attempt = $this->challengeAttempts()
+            ->where('challenge_id', $challenge->id)
+            ->whereIn('status', ['started', 'completed'])
+            ->first();
+
+        if ($attempt) {
+            return $attempt;
+        }
+
+        return ChallengeAttempt::create([
+            'user_id' => $this->id,
+            'challenge_id' => $challenge->id,
+            'status' => 'started',
+            'hints_used' => 0,
+        ]);
+    }
+
+    /**
+     * Get challenge statistics for this user
+     */
+    public function getChallengeStats(): array
+    {
+        $attempts = $this->challengeAttempts()->with('challenge')->get();
+
+        $completed = $attempts->where('status', 'completed');
+
+        return [
+            'total_started' => $attempts->count(),
+            'total_completed' => $completed->count(),
+            'by_difficulty' => [
+                'beginner' => $completed->filter(fn($a) => $a->challenge->difficulty === 'beginner')->count(),
+                'medium' => $completed->filter(fn($a) => $a->challenge->difficulty === 'medium')->count(),
+                'hard' => $completed->filter(fn($a) => $a->challenge->difficulty === 'hard')->count(),
+            ],
+            'by_category' => [
+                'kubernetes' => $completed->filter(fn($a) => $a->challenge->category === 'kubernetes')->count(),
+                'terraform' => $completed->filter(fn($a) => $a->challenge->category === 'terraform')->count(),
+                'docker' => $completed->filter(fn($a) => $a->challenge->category === 'docker')->count(),
+            ],
+        ];
+    }
 }

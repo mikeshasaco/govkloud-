@@ -78,6 +78,7 @@
             </div>
         </div>
 
+        <a href="{{ route('problems.index') }}" style="{{ request()->routeIs('problems.*') ? 'color: var(--gk-cyan);' : '' }}">Problems</a>
         <a href="{{ route('career') }}">Career Paths</a>
         <a href="{{ route('help-center') }}">Help Center</a>
 
