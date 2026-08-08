@@ -100,11 +100,26 @@ class Challenge extends Model
     // ── Accessors ──────────────────────────────────────────────
 
     /**
+     * Safely ensure a value is an array (handles double-encoded JSON).
+     */
+    private function ensureArray($value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        return [];
+    }
+
+    /**
      * Get initial files for the code editor.
      */
     public function getInitialFiles(): array
     {
-        return $this->initial_files_json ?? [];
+        return $this->ensureArray($this->initial_files_json);
     }
 
     /**
@@ -112,7 +127,7 @@ class Challenge extends Model
      */
     public function getFileLanguageMap(): array
     {
-        return $this->file_language_map ?? [];
+        return $this->ensureArray($this->file_language_map);
     }
 
     /**
@@ -120,7 +135,7 @@ class Challenge extends Model
      */
     public function getCommandFlows(): array
     {
-        return $this->command_flows_json ?? [];
+        return $this->ensureArray($this->command_flows_json);
     }
 
     /**
@@ -128,7 +143,7 @@ class Challenge extends Model
      */
     public function getInitialState(): array
     {
-        return $this->initial_state_json ?? [];
+        return $this->ensureArray($this->initial_state_json);
     }
 
     /**
@@ -136,7 +151,7 @@ class Challenge extends Model
      */
     public function getSolutionFiles(): array
     {
-        return $this->solution_files_json ?? [];
+        return $this->ensureArray($this->solution_files_json);
     }
 
     /**
@@ -144,7 +159,7 @@ class Challenge extends Model
      */
     public function getHints(): array
     {
-        return $this->hints_json ?? [];
+        return $this->ensureArray($this->hints_json);
     }
 
     /**

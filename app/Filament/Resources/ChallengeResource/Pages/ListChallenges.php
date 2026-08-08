@@ -82,12 +82,8 @@ class ListChallenges extends ListRecords
                         $problem['points'] = $problem['points'] ?? 10;
                         $problem['estimated_minutes'] = $problem['estimated_minutes'] ?? 15;
 
-                        // Handle JSON fields that might be arrays
-                        foreach (['scenario_manifests_json', 'validation_rules_json', 'initial_files_json', 'solution_files_json', 'hints_json', 'command_flows_json', 'initial_state_json', 'quiz_options_json'] as $jsonField) {
-                            if (isset($problem[$jsonField]) && is_array($problem[$jsonField])) {
-                                $problem[$jsonField] = json_encode($problem[$jsonField]);
-                            }
-                        }
+                        // Note: JSON fields (hints_json, etc.) are passed as arrays
+                        // and the Challenge model's $casts will handle JSON encoding automatically.
 
                         Challenge::create($problem);
                         $imported++;
