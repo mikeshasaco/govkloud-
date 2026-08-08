@@ -433,9 +433,9 @@ class ProblemSessionManager
             ),
         ]);
 
-        // Use the existing provisioner but skip workbench installation
-        // The provisioner handles: namespace → vcluster → kubeconfig
-        $success = $this->sessionProvisioner->provision($session);
+        // Use the lightweight provisioner (namespace → vcluster → kubeconfig only)
+        // No workbench or ingress needed for problems
+        $success = $this->sessionProvisioner->provisionLightweight($session);
 
         if (!$success) {
             throw new Exception("Failed to provision problem environment");

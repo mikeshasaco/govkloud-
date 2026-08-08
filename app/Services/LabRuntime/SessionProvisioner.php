@@ -118,6 +118,72 @@ class SessionProvisioner
   }
 
   /**
+   * Provision a lightweight session (namespace + vcluster only).
+   * Skips workbench (code-server) and ingress — used for standalone problems
+   * where users only need kubectl access via the browser terminal.
+   */
+  public function provisionLightweight(LabSession $session): bool
+  {
+    $namespace = $session->host_namespace;
+    $namespaceAlreadyExists = $this->k8sClient->namespaceExists($namespace);
+
+    try {
+      // Step 1: Create host namespace
+      if ($namespaceAlreadyExists) {
+        Log::info("[Problem] Namespace already exists, reusing: {$namespace}");
+      } else {
+        Log::info("[Problem] Creating namespace: {$namespace}");
+        if (!$this->k8sClient->createNamespace($namespace)) {
+          throw new Exception("Failed to create namespace: {$namespace}");
+        }
+        $this->applyResourceGuardrails($session);
+      }
+
+      // Step 2: Install vcluster
+      Log::info("[Problem] Installing vcluster: {$session->vcluster_release_name}");
+      if (!$this->installVcluster($session)) {
+        throw new Exception("Failed to install vcluster");
+      }
+
+      // Step 3: Wait for vcluster to be ready
+      Log::info("[Problem] Waiting for vcluster to be ready");
+      if (!$this->waitForVcluster($session)) {
+        throw new Exception("vcluster did not become ready in time");
+      }
+
+      // Step 4: Store kubeconfig
+      Log::info("[Problem] Extracting vcluster kubeconfig");
+      if (!$this->storeVclusterKubeconfig($session)) {
+        throw new Exception("Failed to store vcluster kubeconfig");
+      }
+
+      // Mark session as running (no workbench/ingress needed)
+      $session->update([
+        'status' => LabSession::STATUS_RUNNING,
+        'last_activity_at' => now(),
+      ]);
+
+      Log::info("[Problem] Lightweight session ready", [
+        'session_id' => $session->id,
+        'namespace' => $namespace,
+      ]);
+
+      return true;
+
+    } catch (Exception $e) {
+      Log::error("[Problem] Provisioning failed", [
+        'session_id' => $session->id,
+        'error' => $e->getMessage(),
+      ]);
+
+      $session->markError($e->getMessage());
+      $this->cleanupOnError($session);
+
+      return false;
+    }
+  }
+
+  /**
    * Wait until the ingress route is actually serving traffic.
    * There's a delay between creating the K8s Ingress resource and
    * the nginx-ingress controller configuring the route.
