@@ -10,20 +10,27 @@ class ChallengeAttempt extends Model
     protected $fillable = [
         'user_id',
         'challenge_id',
+        'lab_session_id',
         'status',
         'user_files_json',
         'commands_executed',
+        'validation_results_json',
         'time_spent_seconds',
         'hints_used',
+        'points_earned',
         'completed_at',
+        'submitted_at',
     ];
 
     protected $casts = [
         'user_files_json' => 'array',
         'commands_executed' => 'array',
+        'validation_results_json' => 'array',
         'time_spent_seconds' => 'integer',
         'hints_used' => 'integer',
+        'points_earned' => 'integer',
         'completed_at' => 'datetime',
+        'submitted_at' => 'datetime',
     ];
 
     // ── Relationships ──────────────────────────────────────────
@@ -36,6 +43,11 @@ class ChallengeAttempt extends Model
     public function challenge(): BelongsTo
     {
         return $this->belongsTo(Challenge::class);
+    }
+
+    public function labSession(): BelongsTo
+    {
+        return $this->belongsTo(LabSession::class);
     }
 
     // ── Methods ────────────────────────────────────────────────

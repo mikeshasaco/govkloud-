@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ProblemApiController;
 use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\HelpCenterController;
 use App\Http\Controllers\LabSessionController;
@@ -99,6 +100,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/problems/{slug}/save', [ChallengeController::class, 'saveProgress'])->name('problems.save');
     Route::post('/problems/{slug}/complete', [ChallengeController::class, 'complete'])->name('problems.complete');
     Route::post('/problems/{slug}/hint', [ChallengeController::class, 'hint'])->name('problems.hint');
+
+    // Real-cluster problem API
+    Route::post('/api/problems/{slug}/start', [ProblemApiController::class, 'start'])->name('api.problems.start');
+    Route::post('/api/problems/{slug}/exec', [ProblemApiController::class, 'exec'])->name('api.problems.exec');
+    Route::post('/api/problems/{slug}/submit', [ProblemApiController::class, 'submit'])->name('api.problems.submit');
+    Route::post('/api/problems/{slug}/reset', [ProblemApiController::class, 'reset'])->name('api.problems.reset');
 });
 
 // Subscription / Billing routes

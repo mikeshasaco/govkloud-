@@ -53,14 +53,34 @@ class ChallengeResource extends Resource
                                 'hard' => '🔴 Hard',
                             ])
                             ->required(),
+                        Forms\Components\Select::make('problem_type')
+                            ->options([
+                                'build' => '🏗️ Build',
+                                'troubleshoot' => '🔧 Troubleshoot',
+                                'debug' => '🐛 Debug YAML',
+                                'scenario' => '🎯 Scenario',
+                                'quiz' => '📝 Quiz',
+                            ])
+                            ->default('build')
+                            ->required()
+                            ->helperText('Build = create from scratch, Troubleshoot = fix broken state, Scenario = multi-step investigation'),
                         Forms\Components\TextInput::make('estimated_minutes')
                             ->numeric()
                             ->default(15)
                             ->suffix('minutes'),
+                        Forms\Components\TextInput::make('time_limit_minutes')
+                            ->numeric()
+                            ->nullable()
+                            ->suffix('minutes')
+                            ->helperText('Optional enforced time limit'),
                         Forms\Components\TextInput::make('order_index')
                             ->numeric()
                             ->default(0)
                             ->helperText('Auto-assigned if left empty'),
+                        Forms\Components\TextInput::make('points')
+                            ->numeric()
+                            ->default(10)
+                            ->helperText('Points awarded on completion'),
                         Forms\Components\Textarea::make('description')
                             ->required()
                             ->rows(6)
@@ -68,6 +88,9 @@ class ChallengeResource extends Resource
                             ->helperText('Markdown supported. Describe what the user needs to accomplish.'),
                         Forms\Components\Toggle::make('is_published')
                             ->default(false),
+                        Forms\Components\Toggle::make('requires_cluster')
+                            ->default(false)
+                            ->helperText('If enabled, a real vcluster is provisioned when the user starts this problem'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Code Editor Setup')
@@ -87,8 +110,37 @@ class ChallengeResource extends Resource
                             ->helperText('e.g., Key: pod.yaml, Value: yaml'),
                     ]),
 
+                Forms\Components\Section::make('Real Cluster Scenario')
+                    ->description('Configure the pre-built scenario state and auto-grading rules for cluster-based problems.')
+                    ->schema([
+                        Forms\Components\Textarea::make('scenario_manifests_json')
+                            ->label('Scenario Manifests (YAML)')
+                            ->rows(12)
+                            ->helperText('YAML manifests applied to the vcluster when the problem starts. These create the "broken" or "initial" state.')
+                            ->formatStateUsing(fn($state) => $state ? (is_array($state) ? implode("\n---\n", $state) : $state) : '')
+                            ->dehydrateStateUsing(fn($state) => $state ? array_filter(array_map('trim', explode('---', $state))) : null),
+                        Forms\Components\Textarea::make('validation_rules_json')
+                            ->label('Validation Rules (JSON)')
+                            ->rows(10)
+                            ->helperText('JSON array of validation checks for auto-grading. Each rule has: type, name, namespace, expected value, description.')
+                            ->formatStateUsing(fn($state) => $state ? json_encode($state, JSON_PRETTY_PRINT) : '')
+                            ->dehydrateStateUsing(fn($state) => $state ? json_decode($state, true) : null),
+                    ]),
+
+                Forms\Components\Section::make('Quiz Options')
+                    ->description('For quiz/multiple-choice problem types only.')
+                    ->schema([
+                        Forms\Components\Textarea::make('quiz_options_json')
+                            ->label('Quiz Options (JSON)')
+                            ->rows(6)
+                            ->helperText('JSON array of options: [{"text": "Answer A", "is_correct": false}, {"text": "Answer B", "is_correct": true}]')
+                            ->formatStateUsing(fn($state) => $state ? json_encode($state, JSON_PRETTY_PRINT) : '')
+                            ->dehydrateStateUsing(fn($state) => $state ? json_decode($state, true) : null),
+                    ]),
+
                 Forms\Components\Section::make('Terminal Configuration')
-                    ->description('Configure the terminal simulator behavior for this challenge.')
+                    ->description('Legacy: simulated terminal config. Use Scenario Manifests + Validation Rules for real-cluster problems.')
+                    ->collapsed()
                     ->schema([
                         Forms\Components\Textarea::make('command_flows_json')
                             ->label('Command Flows (JSON)')
@@ -162,6 +214,16 @@ class ChallengeResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->limit(40),
+                Tables\Columns\TextColumn::make('problem_type')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'troubleshoot' => 'danger',
+                        'build' => 'success',
+                        'debug' => 'warning',
+                        'scenario' => 'info',
+                        'quiz' => 'gray',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('category')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
@@ -179,6 +241,14 @@ class ChallengeResource extends Resource
                         'hard' => 'danger',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('points')
+                    ->label('Pts')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('acceptance_rate')
+                    ->label('Accept %')
+                    ->suffix('%')
+                    ->sortable()
+                    ->placeholder('—'),
                 Tables\Columns\TextColumn::make('estimated_minutes')
                     ->label('Est. Time')
                     ->suffix(' min')
@@ -187,11 +257,15 @@ class ChallengeResource extends Resource
                     ->counts('attempts')
                     ->label('Attempts')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('order_index')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\IconColumn::make('requires_cluster')
+                    ->label('Cluster')
+                    ->boolean(),
                 Tables\Columns\IconColumn::make('is_published')
                     ->boolean(),
+                Tables\Columns\TextColumn::make('order_index')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

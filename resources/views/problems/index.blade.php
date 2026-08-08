@@ -513,11 +513,19 @@
                             <span class="category-badge {{ $challenge->category }}">
                                 {{ ucfirst($challenge->category) }}
                             </span>
+                            @if($challenge->problem_type)
+                                <span class="category-badge" style="background:rgba(210,180,140,0.1);color:var(--gk-tan);margin-left:4px;">
+                                    {{ $challenge->getProblemTypeLabel() }}
+                                </span>
+                            @endif
                         </td>
 
                         {{-- Estimated Time --}}
                         <td class="problem-time">
                             ~{{ $challenge->estimated_minutes }} min
+                            @if($challenge->points)
+                                <span style="color:var(--gk-cyan);font-size:0.7rem;margin-left:4px;">{{ $challenge->points }}pts</span>
+                            @endif
                         </td>
 
                         {{-- Difficulty --}}

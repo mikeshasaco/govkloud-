@@ -604,6 +604,206 @@
                 border-bottom: 1px solid var(--border);
             }
         }
+
+        /* ── Problem Type Badge ── */
+        .tb-badge.problem-type {
+            background: rgba(210, 180, 140, 0.15);
+            color: var(--gk-tan);
+            font-size: 0.65rem;
+        }
+
+        /* ── Environment Overlay ── */
+        .env-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 15, 30, 0.92);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .env-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .env-overlay-content {
+            text-align: center;
+            max-width: 420px;
+        }
+        .env-overlay-spinner {
+            width: 56px;
+            height: 56px;
+            border: 3px solid rgba(210, 180, 140, 0.15);
+            border-top-color: var(--gk-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .env-overlay h3 {
+            color: var(--text);
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+        }
+        .env-overlay-steps {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            margin: 1.5rem auto;
+            max-width: 280px;
+        }
+        .env-overlay-steps li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            transition: color 0.3s;
+        }
+        .env-overlay-steps li.active { color: var(--gk-cyan); }
+        .env-overlay-steps li.done { color: #22c55e; }
+        .env-overlay-steps li .step-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            flex-shrink: 0;
+        }
+        .env-overlay-steps li.done .step-icon { background: #22c55e; border-color: #22c55e; color: #fff; }
+        .env-overlay-steps li.active .step-icon { border-color: var(--gk-cyan); }
+        .env-overlay-error {
+            color: #ef4444;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+
+        /* ── Start Button (for cluster problems) ── */
+        .start-env-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .start-env-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); }
+        .start-env-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .start-env-btn.running { background: #22c55e; }
+
+        /* ── Validation Results Panel ── */
+        .validation-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 15, 30, 0.92);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .validation-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .validation-card {
+            background: var(--gk-slate);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 480px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .validation-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .validation-header h3 {
+            font-size: 1.3rem;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        .validation-header .score-badge {
+            display: inline-block;
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .score-badge.passed { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+        .score-badge.failed { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .validation-checks {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+        .validation-checks li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+        .validation-checks li:last-child { border-bottom: none; }
+        .check-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+            line-height: 1.4;
+        }
+        .validation-points {
+            text-align: center;
+            font-size: 1.1rem;
+            color: var(--gk-cyan);
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+        .validation-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+        .validation-actions button {
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .val-btn-close {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .val-btn-close:hover { border-color: var(--text); color: var(--text); }
+        .val-btn-retry {
+            background: linear-gradient(135deg, var(--gk-cyan), var(--gk-teal));
+            color: var(--gk-navy);
+            border: none;
+        }
+        .val-btn-retry:hover { transform: translateY(-1px); }
     </style>
 @endpush
 
@@ -616,6 +816,12 @@
             <div class="topbar-badges">
                 <span class="tb-badge {{ $challenge->category }}">{{ ucfirst($challenge->category) }}</span>
                 <span class="tb-badge {{ $challenge->difficulty }}">{{ ucfirst($challenge->difficulty) }}</span>
+                @if($challenge->problem_type)
+                    <span class="tb-badge problem-type">{{ $challenge->getProblemTypeLabel() }}</span>
+                @endif
+                @if($challenge->points)
+                    <span class="tb-badge problem-type">{{ $challenge->points }} pts</span>
+                @endif
             </div>
         </div>
         <div class="topbar-right">
@@ -625,13 +831,48 @@
                 </svg>
                 <span id="timerDisplay">00:00</span>
             </div>
+            @if($challenge->needsCluster())
+                <button class="start-env-btn" id="startEnvBtn" onclick="startEnvironment()">
+                    ▶ Start Environment
+                </button>
+            @endif
             @if($prevChallenge)
                 <a href="{{ route('problems.show', $prevChallenge->slug) }}" style="color:var(--text-muted);text-decoration:none;font-size:0.8rem;">← Prev</a>
             @endif
             @if($nextChallenge)
                 <a href="{{ route('problems.show', $nextChallenge->slug) }}" style="color:var(--text-muted);text-decoration:none;font-size:0.8rem;">Next →</a>
             @endif
-            <button class="submit-btn" id="submitBtn" onclick="completeChallenge()">Submit</button>
+            <button class="submit-btn" id="submitBtn" onclick="submitChallenge()">Submit</button>
+        </div>
+    </div>
+
+    <!-- Environment Provisioning Overlay -->
+    <div class="env-overlay" id="envOverlay">
+        <div class="env-overlay-content">
+            <div class="env-overlay-spinner" id="envSpinner"></div>
+            <h3 id="envOverlayTitle">Starting Environment...</h3>
+            <ul class="env-overlay-steps">
+                <li id="envStep1" class="active"><span class="step-icon">1</span> Provisioning cluster</li>
+                <li id="envStep2"><span class="step-icon">2</span> Loading scenario</li>
+                <li id="envStep3"><span class="step-icon">3</span> Environment ready</li>
+            </ul>
+            <div class="env-overlay-error" id="envError" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Validation Results Overlay -->
+    <div class="validation-overlay" id="validationOverlay">
+        <div class="validation-card">
+            <div class="validation-header">
+                <h3 id="valTitle">Checking...</h3>
+                <span class="score-badge" id="valBadge"></span>
+            </div>
+            <ul class="validation-checks" id="valChecks"></ul>
+            <div class="validation-points" id="valPoints" style="display:none;"></div>
+            <div class="validation-actions">
+                <button class="val-btn-close" onclick="closeValidation()">Close</button>
+                <button class="val-btn-retry" id="valRetryBtn" onclick="closeValidation()" style="display:none;">Try Again</button>
+            </div>
         </div>
     </div>
 
@@ -755,7 +996,7 @@
             <!-- Editor Footer -->
             <div class="editor-footer">
                 <span id="cursorPos">Ln 1, Col 1</span>
-                <span id="langLabel">{{ $challenge->getFileLanguageMap() ? reset($challenge->getFileLanguageMap()) : 'YAML' }}</span>
+                <span id="langLabel">{{ ($langMap = $challenge->getFileLanguageMap()) ? reset($langMap) : 'YAML' }}</span>
                 <div class="editor-footer-btns">
                     <button class="editor-btn save" onclick="saveProgress()">Save</button>
                     <button class="editor-btn" onclick="resetEditor()">Reset</button>
@@ -790,12 +1031,15 @@
 const CHALLENGE = {
     slug: @json($challenge->slug),
     category: @json($challenge->category),
+    problemType: @json($challenge->problem_type ?? 'build'),
+    requiresCluster: @json((bool)$challenge->needsCluster()),
     initialFiles: @json($challenge->getInitialFiles()),
     fileLanguageMap: @json($challenge->getFileLanguageMap()),
     commandFlows: @json($challenge->getCommandFlows()),
     initialState: @json($challenge->getInitialState()),
     solutionFiles: @json($challenge->getSolutionFiles()),
     hints: @json($challenge->getHints()),
+    validationRules: @json($challenge->getValidationRules()),
 };
 
 const ATTEMPT = {
@@ -803,6 +1047,7 @@ const ATTEMPT = {
     commandsExecuted: @json($attempt->commands_executed ?? []),
     hintsUsed: {{ $attempt->hints_used }},
     status: @json($attempt->status),
+    labSessionId: @json($attempt->lab_session_id),
 };
 
 const CSRF_TOKEN = '{{ csrf_token() }}';
@@ -816,6 +1061,9 @@ let commandHistory = [];
 let historyIndex = -1;
 let commandsExecuted = ATTEMPT.commandsExecuted || [];
 let startTime = Date.now();
+let envSessionReady = !CHALLENGE.requiresCluster || !!ATTEMPT.labSessionId;
+let isSubmitting = false;
+
 
 // ═══════════════════════════════════════════════════════════════
 // TERMINAL STATE ENGINE
@@ -905,9 +1153,14 @@ function handleTerminalInput(event) {
         historyIndex = commandHistory.length;
         commandsExecuted.push(command);
 
-        const output = processCommand(command);
-        appendToTerminal(command, output);
-        checkObjectives();
+        // Route to real cluster or simulated terminal
+        if (CHALLENGE.requiresCluster && envSessionReady) {
+            executeRealCommand(command);
+        } else {
+            const output = processCommand(command);
+            appendToTerminal(command, output);
+            checkObjectives();
+        }
     } else if (event.key === 'ArrowUp') {
         event.preventDefault();
         if (historyIndex > 0) {
@@ -923,6 +1176,47 @@ function handleTerminalInput(event) {
             historyIndex = commandHistory.length;
             document.getElementById('terminalInput').value = '';
         }
+    }
+}
+
+/**
+ * Execute a command against the real vcluster via the kubectl proxy API.
+ */
+async function executeRealCommand(command) {
+    // Show command immediately with a loading indicator
+    const termOut = document.getElementById('terminalOutput');
+    termOut.innerHTML += `<span class="prompt">$ </span><span class="cmd">${escapeHtml(command)}</span>\n`;
+    termOut.innerHTML += `<span class="output" style="color:var(--text-muted);font-style:italic;">executing...</span>\n`;
+    const body = document.getElementById('terminalBody');
+    body.scrollTop = body.scrollHeight;
+
+    try {
+        const response = await fetch(`/api/problems/${CHALLENGE.slug}/exec`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+            body: JSON.stringify({ command }),
+        });
+        const data = await response.json();
+
+        // Remove the "executing..." line and show real output
+        const lines = termOut.innerHTML.split('\n');
+        // Remove the last "executing..." line
+        const execIdx = lines.findLastIndex(l => l.includes('executing...'));
+        if (execIdx >= 0) lines.splice(execIdx, 1);
+        termOut.innerHTML = lines.join('\n');
+
+        if (data.output) {
+            const isError = data.exit_code !== 0;
+            termOut.innerHTML += `<span class="${isError ? 'error' : 'output'}">${escapeHtml(data.output)}</span>\n`;
+        }
+        body.scrollTop = body.scrollHeight;
+    } catch (err) {
+        const lines = termOut.innerHTML.split('\n');
+        const execIdx = lines.findLastIndex(l => l.includes('executing...'));
+        if (execIdx >= 0) lines.splice(execIdx, 1);
+        termOut.innerHTML = lines.join('\n');
+        termOut.innerHTML += `<span class="error">Error: Could not connect to environment. Try clicking "Start Environment".</span>\n`;
+        body.scrollTop = body.scrollHeight;
     }
 }
 
@@ -1552,6 +1846,7 @@ function saveProgress() {
 }
 
 function completeChallenge() {
+    // Legacy path — only used for non-cluster problems
     files[currentFile] = document.getElementById('codeEditor').value;
 
     fetch(`/problems/${CHALLENGE.slug}/complete`, {
@@ -1574,6 +1869,210 @@ function completeChallenge() {
             showSolutionFromData(data.solution_files, data.solution_explanation);
         }
     });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUBMIT — Routes between real cluster validation and legacy
+// ═══════════════════════════════════════════════════════════════
+async function submitChallenge() {
+    if (isSubmitting) return;
+
+    if (CHALLENGE.requiresCluster) {
+        // Real cluster validation
+        await submitToRealCluster();
+    } else {
+        // Legacy simulated path
+        completeChallenge();
+    }
+}
+
+async function submitToRealCluster() {
+    if (!envSessionReady) {
+        appendToTerminal('', 'Error: Environment not started. Click "▶ Start Environment" first.');
+        return;
+    }
+
+    isSubmitting = true;
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = 'Validating...';
+    btn.disabled = true;
+
+    // Save current file state
+    files[currentFile] = document.getElementById('codeEditor').value;
+
+    try {
+        const response = await fetch(`/api/problems/${CHALLENGE.slug}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+            body: JSON.stringify({
+                files: files,
+                time_spent_seconds: Math.floor((Date.now() - startTime) / 1000),
+            }),
+        });
+        const data = await response.json();
+
+        showValidationResults(data);
+    } catch (err) {
+        alert('Error submitting: ' + err.message);
+    } finally {
+        isSubmitting = false;
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+    }
+}
+
+function showValidationResults(data) {
+    const overlay = document.getElementById('validationOverlay');
+    const title = document.getElementById('valTitle');
+    const badge = document.getElementById('valBadge');
+    const checks = document.getElementById('valChecks');
+    const points = document.getElementById('valPoints');
+    const retryBtn = document.getElementById('valRetryBtn');
+
+    if (data.passed) {
+        title.textContent = '🎉 Problem Solved!';
+        badge.className = 'score-badge passed';
+        badge.textContent = `${data.score}/${data.total} checks passed`;
+        retryBtn.style.display = 'none';
+
+        // Update submit button
+        const btn = document.getElementById('submitBtn');
+        btn.textContent = '✓ Solved';
+        btn.disabled = true;
+        btn.style.background = '#22c55e';
+        btn.style.color = '#fff';
+
+        // Show points
+        if (data.points_earned) {
+            points.textContent = `+${data.points_earned} points earned!`;
+            points.style.display = 'block';
+        }
+
+        // Show solution
+        if (data.solution_files || data.solution_explanation) {
+            showSolutionFromData(data.solution_files, data.solution_explanation);
+        }
+    } else {
+        title.textContent = 'Not Quite...';
+        badge.className = 'score-badge failed';
+        badge.textContent = `${data.score}/${data.total} checks passed`;
+        retryBtn.style.display = 'inline-block';
+        points.style.display = 'none';
+    }
+
+    // Populate check results
+    checks.innerHTML = '';
+    (data.results || []).forEach(r => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span class="check-icon">${r.passed ? '✅' : '❌'}</span>
+            <span>${escapeHtml(r.description || r.type)}</span>
+        `;
+        checks.appendChild(li);
+    });
+
+    overlay.classList.add('active');
+}
+
+function closeValidation() {
+    document.getElementById('validationOverlay').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// START ENVIRONMENT (real cluster provisioning)
+// ═══════════════════════════════════════════════════════════════
+async function startEnvironment() {
+    const btn = document.getElementById('startEnvBtn');
+    const overlay = document.getElementById('envOverlay');
+    const error = document.getElementById('envError');
+
+    btn.disabled = true;
+    btn.textContent = 'Starting...';
+    error.style.display = 'none';
+
+    // Show overlay
+    overlay.classList.add('active');
+
+    // Animate steps
+    const steps = [
+        document.getElementById('envStep1'),
+        document.getElementById('envStep2'),
+        document.getElementById('envStep3'),
+    ];
+
+    steps[0].className = 'active';
+    steps[1].className = '';
+    steps[2].className = '';
+
+    try {
+        // Step 1: Hit the start API (provisions cluster + applies scenario)
+        setTimeout(() => {
+            steps[0].className = 'active';
+        }, 100);
+
+        const response = await fetch(`/api/problems/${CHALLENGE.slug}/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+        });
+        const data = await response.json();
+
+        if (data.status === 'error') {
+            throw new Error(data.message || 'Failed to start environment');
+        }
+
+        // Step 2: Scenario loaded
+        steps[0].className = 'done';
+        steps[1].className = 'active';
+
+        // Brief pause for visual effect
+        await new Promise(r => setTimeout(r, 800));
+
+        // Step 3: Ready
+        steps[1].className = 'done';
+        steps[2].className = 'done';
+
+        document.getElementById('envOverlayTitle').textContent = '✅ Environment Ready!';
+        document.getElementById('envSpinner').style.display = 'none';
+
+        envSessionReady = true;
+
+        // Update button
+        btn.textContent = '✓ Running';
+        btn.className = 'start-env-btn running';
+        btn.disabled = true;
+
+        // Print welcome message in terminal
+        const termOut = document.getElementById('terminalOutput');
+        termOut.innerHTML += `<span class="output" style="color:#22c55e;">✓ Environment ready. You can now run kubectl commands.</span>\n`;
+        termOut.innerHTML += `<span class="output" style="color:var(--text-muted);">Try: kubectl get pods</span>\n`;
+
+        // Close overlay after a moment
+        await new Promise(r => setTimeout(r, 1200));
+        overlay.classList.remove('active');
+
+        // Reset spinner for next use
+        document.getElementById('envSpinner').style.display = '';
+        document.getElementById('envOverlayTitle').textContent = 'Starting Environment...';
+
+        // Focus terminal
+        document.getElementById('terminalInput').focus();
+
+    } catch (err) {
+        error.textContent = err.message;
+        error.style.display = 'block';
+        document.getElementById('envSpinner').style.display = 'none';
+        document.getElementById('envOverlayTitle').textContent = '❌ Failed to Start';
+
+        btn.disabled = false;
+        btn.textContent = '▶ Retry';
+
+        // Auto-close after 3s
+        setTimeout(() => {
+            overlay.classList.remove('active');
+            document.getElementById('envSpinner').style.display = '';
+            document.getElementById('envOverlayTitle').textContent = 'Starting Environment...';
+        }, 4000);
+    }
 }
 
 function showSolution() {
@@ -1625,7 +2124,33 @@ document.getElementById('terminalBody').addEventListener('click', function() {
     document.getElementById('terminalInput').focus();
 });
 
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
 // Run objective check on load (for resumed sessions)
 checkObjectives();
+
+// If cluster problem has an existing session, mark button as running
+if (CHALLENGE.requiresCluster && ATTEMPT.labSessionId) {
+    const btn = document.getElementById('startEnvBtn');
+    if (btn) {
+        btn.textContent = '✓ Running';
+        btn.className = 'start-env-btn running';
+        btn.disabled = true;
+    }
+    // Print reconnection message
+    const termOut = document.getElementById('terminalOutput');
+    termOut.innerHTML += `<span class="output" style="color:#22c55e;">✓ Reconnected to existing environment.</span>\n`;
+    termOut.innerHTML += `<span class="output" style="color:var(--text-muted);">Try: kubectl get pods</span>\n`;
+}
+
+// If problem is already completed
+if (ATTEMPT.status === 'completed') {
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = '✓ Solved';
+    btn.disabled = true;
+    btn.style.background = '#22c55e';
+    btn.style.color = '#fff';
+}
 </script>
 @endpush

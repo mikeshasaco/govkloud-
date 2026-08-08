@@ -24,13 +24,22 @@ class Challenge extends Model
         'description',
         'category',
         'difficulty',
+        'problem_type',
         'estimated_minutes',
+        'time_limit_minutes',
         'order_index',
+        'points',
+        'acceptance_rate',
         'is_published',
+        'requires_cluster',
         'initial_files_json',
         'file_language_map',
         'command_flows_json',
         'initial_state_json',
+        'scenario_manifests_json',
+        'validation_rules_json',
+        'quiz_options_json',
+        'starter_yaml',
         'solution_files_json',
         'solution_explanation',
         'hints_json',
@@ -41,12 +50,19 @@ class Challenge extends Model
 
     protected $casts = [
         'is_published' => 'boolean',
+        'requires_cluster' => 'boolean',
         'order_index' => 'integer',
         'estimated_minutes' => 'integer',
+        'time_limit_minutes' => 'integer',
+        'points' => 'integer',
+        'acceptance_rate' => 'decimal:2',
         'initial_files_json' => 'array',
         'file_language_map' => 'array',
         'command_flows_json' => 'array',
         'initial_state_json' => 'array',
+        'scenario_manifests_json' => 'array',
+        'validation_rules_json' => 'array',
+        'quiz_options_json' => 'array',
         'solution_files_json' => 'array',
         'hints_json' => 'array',
         'tags' => 'array',
@@ -137,6 +153,62 @@ class Challenge extends Model
     public function requiresSubscription(): bool
     {
         return in_array($this->difficulty, ['medium', 'hard']);
+    }
+
+    /**
+     * Check if this is a cluster-based problem.
+     */
+    public function needsCluster(): bool
+    {
+        return $this->requires_cluster
+            || in_array($this->problem_type, ['troubleshoot', 'build', 'scenario']);
+    }
+
+    /**
+     * Check if this is a quiz/multiple-choice problem.
+     */
+    public function isQuiz(): bool
+    {
+        return $this->problem_type === 'quiz';
+    }
+
+    /**
+     * Get the scenario manifests (YAML to apply when problem starts).
+     */
+    public function getScenarioManifests(): array
+    {
+        return $this->scenario_manifests_json ?? [];
+    }
+
+    /**
+     * Get the validation rules for auto-grading.
+     */
+    public function getValidationRules(): array
+    {
+        return $this->validation_rules_json ?? [];
+    }
+
+    /**
+     * Get quiz options.
+     */
+    public function getQuizOptions(): array
+    {
+        return $this->quiz_options_json ?? [];
+    }
+
+    /**
+     * Get the problem type label.
+     */
+    public function getProblemTypeLabel(): string
+    {
+        return match ($this->problem_type) {
+            'troubleshoot' => '🔧 Troubleshoot',
+            'build' => '🏗️ Build',
+            'debug' => '🐛 Debug',
+            'scenario' => '🎯 Scenario',
+            'quiz' => '📝 Quiz',
+            default => ucfirst($this->problem_type ?? 'build'),
+        };
     }
 
     /**

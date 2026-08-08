@@ -357,6 +357,184 @@ class ChallengeSeeder extends Seeder
                 ],
                 'tags' => ['modules', 'reusability', 'structure', 'advanced'],
             ],
+
+            // ═══════════════════════════════════════════════════
+            // REAL-CLUSTER: TROUBLESHOOT (Beginner)
+            // ═══════════════════════════════════════════════════
+            [
+                'title' => 'Fix the CrashLooping Pod',
+                'slug' => 'fix-the-crashlooping-pod',
+                'category' => 'kubernetes',
+                'difficulty' => 'beginner',
+                'problem_type' => 'troubleshoot',
+                'requires_cluster' => true,
+                'estimated_minutes' => 10,
+                'time_limit_minutes' => 30,
+                'order_index' => 10,
+                'points' => 15,
+                'is_published' => true,
+                'description' => "A pod named **web-app** has been deployed but is stuck in CrashLoopBackOff.\n\nYour task:\n1. Investigate why the pod is failing\n2. Fix the issue so the pod reaches **Running** status\n3. Submit to verify your fix\n\nHint: Start by describing the pod to see the error events.",
+                'scenario_manifests_json' => [
+                    "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-app\n  labels:\n    app: web-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:99.99\n    ports:\n    - containerPort: 80",
+                ],
+                'initial_files_json' => [
+                    'fix.yaml' => "# Investigate the pod, then write a corrected manifest here\n# Apply it with: kubectl apply -f fix.yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: web-app\n  labels:\n    app: web-app\nspec:\n  containers:\n  - name: nginx\n    image:       # ← Fix the image tag\n    ports:\n    - containerPort: 80\n",
+                ],
+                'file_language_map' => ['fix.yaml' => 'yaml'],
+                'validation_rules_json' => [
+                    [
+                        'type' => 'pod_status',
+                        'name' => 'web-app',
+                        'namespace' => 'default',
+                        'expected_status' => 'Running',
+                        'description' => 'Pod "web-app" should be in Running status',
+                    ],
+                    [
+                        'type' => 'container_image',
+                        'pod_name' => 'web-app',
+                        'namespace' => 'default',
+                        'expected_image' => 'nginx:1.25',
+                        'description' => 'Pod should use a valid nginx image (nginx:1.25)',
+                    ],
+                ],
+                'solution_files_json' => [
+                    'fix.yaml' => "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-app\n  labels:\n    app: web-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80",
+                ],
+                'solution_explanation' => "The pod was using image \"nginx:99.99\" which doesn't exist, causing ImagePullBackOff/CrashLoopBackOff. The fix is to delete the broken pod and re-create it with a valid image tag like nginx:1.25.\n\nDiagnostic commands:\n- kubectl describe pod web-app → shows Events with \"ImagePullBackOff\"\n- kubectl get pods → shows CrashLoopBackOff status\n\nFix:\n- kubectl delete pod web-app\n- kubectl apply -f fix.yaml (with corrected image)",
+                'hints_json' => [
+                    'Run "kubectl describe pod web-app" and look at the Events section',
+                    'The image tag "nginx:99.99" does not exist. Use a real tag like "nginx:1.25"',
+                    'You need to delete the broken pod first: "kubectl delete pod web-app", then apply the fixed YAML',
+                ],
+                'tags' => ['troubleshoot', 'pods', 'crashloop', 'image-pull', 'real-cluster'],
+            ],
+
+            // ═══════════════════════════════════════════════════
+            // REAL-CLUSTER: BUILD (Medium)
+            // ═══════════════════════════════════════════════════
+            [
+                'title' => 'Deploy a Scalable Web App',
+                'slug' => 'deploy-scalable-web-app',
+                'category' => 'kubernetes',
+                'difficulty' => 'medium',
+                'problem_type' => 'build',
+                'requires_cluster' => true,
+                'estimated_minutes' => 15,
+                'time_limit_minutes' => 45,
+                'order_index' => 11,
+                'points' => 25,
+                'is_published' => true,
+                'description' => "Create a production-ready deployment with a Service.\n\nYour task:\n1. Create a **Deployment** named \"api-server\" with:\n   - 3 replicas\n   - Image: nginx:1.25\n   - Container port: 80\n   - Labels: app=api-server\n2. Create a **Service** named \"api-service\" that:\n   - Selects pods with label app=api-server\n   - Exposes port 80\n   - Type: ClusterIP\n3. Verify all 3 replicas are running\n4. Submit to validate",
+                'scenario_manifests_json' => [],
+                'initial_files_json' => [
+                    'deployment.yaml' => "# Create your Deployment here\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: api-server\nspec:\n  replicas:     # How many?\n  selector:\n    matchLabels:\n      app: api-server\n  template:\n    metadata:\n      labels:\n        app: api-server\n    spec:\n      containers:\n      - name: nginx\n        image:          # Which image?\n        ports:\n        - containerPort: 80\n",
+                    'service.yaml' => "# Create your Service here\napiVersion: v1\nkind: Service\nmetadata:\n  name: api-service\nspec:\n  selector:\n    # Which pods?\n  ports:\n  - port: 80\n    targetPort: 80\n",
+                ],
+                'file_language_map' => ['deployment.yaml' => 'yaml', 'service.yaml' => 'yaml'],
+                'validation_rules_json' => [
+                    [
+                        'type' => 'resource_exists',
+                        'kind' => 'Deployment',
+                        'name' => 'api-server',
+                        'namespace' => 'default',
+                        'description' => 'Deployment "api-server" should exist',
+                    ],
+                    [
+                        'type' => 'replica_count',
+                        'kind' => 'deployment',
+                        'name' => 'api-server',
+                        'namespace' => 'default',
+                        'expected' => 3,
+                        'description' => 'Deployment should have 3 ready replicas',
+                    ],
+                    [
+                        'type' => 'resource_exists',
+                        'kind' => 'Service',
+                        'name' => 'api-service',
+                        'namespace' => 'default',
+                        'description' => 'Service "api-service" should exist',
+                    ],
+                    [
+                        'type' => 'endpoints_populated',
+                        'service_name' => 'api-service',
+                        'namespace' => 'default',
+                        'description' => 'Service "api-service" should have active endpoints',
+                    ],
+                ],
+                'solution_files_json' => [
+                    'deployment.yaml' => "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: api-server\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: api-server\n  template:\n    metadata:\n      labels:\n        app: api-server\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        ports:\n        - containerPort: 80",
+                    'service.yaml' => "apiVersion: v1\nkind: Service\nmetadata:\n  name: api-service\nspec:\n  selector:\n    app: api-server\n  ports:\n  - port: 80\n    targetPort: 80",
+                ],
+                'solution_explanation' => "A Deployment manages a set of identical pods. The selector.matchLabels must match the template.metadata.labels so the Deployment knows which pods it owns. The Service uses the same label selector to route traffic to all matching pods. With 3 replicas, Kubernetes ensures exactly 3 pods are always running.",
+                'hints_json' => [
+                    'Set spec.replicas to 3 in the Deployment',
+                    'Make sure the Service selector matches the pod labels: app: api-server',
+                    'Apply both files: kubectl apply -f deployment.yaml -f service.yaml',
+                ],
+                'tags' => ['deployment', 'service', 'replicas', 'scaling', 'real-cluster'],
+            ],
+
+            // ═══════════════════════════════════════════════════
+            // REAL-CLUSTER: SCENARIO (Hard)
+            // ═══════════════════════════════════════════════════
+            [
+                'title' => 'Debug the Broken Service Connection',
+                'slug' => 'debug-broken-service-connection',
+                'category' => 'kubernetes',
+                'difficulty' => 'hard',
+                'problem_type' => 'scenario',
+                'requires_cluster' => true,
+                'estimated_minutes' => 20,
+                'time_limit_minutes' => 60,
+                'order_index' => 12,
+                'points' => 40,
+                'is_published' => true,
+                'description' => "A team reports their frontend app can't connect to the backend API.\n\nBoth pods are deployed and running, but the frontend gets connection errors when trying to reach the backend via the Service.\n\n**Your investigation should:**\n1. Check the status of all pods and services\n2. Identify why the Service isn't routing to the backend pod\n3. Fix the issue so the Service correctly routes to the backend\n4. Submit to validate\n\nThere are multiple resources deployed — look carefully at the labels and selectors.",
+                'scenario_manifests_json' => [
+                    // Backend pod with correct labels
+                    "apiVersion: v1\nkind: Pod\nmetadata:\n  name: backend-api\n  labels:\n    app: backend\n    tier: api\nspec:\n  containers:\n  - name: api\n    image: nginx:1.25\n    ports:\n    - containerPort: 80",
+                    // Service with WRONG selector (mismatched label)
+                    "apiVersion: v1\nkind: Service\nmetadata:\n  name: backend-service\nspec:\n  selector:\n    app: backend-api\n    tier: api\n  ports:\n  - port: 80\n    targetPort: 80",
+                    // Frontend pod that tries to connect
+                    "apiVersion: v1\nkind: Pod\nmetadata:\n  name: frontend-app\n  labels:\n    app: frontend\nspec:\n  containers:\n  - name: frontend\n    image: nginx:1.25\n    ports:\n    - containerPort: 80",
+                ],
+                'initial_files_json' => [
+                    'notes.md' => "# Investigation Notes\n# Use this space to track what you find\n#\n# Useful commands:\n# kubectl get pods -o wide\n# kubectl get svc\n# kubectl get endpoints\n# kubectl describe svc backend-service\n# kubectl describe pod backend-api\n",
+                ],
+                'file_language_map' => ['notes.md' => 'markdown'],
+                'validation_rules_json' => [
+                    [
+                        'type' => 'pod_status',
+                        'name' => 'backend-api',
+                        'namespace' => 'default',
+                        'expected_status' => 'Running',
+                        'description' => 'Backend pod should be Running',
+                    ],
+                    [
+                        'type' => 'pod_status',
+                        'name' => 'frontend-app',
+                        'namespace' => 'default',
+                        'expected_status' => 'Running',
+                        'description' => 'Frontend pod should be Running',
+                    ],
+                    [
+                        'type' => 'endpoints_populated',
+                        'service_name' => 'backend-service',
+                        'namespace' => 'default',
+                        'description' => 'Service "backend-service" should have active endpoints (routing to backend pod)',
+                    ],
+                ],
+                'solution_files_json' => [
+                    'fix-service.yaml' => "apiVersion: v1\nkind: Service\nmetadata:\n  name: backend-service\nspec:\n  selector:\n    app: backend        # was: backend-api (wrong!)\n    tier: api\n  ports:\n  - port: 80\n    targetPort: 80",
+                ],
+                'solution_explanation' => "The Service selector had app: backend-api but the pod label is app: backend. This mismatch meant the Service had no endpoints (kubectl get endpoints backend-service shows <none>).\n\nThe fix is to update the Service selector to match the pod labels:\n- selector.app: backend (not backend-api)\n- selector.tier: api (this was already correct)\n\nDiagnostic flow:\n1. kubectl get endpoints backend-service → shows <none>\n2. kubectl describe svc backend-service → shows selector\n3. kubectl get pod backend-api --show-labels → shows actual labels\n4. Compare selectors vs labels → mismatch found\n5. kubectl apply -f fix-service.yaml → endpoints populate",
+                'hints_json' => [
+                    'Run "kubectl get endpoints backend-service" — what do you see?',
+                    'Compare the Service selector (kubectl describe svc backend-service) with the pod labels (kubectl get pod backend-api --show-labels)',
+                    'The Service selector says "app: backend-api" but the pod label is "app: backend" — fix the selector',
+                ],
+                'tags' => ['scenario', 'services', 'selectors', 'labels', 'debugging', 'networking', 'real-cluster'],
+            ],
         ];
 
         foreach ($challenges as $data) {
