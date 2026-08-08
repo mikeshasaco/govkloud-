@@ -151,6 +151,73 @@ class ProblemSessionManager
     }
 
     /**
+     * Apply YAML content from the code editor to the user's vcluster.
+     * Pipes the YAML via stdin to `kubectl apply -f -`.
+     */
+    public function applyYaml(LabSession $session, string $yamlContent): array
+    {
+        $kubeconfigPath = $this->getSessionKubeconfig($session);
+
+        if (!$kubeconfigPath) {
+            return [
+                'output' => "Error: Session environment not found. Try restarting the problem.",
+                'exit_code' => 1,
+            ];
+        }
+
+        // Validate it looks like YAML (basic check)
+        if (empty(trim($yamlContent))) {
+            return [
+                'output' => "Error: Empty YAML content. Write your manifest in the editor first.",
+                'exit_code' => 1,
+            ];
+        }
+
+        $kubectlPath = config('govkloud.kubectl.binary_path');
+        $command = sprintf(
+            '%s --kubeconfig %s apply -f - 2>&1',
+            escapeshellarg($kubectlPath),
+            escapeshellarg($kubeconfigPath)
+        );
+
+        // Use proc_open to pipe YAML via stdin
+        $descriptors = [
+            0 => ['pipe', 'r'], // stdin
+            1 => ['pipe', 'w'], // stdout
+            2 => ['pipe', 'w'], // stderr
+        ];
+
+        $process = proc_open($command, $descriptors, $pipes);
+
+        if (!is_resource($process)) {
+            return [
+                'output' => "Error: Failed to execute kubectl.",
+                'exit_code' => 1,
+            ];
+        }
+
+        // Write YAML to stdin
+        fwrite($pipes[0], $yamlContent);
+        fclose($pipes[0]);
+
+        // Read output
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+
+        $exitCode = proc_close($process);
+
+        $output = trim($stdout . ($stderr ? "\n" . $stderr : ''));
+
+        return [
+            'output' => $output ?: ($exitCode === 0 ? 'Applied successfully.' : 'Apply failed.'),
+            'exit_code' => $exitCode,
+        ];
+    }
+
+    /**
      * Submit a problem attempt: run validation rules against the cluster.
      *
      * @return array Validation results

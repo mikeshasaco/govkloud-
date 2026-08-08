@@ -25,7 +25,8 @@ class ChallengeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Challenge Details')
+                // ── Section 1: The Basics ──
+                Forms\Components\Section::make('Problem Basics')
                     ->schema([
                         Forms\Components\TextInput::make('title')
                             ->required()
@@ -40,168 +41,122 @@ class ChallengeResource extends Resource
                             ->helperText('Auto-generated from title'),
                         Forms\Components\Select::make('category')
                             ->options([
-                                'kubernetes' => '☸️ Kubernetes',
-                                'terraform' => '🏗️ Terraform',
-                                'docker' => '🐳 Docker',
+                                'kubernetes' => 'Kubernetes',
+                                'terraform' => 'Terraform',
+                                'docker' => 'Docker',
                             ])
-                            ->required()
-                            ->searchable(),
+                            ->required(),
                         Forms\Components\Select::make('difficulty')
                             ->options([
-                                'beginner' => '🟢 Beginner',
-                                'medium' => '🟠 Medium',
-                                'hard' => '🔴 Hard',
+                                'beginner' => 'Beginner',
+                                'medium' => 'Medium',
+                                'hard' => 'Hard',
                             ])
                             ->required(),
                         Forms\Components\Select::make('problem_type')
                             ->options([
-                                'build' => '🏗️ Build',
-                                'troubleshoot' => '🔧 Troubleshoot',
-                                'debug' => '🐛 Debug YAML',
-                                'scenario' => '🎯 Scenario',
-                                'quiz' => '📝 Quiz',
+                                'troubleshoot' => 'Troubleshoot - something is broken, fix it',
+                                'build' => 'Build - create resources from scratch',
+                                'scenario' => 'Scenario - multi-step investigation',
+                                'debug' => 'Debug - fix broken YAML',
+                                'quiz' => 'Quiz - multiple choice (no cluster)',
                             ])
-                            ->default('build')
-                            ->required()
-                            ->helperText('Build = create from scratch, Troubleshoot = fix broken state, Scenario = multi-step investigation'),
-                        Forms\Components\TextInput::make('estimated_minutes')
-                            ->numeric()
-                            ->default(15)
-                            ->suffix('minutes'),
-                        Forms\Components\TextInput::make('time_limit_minutes')
-                            ->numeric()
-                            ->nullable()
-                            ->suffix('minutes')
-                            ->helperText('Optional enforced time limit'),
-                        Forms\Components\TextInput::make('order_index')
-                            ->numeric()
-                            ->default(0)
-                            ->helperText('Auto-assigned if left empty'),
+                            ->default('troubleshoot')
+                            ->required(),
                         Forms\Components\TextInput::make('points')
                             ->numeric()
                             ->default(10)
-                            ->helperText('Points awarded on completion'),
+                            ->suffix('pts'),
+                        Forms\Components\TextInput::make('estimated_minutes')
+                            ->numeric()
+                            ->default(15)
+                            ->suffix('min'),
                         Forms\Components\Textarea::make('description')
                             ->required()
                             ->rows(6)
                             ->columnSpanFull()
-                            ->helperText('Markdown supported. Describe what the user needs to accomplish.'),
+                            ->helperText('Describe the problem. What is broken? What should the user do? Markdown supported.'),
                         Forms\Components\Toggle::make('is_published')
-                            ->default(false),
-                        Forms\Components\Toggle::make('requires_cluster')
                             ->default(false)
-                            ->helperText('If enabled, a real vcluster is provisioned when the user starts this problem'),
+                            ->helperText('Show this problem to users'),
+                        Forms\Components\Toggle::make('requires_cluster')
+                            ->default(true)
+                            ->helperText('Provisions a real vcluster (turn OFF for quiz-only problems)'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Code Editor Setup')
-                    ->description('Define the files pre-loaded in the code editor when the user starts this challenge.')
-                    ->schema([
-                        Forms\Components\KeyValue::make('initial_files_json')
-                            ->label('Initial Files')
-                            ->keyLabel('Filename')
-                            ->valueLabel('Content')
-                            ->addActionLabel('Add File')
-                            ->helperText('e.g., Key: pod.yaml, Value: # Write your manifest here'),
-                        Forms\Components\KeyValue::make('file_language_map')
-                            ->label('Language Map')
-                            ->keyLabel('Filename')
-                            ->valueLabel('Language')
-                            ->addActionLabel('Add Mapping')
-                            ->helperText('e.g., Key: pod.yaml, Value: yaml'),
-                    ]),
-
-                Forms\Components\Section::make('Real Cluster Scenario')
-                    ->description('Configure the pre-built scenario state and auto-grading rules for cluster-based problems.')
+                // ── Section 2: Problem Setup ──
+                Forms\Components\Section::make('Problem Setup')
+                    ->description('What gets deployed when the user clicks Start Environment, and how do we grade it.')
                     ->schema([
                         Forms\Components\Textarea::make('scenario_manifests_json')
-                            ->label('Scenario Manifests (YAML)')
-                            ->rows(12)
-                            ->helperText('YAML manifests applied to the vcluster when the problem starts. These create the "broken" or "initial" state.')
+                            ->label('Scenario YAML - What to deploy')
+                            ->rows(14)
+                            ->columnSpanFull()
+                            ->helperText('Paste Kubernetes YAML that creates the broken or initial state. Separate multiple manifests with ---')
+                            ->placeholder("apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:99.99\n    ports:\n    - containerPort: 80")
                             ->formatStateUsing(fn($state) => $state ? (is_array($state) ? implode("\n---\n", $state) : $state) : '')
                             ->dehydrateStateUsing(fn($state) => $state ? array_filter(array_map('trim', explode('---', $state))) : null),
                         Forms\Components\Textarea::make('validation_rules_json')
-                            ->label('Validation Rules (JSON)')
+                            ->label('Grading Rules - How to check the answer')
                             ->rows(10)
-                            ->helperText('JSON array of validation checks for auto-grading. Each rule has: type, name, namespace, expected value, description.')
+                            ->columnSpanFull()
+                            ->helperText('JSON array of checks. Types: pod_status, resource_exists, field_equals, container_image, replica_count, endpoints_populated')
+                            ->placeholder('[{"type": "pod_status", "name": "web-app", "namespace": "default", "expected_status": "Running", "description": "Pod should be Running"}]')
                             ->formatStateUsing(fn($state) => $state ? json_encode($state, JSON_PRETTY_PRINT) : '')
                             ->dehydrateStateUsing(fn($state) => $state ? json_decode($state, true) : null),
+                        Forms\Components\KeyValue::make('initial_files_json')
+                            ->label('Starter Files - Pre-loaded in the editor')
+                            ->keyLabel('Filename')
+                            ->valueLabel('Content')
+                            ->addActionLabel('Add File')
+                            ->helperText('Files shown in the code editor. e.g. fix.yaml with starter YAML'),
                     ]),
 
-                Forms\Components\Section::make('Quiz Options')
-                    ->description('For quiz/multiple-choice problem types only.')
-                    ->schema([
-                        Forms\Components\Textarea::make('quiz_options_json')
-                            ->label('Quiz Options (JSON)')
-                            ->rows(6)
-                            ->helperText('JSON array of options: [{"text": "Answer A", "is_correct": false}, {"text": "Answer B", "is_correct": true}]')
-                            ->formatStateUsing(fn($state) => $state ? json_encode($state, JSON_PRETTY_PRINT) : '')
-                            ->dehydrateStateUsing(fn($state) => $state ? json_decode($state, true) : null),
-                    ]),
-
-                Forms\Components\Section::make('Terminal Configuration')
-                    ->description('Legacy: simulated terminal config. Use Scenario Manifests + Validation Rules for real-cluster problems.')
-                    ->collapsed()
-                    ->schema([
-                        Forms\Components\Textarea::make('command_flows_json')
-                            ->label('Command Flows (JSON)')
-                            ->rows(10)
-                            ->helperText('JSON config: required_commands, validations, custom_outputs')
-                            ->formatStateUsing(fn($state) => $state ? json_encode($state, JSON_PRETTY_PRINT) : '')
-                            ->dehydrateStateUsing(fn($state) => $state ? json_decode($state, true) : null),
-                        Forms\Components\Textarea::make('initial_state_json')
-                            ->label('Initial Cluster State (JSON)')
-                            ->rows(6)
-                            ->helperText('Pre-existing resources in the simulated cluster')
-                            ->formatStateUsing(fn($state) => $state ? json_encode($state, JSON_PRETTY_PRINT) : '')
-                            ->dehydrateStateUsing(fn($state) => $state ? json_decode($state, true) : null),
-                    ]),
-
-                Forms\Components\Section::make('Solution')
-                    ->description('The correct answer revealed after the user completes or gives up.')
+                // ── Section 3: Solution & Hints ──
+                Forms\Components\Section::make('Solution & Hints')
                     ->schema([
                         Forms\Components\KeyValue::make('solution_files_json')
                             ->label('Solution Files')
                             ->keyLabel('Filename')
                             ->valueLabel('Correct Content')
-                            ->addActionLabel('Add Solution File'),
+                            ->addActionLabel('Add Solution File')
+                            ->helperText('Shown after the user solves it or clicks Show Solution'),
                         Forms\Components\Textarea::make('solution_explanation')
-                            ->label('Solution Explanation')
+                            ->label('Explanation')
                             ->rows(4)
-                            ->helperText('Markdown explanation of why this solution works.'),
-                    ]),
-
-                Forms\Components\Section::make('Hints')
-                    ->description('Progressive hints revealed one at a time.')
-                    ->schema([
+                            ->helperText('Explain WHY the solution works and the diagnostic steps.'),
                         Forms\Components\Textarea::make('hints_json')
-                            ->label('Hints (JSON array)')
+                            ->label('Hints (progressive)')
                             ->rows(4)
-                            ->helperText('JSON array of strings, e.g., ["Hint 1", "Hint 2", "Hint 3"]')
+                            ->helperText('JSON array of hint strings revealed one at a time')
+                            ->placeholder('["First hint", "Second hint", "Third hint"]')
                             ->formatStateUsing(fn($state) => $state ? json_encode($state, JSON_PRETTY_PRINT) : '')
                             ->dehydrateStateUsing(fn($state) => $state ? json_decode($state, true) : null),
                     ]),
 
-                Forms\Components\Section::make('Tutorial Video')
-                    ->description('Optional animated tutorial users can watch before starting.')
+                // ── Section 4: Optional ──
+                Forms\Components\Section::make('Optional')
+                    ->collapsed()
                     ->schema([
                         Forms\Components\TextInput::make('video_url')
-                            ->label('Video URL (YouTube, Vimeo, etc.)')
+                            ->label('Tutorial Video URL')
                             ->url()
                             ->placeholder('https://youtube.com/watch?v=...'),
-                        Forms\Components\FileUpload::make('video_file')
-                            ->label('Or Upload Video')
-                            ->disk('azure')
-                            ->directory('challenge-videos')
-                            ->visibility('public')
-                            ->acceptedFileTypes(['video/mp4', 'video/webm'])
-                            ->maxSize(512000), // 500MB
-                    ]),
-
-                Forms\Components\Section::make('Tags')
-                    ->schema([
                         Forms\Components\TagsInput::make('tags')
-                            ->placeholder('Add tags...')
-                            ->helperText('e.g., pods, secrets, probes, networking'),
+                            ->placeholder('pods, services, debugging...'),
+                        Forms\Components\TextInput::make('time_limit_minutes')
+                            ->numeric()
+                            ->nullable()
+                            ->suffix('minutes')
+                            ->helperText('Enforced time limit (leave empty for unlimited)'),
+                        Forms\Components\TextInput::make('order_index')
+                            ->numeric()
+                            ->default(0),
+                        // Legacy fields kept for backward compatibility
+                        Forms\Components\Hidden::make('file_language_map'),
+                        Forms\Components\Hidden::make('command_flows_json'),
+                        Forms\Components\Hidden::make('initial_state_json'),
+                        Forms\Components\Hidden::make('quiz_options_json'),
                     ]),
             ]);
     }

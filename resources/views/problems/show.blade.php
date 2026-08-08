@@ -483,6 +483,27 @@
             color: var(--gk-cyan);
         }
 
+        .apply-cluster-btn {
+            background: rgba(34, 197, 94, 0.15) !important;
+            border-color: rgba(34, 197, 94, 0.4) !important;
+            color: #22c55e !important;
+            font-weight: 600 !important;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .apply-cluster-btn:hover {
+            background: rgba(34, 197, 94, 0.25) !important;
+            border-color: rgba(34, 197, 94, 0.6) !important;
+            transform: translateY(-1px);
+        }
+
+        .apply-cluster-btn.applying {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
         /* Right Panel - Terminal */
         .panel-right {
             width: 380px;
@@ -998,6 +1019,12 @@
                 <span id="cursorPos">Ln 1, Col 1</span>
                 <span id="langLabel">{{ ($langMap = $challenge->getFileLanguageMap()) ? reset($langMap) : 'YAML' }}</span>
                 <div class="editor-footer-btns">
+                    @if($challenge->needsCluster())
+                    <button class="editor-btn apply-cluster-btn" id="applyToClusterBtn" onclick="applyToCluster()" title="Apply the editor YAML to your cluster">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Apply to Cluster
+                    </button>
+                    @endif
                     <button class="editor-btn save" onclick="saveProgress()">Save</button>
                     <button class="editor-btn" onclick="resetEditor()">Reset</button>
                 </div>
@@ -1220,6 +1247,74 @@ async function executeRealCommand(command) {
     }
 }
 
+/**
+ * Apply the current editor YAML to the real cluster.
+ * Takes editor content → POST /api/problems/{slug}/apply → kubectl apply -f -
+ */
+async function applyToCluster() {
+    if (!envSessionReady) {
+        const termOut = document.getElementById('terminalOutput');
+        termOut.innerHTML += `<span class="error">Error: No active environment. Click 'Start Environment' first.</span>\n`;
+        document.getElementById('terminalBody').scrollTop = document.getElementById('terminalBody').scrollHeight;
+        return;
+    }
+
+    // Get current editor content
+    files[currentFile] = document.getElementById('codeEditor').value;
+    const yaml = document.getElementById('codeEditor').value.trim();
+
+    if (!yaml) {
+        const termOut = document.getElementById('terminalOutput');
+        termOut.innerHTML += `<span class="error">Error: Editor is empty. Write your YAML first.</span>\n`;
+        return;
+    }
+
+    // Update button state
+    const btn = document.getElementById('applyToClusterBtn');
+    if (btn) {
+        btn.classList.add('applying');
+        btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Applying...';
+    }
+
+    // Show in terminal
+    const termOut = document.getElementById('terminalOutput');
+    const body = document.getElementById('terminalBody');
+    termOut.innerHTML += `<span class="prompt">$ </span><span class="cmd">kubectl apply -f ${escapeHtml(currentFile)}</span>\n`;
+    termOut.innerHTML += `<span class="output" style="color:var(--text-muted);font-style:italic;">applying ${escapeHtml(currentFile)}...</span>\n`;
+    body.scrollTop = body.scrollHeight;
+
+    try {
+        const response = await fetch(`/api/problems/${CHALLENGE.slug}/apply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+            body: JSON.stringify({ yaml }),
+        });
+        const data = await response.json();
+
+        // Remove "applying..." line
+        const lines = termOut.innerHTML.split('\n');
+        const applyIdx = lines.findLastIndex(l => l.includes('applying'));
+        if (applyIdx >= 0) lines.splice(applyIdx, 1);
+        termOut.innerHTML = lines.join('\n');
+
+        const isError = data.exit_code !== 0;
+        termOut.innerHTML += `<span class="${isError ? 'error' : 'output'}">${escapeHtml(data.output)}</span>\n`;
+        body.scrollTop = body.scrollHeight;
+    } catch (err) {
+        const lines = termOut.innerHTML.split('\n');
+        const applyIdx = lines.findLastIndex(l => l.includes('applying'));
+        if (applyIdx >= 0) lines.splice(applyIdx, 1);
+        termOut.innerHTML = lines.join('\n');
+        termOut.innerHTML += `<span class="error">Error: Could not connect to environment.</span>\n`;
+        body.scrollTop = body.scrollHeight;
+    } finally {
+        // Reset button
+        if (btn) {
+            btn.classList.remove('applying');
+            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Apply to Cluster';
+        }
+    }
+}
 function appendToTerminal(command, output) {
     const termOut = document.getElementById('terminalOutput');
     let html = `<span class="prompt">$ </span><span class="cmd">${escapeHtml(command)}</span>\n`;

@@ -95,6 +95,42 @@ class ProblemApiController extends Controller
     }
 
     /**
+     * Apply YAML from the code editor to the user's cluster.
+     *
+     * POST /api/problems/{slug}/apply
+     * Body: { "yaml": "apiVersion: v1\nkind: Pod..." }
+     */
+    public function apply(Request $request, string $slug): JsonResponse
+    {
+        $request->validate([
+            'yaml' => 'required|string|max:50000',
+        ]);
+
+        $challenge = Challenge::where('slug', $slug)->published()->firstOrFail();
+        $user = Auth::user();
+        $attempt = $user->getOrCreateChallengeAttempt($challenge);
+
+        if (!$attempt->lab_session_id) {
+            return response()->json([
+                'output' => "Error: No active environment. Click 'Start' to begin.",
+                'exit_code' => 1,
+            ]);
+        }
+
+        $session = $attempt->labSession;
+        if (!$session || !$session->isRunning()) {
+            return response()->json([
+                'output' => "Error: Environment has expired. Click 'Start' to restart.",
+                'exit_code' => 1,
+            ]);
+        }
+
+        $result = $this->sessionManager->applyYaml($session, $request->input('yaml'));
+
+        return response()->json($result);
+    }
+
+    /**
      * Submit the problem for auto-grading.
      * Validates the cluster state against the challenge's validation rules.
      *
