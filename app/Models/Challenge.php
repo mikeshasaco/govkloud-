@@ -160,8 +160,8 @@ class Challenge extends Model
      */
     public function needsCluster(): bool
     {
-        return $this->requires_cluster
-            || in_array($this->problem_type, ['troubleshoot', 'build', 'scenario']);
+        return ($this->requires_cluster ?? false)
+            || in_array($this->problem_type ?? '', ['troubleshoot', 'build', 'scenario']);
     }
 
     /**
@@ -201,13 +201,14 @@ class Challenge extends Model
      */
     public function getProblemTypeLabel(): string
     {
-        return match ($this->problem_type) {
+        $type = $this->problem_type ?? 'build';
+        return match ($type) {
             'troubleshoot' => '🔧 Troubleshoot',
             'build' => '🏗️ Build',
             'debug' => '🐛 Debug',
             'scenario' => '🎯 Scenario',
             'quiz' => '📝 Quiz',
-            default => ucfirst($this->problem_type ?? 'build'),
+            default => ucfirst($type),
         };
     }
 
