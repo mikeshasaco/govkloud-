@@ -140,7 +140,7 @@ class ProblemSessionManager
         $kubectlPath = config('govkloud.kubectl.binary_path');
         $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
         $namespace = $session->host_namespace;
-        $vclusterPod = $session->vcluster_release_name . '-0';
+        $runnerPod = 'kubectl-runner';
 
         // Route command through host cluster → exec into vcluster pod
         // The vcluster pod has an internal kubeconfig at /data/server/credentials/admin.kubeconfig
@@ -149,7 +149,7 @@ class ProblemSessionManager
             escapeshellarg($kubectlPath),
             escapeshellarg($hostKubeconfig),
             escapeshellarg($namespace),
-            escapeshellarg($vclusterPod),
+            escapeshellarg($runnerPod),
             $sanitized
         );
 
@@ -180,7 +180,7 @@ class ProblemSessionManager
         $kubectlPath = config('govkloud.kubectl.binary_path');
         $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
         $namespace = $session->host_namespace;
-        $vclusterPod = $session->vcluster_release_name . '-0';
+        $runnerPod = 'kubectl-runner';
 
         // Route through host cluster → exec into vcluster → kubectl apply -f -
         $command = sprintf(
@@ -188,7 +188,7 @@ class ProblemSessionManager
             escapeshellarg($kubectlPath),
             escapeshellarg($hostKubeconfig),
             escapeshellarg($namespace),
-            escapeshellarg($vclusterPod)
+            escapeshellarg($runnerPod)
         );
 
         // Use proc_open to pipe YAML via stdin
@@ -275,9 +275,9 @@ class ProblemSessionManager
         }
 
         $namespace = $session->host_namespace;
-        $vclusterPod = $session->vcluster_release_name . '-0';
+        $runnerPod = 'kubectl-runner';
 
-        $results = $this->validator->validate($rules, $namespace, $vclusterPod);
+        $results = $this->validator->validate($rules, $namespace, $runnerPod);
 
         // Calculate points
         $pointsEarned = 0;
@@ -315,7 +315,7 @@ class ProblemSessionManager
             $kubectlPath = config('govkloud.kubectl.binary_path');
             $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
             $namespace = $session->host_namespace;
-            $vclusterPod = $session->vcluster_release_name . '-0';
+            $runnerPod = 'kubectl-runner';
 
             // Delete all user-created resources in default namespace via exec
             $resourceTypes = 'pods,deployments,services,configmaps,secrets,ingresses,networkpolicies,jobs,cronjobs,statefulsets,daemonsets,replicasets,pvc';
@@ -324,7 +324,7 @@ class ProblemSessionManager
                 escapeshellarg($kubectlPath),
                 escapeshellarg($hostKubeconfig),
                 escapeshellarg($namespace),
-                escapeshellarg($vclusterPod),
+                escapeshellarg($runnerPod),
                 $resourceTypes
             ));
 
@@ -378,7 +378,7 @@ class ProblemSessionManager
         $kubectlPath = config('govkloud.kubectl.binary_path');
         $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
         $namespace = $session->host_namespace;
-        $vclusterPod = $session->vcluster_release_name . '-0';
+        $runnerPod = 'kubectl-runner';
 
         // scenario_manifests_json can be a string (raw YAML) or array of YAML strings
         $yamlContent = is_array($manifests)
@@ -391,7 +391,7 @@ class ProblemSessionManager
             escapeshellarg($kubectlPath),
             escapeshellarg($hostKubeconfig),
             escapeshellarg($namespace),
-            escapeshellarg($vclusterPod)
+            escapeshellarg($runnerPod)
         );
 
         $descriptors = [

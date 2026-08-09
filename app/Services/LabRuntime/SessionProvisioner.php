@@ -174,6 +174,10 @@ class SessionProvisioner
         throw new Exception("Failed to store vcluster kubeconfig");
       }
 
+      // Step 5: Deploy kubectl-runner pod (has kubectl + vcluster kubeconfig)
+      Log::info("[Problem] Deploying kubectl-runner pod");
+      $this->deployKubectlRunner($session);
+
       // Mark session as running (no workbench/ingress needed)
       $session->update([
         'status' => LabSession::STATUS_RUNNING,
@@ -198,6 +202,83 @@ class SessionProvisioner
 
       return false;
     }
+  }
+
+  /**
+   * Deploy a kubectl-runner pod in the host namespace.
+   * This pod provides kubectl with access to the vcluster's kubeconfig.
+   * Commands are exec'd into this pod from the App Service.
+   */
+  protected function deployKubectlRunner(LabSession $session): void
+  {
+    $namespace = $session->host_namespace;
+    $podName = 'kubectl-runner';
+    $vcRelease = $session->vcluster_release_name;
+
+    $yaml = <<<YAML
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {$podName}
+  namespace: {$namespace}
+  labels:
+    app: kubectl-runner
+    session: "{$session->id}"
+spec:
+  containers:
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command: ["sleep", "infinity"]
+    volumeMounts:
+    - name: kubeconfig
+      mountPath: /home/.kube
+      readOnly: true
+    env:
+    - name: KUBECONFIG
+      value: /home/.kube/config
+    resources:
+      limits:
+        cpu: "100m"
+        memory: "64Mi"
+      requests:
+        cpu: "50m"
+        memory: "32Mi"
+  volumes:
+  - name: kubeconfig
+    secret:
+      secretName: vcluster-kubeconfig
+      items:
+      - key: config
+        path: config
+  restartPolicy: Always
+YAML;
+
+    $this->k8sClient->applyYaml($namespace, $yaml);
+
+    // Wait for the runner pod to be ready
+    $kubectlPath = config('govkloud.kubectl.binary_path');
+    $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
+
+    $maxAttempts = 30;
+    for ($i = 0; $i < $maxAttempts; $i++) {
+      sleep(2);
+      $output = [];
+      $returnCode = 0;
+      exec(sprintf(
+        '%s --kubeconfig %s get pod %s -n %s -o jsonpath={.status.phase} 2>&1',
+        escapeshellarg($kubectlPath),
+        escapeshellarg($hostKubeconfig),
+        escapeshellarg($podName),
+        escapeshellarg($namespace)
+      ), $output, $returnCode);
+
+      if ($returnCode === 0 && trim(implode('', $output)) === 'Running') {
+        Log::info("[Problem] kubectl-runner pod is ready in {$namespace}");
+        return;
+      }
+    }
+
+    Log::warning("[Problem] kubectl-runner pod not ready after {$maxAttempts} attempts, proceeding anyway");
   }
 
   /**
