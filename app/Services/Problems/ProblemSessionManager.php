@@ -121,6 +121,7 @@ class ProblemSessionManager
 
     /**
      * Execute a kubectl command in the user's vcluster.
+     * Routes through the host cluster: kubectl exec into the vcluster pod.
      *
      * @return array ['output' => string, 'exit_code' => int]
      */
@@ -136,21 +137,19 @@ class ProblemSessionManager
             ];
         }
 
-        // Get the vcluster kubeconfig path
-        $kubeconfigPath = $this->getSessionKubeconfig($session);
-
-        if (!$kubeconfigPath) {
-            return [
-                'output' => "Error: Session environment not found. Try restarting the problem.",
-                'exit_code' => 1,
-            ];
-        }
-
         $kubectlPath = config('govkloud.kubectl.binary_path');
+        $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
+        $namespace = $session->host_namespace;
+        $vclusterPod = $session->vcluster_release_name . '-0';
+
+        // Route command through host cluster → exec into vcluster pod
+        // The vcluster pod has an internal kubeconfig at /data/server/credentials/admin.kubeconfig
         $fullCommand = sprintf(
-            '%s --kubeconfig %s %s 2>&1',
+            '%s --kubeconfig %s exec -n %s %s -- kubectl %s 2>&1',
             escapeshellarg($kubectlPath),
-            escapeshellarg($kubeconfigPath),
+            escapeshellarg($hostKubeconfig),
+            escapeshellarg($namespace),
+            escapeshellarg($vclusterPod),
             $sanitized
         );
 
@@ -166,19 +165,10 @@ class ProblemSessionManager
 
     /**
      * Apply YAML content from the code editor to the user's vcluster.
-     * Pipes the YAML via stdin to `kubectl apply -f -`.
+     * Routes through the host cluster: kubectl exec with stdin piping.
      */
     public function applyYaml(LabSession $session, string $yamlContent): array
     {
-        $kubeconfigPath = $this->getSessionKubeconfig($session);
-
-        if (!$kubeconfigPath) {
-            return [
-                'output' => "Error: Session environment not found. Try restarting the problem.",
-                'exit_code' => 1,
-            ];
-        }
-
         // Validate it looks like YAML (basic check)
         if (empty(trim($yamlContent))) {
             return [
@@ -188,10 +178,17 @@ class ProblemSessionManager
         }
 
         $kubectlPath = config('govkloud.kubectl.binary_path');
+        $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
+        $namespace = $session->host_namespace;
+        $vclusterPod = $session->vcluster_release_name . '-0';
+
+        // Route through host cluster → exec into vcluster → kubectl apply -f -
         $command = sprintf(
-            '%s --kubeconfig %s apply -f - 2>&1',
+            '%s --kubeconfig %s exec -i -n %s %s -- kubectl apply -f - 2>&1',
             escapeshellarg($kubectlPath),
-            escapeshellarg($kubeconfigPath)
+            escapeshellarg($hostKubeconfig),
+            escapeshellarg($namespace),
+            escapeshellarg($vclusterPod)
         );
 
         // Use proc_open to pipe YAML via stdin
@@ -277,18 +274,10 @@ class ProblemSessionManager
             ];
         }
 
-        $kubeconfigPath = $this->getSessionKubeconfig($session);
-        if (!$kubeconfigPath) {
-            return [
-                'passed' => false,
-                'results' => [],
-                'score' => 0,
-                'total' => 0,
-                'message' => 'Could not connect to environment.',
-            ];
-        }
+        $namespace = $session->host_namespace;
+        $vclusterPod = $session->vcluster_release_name . '-0';
 
-        $results = $this->validator->validate($rules, $kubeconfigPath);
+        $results = $this->validator->validate($rules, $namespace, $vclusterPod);
 
         // Calculate points
         $pointsEarned = 0;
@@ -323,20 +312,19 @@ class ProblemSessionManager
     public function resetScenario(Challenge $challenge, LabSession $session): bool
     {
         try {
-            // Delete existing resources in the default namespace
-            $kubeconfigPath = $this->getSessionKubeconfig($session);
-            if (!$kubeconfigPath) {
-                return false;
-            }
-
             $kubectlPath = config('govkloud.kubectl.binary_path');
+            $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
+            $namespace = $session->host_namespace;
+            $vclusterPod = $session->vcluster_release_name . '-0';
 
-            // Delete all user-created resources in default namespace
+            // Delete all user-created resources in default namespace via exec
             $resourceTypes = 'pods,deployments,services,configmaps,secrets,ingresses,networkpolicies,jobs,cronjobs,statefulsets,daemonsets,replicasets,pvc';
             exec(sprintf(
-                '%s --kubeconfig %s delete %s --all -n default --ignore-not-found 2>&1',
+                '%s --kubeconfig %s exec -n %s %s -- kubectl delete %s --all -n default --ignore-not-found 2>&1',
                 escapeshellarg($kubectlPath),
-                escapeshellarg($kubeconfigPath),
+                escapeshellarg($hostKubeconfig),
+                escapeshellarg($namespace),
+                escapeshellarg($vclusterPod),
                 $resourceTypes
             ));
 
@@ -387,56 +375,68 @@ class ProblemSessionManager
             return;
         }
 
-        $kubeconfigPath = $this->getSessionKubeconfig($session);
-        if (!$kubeconfigPath) {
-            throw new Exception("Cannot apply scenario: kubeconfig not found for session {$session->id}");
-        }
-
         $kubectlPath = config('govkloud.kubectl.binary_path');
+        $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
+        $namespace = $session->host_namespace;
+        $vclusterPod = $session->vcluster_release_name . '-0';
 
         // scenario_manifests_json can be a string (raw YAML) or array of YAML strings
         $yamlContent = is_array($manifests)
             ? implode("\n---\n", $manifests)
             : $manifests;
 
-        $tempFile = tempnam(sys_get_temp_dir(), 'scenario_');
-        file_put_contents($tempFile, $yamlContent);
+        // Route through host cluster → exec into vcluster → kubectl apply -f -
+        $command = sprintf(
+            '%s --kubeconfig %s exec -i -n %s %s -- kubectl apply -f - 2>&1',
+            escapeshellarg($kubectlPath),
+            escapeshellarg($hostKubeconfig),
+            escapeshellarg($namespace),
+            escapeshellarg($vclusterPod)
+        );
 
-        try {
-            $output = [];
-            $returnCode = 0;
-            exec(sprintf(
-                '%s --kubeconfig %s apply -f %s 2>&1',
-                escapeshellarg($kubectlPath),
-                escapeshellarg($kubeconfigPath),
-                escapeshellarg($tempFile)
-            ), $output, $returnCode);
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
 
-            if ($returnCode !== 0) {
-                $outputStr = implode("\n", $output);
-                Log::warning("Scenario apply had issues", [
-                    'challenge' => $challenge->slug,
-                    'output' => $outputStr,
-                ]);
-            }
+        $process = proc_open($command, $descriptors, $pipes);
 
-            Log::info("Scenario applied for problem", [
-                'challenge' => $challenge->slug,
-                'session_id' => $session->id,
-            ]);
-
-            // Wait for the scenario state to establish
-            $this->waitForScenarioReady($challenge, $kubeconfigPath);
-
-        } finally {
-            unlink($tempFile);
+        if (!is_resource($process)) {
+            throw new Exception("Failed to exec into vcluster pod for scenario apply");
         }
+
+        fwrite($pipes[0], $yamlContent);
+        fclose($pipes[0]);
+
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+
+        $returnCode = proc_close($process);
+
+        if ($returnCode !== 0) {
+            Log::warning("Scenario apply had issues", [
+                'challenge' => $challenge->slug,
+                'output' => trim($stdout . "\n" . $stderr),
+            ]);
+        }
+
+        Log::info("Scenario applied for problem", [
+            'challenge' => $challenge->slug,
+            'session_id' => $session->id,
+        ]);
+
+        // Wait for the scenario state to establish
+        $this->waitForScenarioReady($challenge);
     }
 
     /**
      * Wait for scenario resources to reach their expected (potentially broken) state.
      */
-    protected function waitForScenarioReady(Challenge $challenge, string $kubeconfigPath): void
+    protected function waitForScenarioReady(Challenge $challenge): void
     {
         // Give K8s a few seconds to process the manifests
         // For troubleshooting problems, we want the broken state to establish

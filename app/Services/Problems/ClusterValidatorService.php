@@ -19,20 +19,21 @@ class ClusterValidatorService
     ) {}
 
     /**
-     * Run all validation rules against a cluster using the given kubeconfig.
+     * Run all validation rules against a cluster by exec'ing into the vcluster pod.
      *
-     * @param  array  $rules      Validation rules from challenge.validation_rules_json
-     * @param  string $kubeconfig Path to the vcluster kubeconfig file
+     * @param  array  $rules        Validation rules from challenge.validation_rules_json
+     * @param  string $namespace    Host namespace (e.g. gk-sess-prob-username)
+     * @param  string $vclusterPod  Vcluster pod name (e.g. vc-prob-8f14e45f-0)
      * @return array  ['passed' => bool, 'results' => [...], 'score' => int, 'total' => int]
      */
-    public function validate(array $rules, string $kubeconfig): array
+    public function validate(array $rules, string $namespace, string $vclusterPod): array
     {
         $results = [];
         $passed = 0;
         $total = count($rules);
 
         foreach ($rules as $rule) {
-            $result = $this->runValidation($rule, $kubeconfig);
+            $result = $this->runValidation($rule, $namespace, $vclusterPod);
             $results[] = $result;
 
             if ($result['passed']) {
@@ -51,25 +52,25 @@ class ClusterValidatorService
     /**
      * Run a single validation rule.
      */
-    protected function runValidation(array $rule, string $kubeconfig): array
+    protected function runValidation(array $rule, string $namespace, string $vclusterPod): array
     {
         $type = $rule['type'] ?? '';
         $description = $rule['description'] ?? "Check: {$type}";
 
         try {
             $passed = match ($type) {
-                'pod_status' => $this->checkPodStatus($rule, $kubeconfig),
-                'resource_exists' => $this->checkResourceExists($rule, $kubeconfig),
-                'resource_not_exists' => $this->checkResourceNotExists($rule, $kubeconfig),
-                'field_equals' => $this->checkFieldEquals($rule, $kubeconfig),
-                'field_contains' => $this->checkFieldContains($rule, $kubeconfig),
-                'container_image' => $this->checkContainerImage($rule, $kubeconfig),
-                'replica_count' => $this->checkReplicaCount($rule, $kubeconfig),
-                'endpoints_populated' => $this->checkEndpointsPopulated($rule, $kubeconfig),
-                'label_exists' => $this->checkLabelExists($rule, $kubeconfig),
-                'config_data' => $this->checkConfigData($rule, $kubeconfig),
-                'resource_count' => $this->checkResourceCount($rule, $kubeconfig),
-                'pod_log_contains' => $this->checkPodLogContains($rule, $kubeconfig),
+                'pod_status' => $this->checkPodStatus($rule, $namespace, $vclusterPod),
+                'resource_exists' => $this->checkResourceExists($rule, $namespace, $vclusterPod),
+                'resource_not_exists' => $this->checkResourceNotExists($rule, $namespace, $vclusterPod),
+                'field_equals' => $this->checkFieldEquals($rule, $namespace, $vclusterPod),
+                'field_contains' => $this->checkFieldContains($rule, $namespace, $vclusterPod),
+                'container_image' => $this->checkContainerImage($rule, $namespace, $vclusterPod),
+                'replica_count' => $this->checkReplicaCount($rule, $namespace, $vclusterPod),
+                'endpoints_populated' => $this->checkEndpointsPopulated($rule, $namespace, $vclusterPod),
+                'label_exists' => $this->checkLabelExists($rule, $namespace, $vclusterPod),
+                'config_data' => $this->checkConfigData($rule, $namespace, $vclusterPod),
+                'resource_count' => $this->checkResourceCount($rule, $namespace, $vclusterPod),
+                'pod_log_contains' => $this->checkPodLogContains($rule, $namespace, $vclusterPod),
                 default => throw new \InvalidArgumentException("Unknown validation type: {$type}"),
             };
 
@@ -97,7 +98,7 @@ class ClusterValidatorService
     /**
      * Check if a pod has the expected status (Running, Succeeded, etc.)
      */
-    protected function checkPodStatus(array $rule, string $kubeconfig): bool
+    protected function checkPodStatus(array $rule, string $namespace, string $vclusterPod): bool
     {
         $name = $rule['name'];
         $namespace = $rule['namespace'] ?? 'default';
@@ -114,7 +115,7 @@ class ClusterValidatorService
     /**
      * Check if a Kubernetes resource exists.
      */
-    protected function checkResourceExists(array $rule, string $kubeconfig): bool
+    protected function checkResourceExists(array $rule, string $namespace, string $vclusterPod): bool
     {
         $kind = strtolower($rule['kind']);
         $name = $rule['name'];
@@ -131,16 +132,16 @@ class ClusterValidatorService
     /**
      * Check if a Kubernetes resource does NOT exist.
      */
-    protected function checkResourceNotExists(array $rule, string $kubeconfig): bool
+    protected function checkResourceNotExists(array $rule, string $namespace, string $vclusterPod): bool
     {
-        return !$this->checkResourceExists($rule, $kubeconfig);
+        return !$this->checkResourceExists($rule, $namespace, $vclusterPod);
     }
 
     /**
      * Check if a specific field equals an expected value.
      * Uses jsonpath to extract the field.
      */
-    protected function checkFieldEquals(array $rule, string $kubeconfig): bool
+    protected function checkFieldEquals(array $rule, string $namespace, string $vclusterPod): bool
     {
         $kind = strtolower($rule['kind']);
         $name = $rule['name'];
@@ -161,7 +162,7 @@ class ClusterValidatorService
     /**
      * Check if a specific field contains a substring.
      */
-    protected function checkFieldContains(array $rule, string $kubeconfig): bool
+    protected function checkFieldContains(array $rule, string $namespace, string $vclusterPod): bool
     {
         $kind = strtolower($rule['kind']);
         $name = $rule['name'];
@@ -182,7 +183,7 @@ class ClusterValidatorService
     /**
      * Check if a pod's container uses the expected image.
      */
-    protected function checkContainerImage(array $rule, string $kubeconfig): bool
+    protected function checkContainerImage(array $rule, string $namespace, string $vclusterPod): bool
     {
         $podName = $rule['pod_name'] ?? $rule['name'];
         $namespace = $rule['namespace'] ?? 'default';
@@ -201,7 +202,7 @@ class ClusterValidatorService
     /**
      * Check if a Deployment/StatefulSet has the expected number of ready replicas.
      */
-    protected function checkReplicaCount(array $rule, string $kubeconfig): bool
+    protected function checkReplicaCount(array $rule, string $namespace, string $vclusterPod): bool
     {
         $kind = strtolower($rule['kind'] ?? 'deployment');
         $name = $rule['name'];
@@ -219,7 +220,7 @@ class ClusterValidatorService
     /**
      * Check if a Service has active endpoints (at least one).
      */
-    protected function checkEndpointsPopulated(array $rule, string $kubeconfig): bool
+    protected function checkEndpointsPopulated(array $rule, string $namespace, string $vclusterPod): bool
     {
         $serviceName = $rule['service_name'] ?? $rule['name'];
         $namespace = $rule['namespace'] ?? 'default';
@@ -236,7 +237,7 @@ class ClusterValidatorService
     /**
      * Check if a resource has specific labels.
      */
-    protected function checkLabelExists(array $rule, string $kubeconfig): bool
+    protected function checkLabelExists(array $rule, string $namespace, string $vclusterPod): bool
     {
         $kind = strtolower($rule['kind']);
         $name = $rule['name'];
@@ -267,7 +268,7 @@ class ClusterValidatorService
     /**
      * Check if a ConfigMap or Secret contains specific keys.
      */
-    protected function checkConfigData(array $rule, string $kubeconfig): bool
+    protected function checkConfigData(array $rule, string $namespace, string $vclusterPod): bool
     {
         $kind = strtolower($rule['kind'] ?? 'configmap');
         $name = $rule['name'];
@@ -296,7 +297,7 @@ class ClusterValidatorService
     /**
      * Check that a specific number of resources of a kind exist.
      */
-    protected function checkResourceCount(array $rule, string $kubeconfig): bool
+    protected function checkResourceCount(array $rule, string $namespace, string $vclusterPod): bool
     {
         $kind = strtolower($rule['kind']);
         $namespace = $rule['namespace'] ?? 'default';
@@ -309,7 +310,7 @@ class ClusterValidatorService
             $args[] = $labelSelector;
         }
 
-        $result = $this->kubectl($args, $kubeconfig);
+        $result = $this->kubectl($args, $namespace, $vclusterPod);
 
         if (!$result['success']) {
             return false;
@@ -322,7 +323,7 @@ class ClusterValidatorService
     /**
      * Check if a pod's logs contain a specific string.
      */
-    protected function checkPodLogContains(array $rule, string $kubeconfig): bool
+    protected function checkPodLogContains(array $rule, string $namespace, string $vclusterPod): bool
     {
         $podName = $rule['pod_name'] ?? $rule['name'];
         $namespace = $rule['namespace'] ?? 'default';
@@ -335,7 +336,7 @@ class ClusterValidatorService
             $args[] = $container;
         }
 
-        $result = $this->kubectl($args, $kubeconfig);
+        $result = $this->kubectl($args, $namespace, $vclusterPod);
 
         return $result['success'] && str_contains($result['output'], $contains);
     }
@@ -343,17 +344,25 @@ class ClusterValidatorService
     /**
      * Run a kubectl command using a specific kubeconfig (the user's vcluster).
      */
-    protected function kubectl(array $args, string $kubeconfig): array
+    protected function kubectl(array $args, string $namespace, string $vclusterPod): array
     {
         $kubectlPath = config('govkloud.kubectl.binary_path');
-        $command = [$kubectlPath, '--kubeconfig', $kubeconfig];
-        $command = array_merge($command, $args);
+        $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
 
-        $commandString = implode(' ', array_map('escapeshellarg', $command));
+        // Build: kubectl --kubeconfig <host> exec -n <namespace> <pod> -- kubectl <args>
+        $innerArgs = implode(' ', array_map('escapeshellarg', $args));
+        $command = sprintf(
+            '%s --kubeconfig %s exec -n %s %s -- kubectl %s 2>&1',
+            escapeshellarg($kubectlPath),
+            escapeshellarg($hostKubeconfig),
+            escapeshellarg($namespace),
+            escapeshellarg($vclusterPod),
+            $innerArgs
+        );
 
         $output = [];
         $returnCode = 0;
-        exec($commandString . ' 2>&1', $output, $returnCode);
+        exec($command, $output, $returnCode);
 
         return [
             'success' => $returnCode === 0,
