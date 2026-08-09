@@ -140,8 +140,25 @@ class SessionProvisioner
       }
 
       // Step 2: Install vcluster
-      Log::info("[Problem] Installing vcluster: {$session->vcluster_release_name}");
+      Log::info("[Problem] Installing vcluster: {$session->vcluster_release_name} in namespace: {$namespace}");
+
+      // Add detailed logging for debugging
+      $helmPath = config('govkloud.helm.binary_path');
+      $kubeconfigPath = config('govkloud.host_k8s.kubeconfig_path');
+      Log::info("[Problem] Helm path: {$helmPath}, Kubeconfig: {$kubeconfigPath}");
+
       if (!$this->installVcluster($session)) {
+        // Try to get more details about why it failed
+        Log::error("[Problem] vcluster install failed. Checking helm binary and kubeconfig...");
+
+        $helmCheck = [];
+        exec("{$helmPath} version 2>&1", $helmCheck);
+        Log::error("[Problem] Helm version check: " . implode("\n", $helmCheck));
+
+        $kubectlCheck = [];
+        exec(config('govkloud.kubectl.binary_path') . " --kubeconfig {$kubeconfigPath} cluster-info 2>&1", $kubectlCheck);
+        Log::error("[Problem] kubectl cluster-info: " . implode("\n", $kubectlCheck));
+
         throw new Exception("Failed to install vcluster");
       }
 
