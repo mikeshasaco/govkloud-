@@ -2100,7 +2100,7 @@ async function startEnvironment() {
     steps[2].className = '';
 
     try {
-        // Step 1: Hit the start API (provisions cluster + applies scenario)
+        // Step 1: Hit the start API (dispatches provisioning job)
         setTimeout(() => {
             steps[0].className = 'active';
         }, 100);
@@ -2113,6 +2113,46 @@ async function startEnvironment() {
 
         if (data.status === 'error') {
             throw new Error(data.message || 'Failed to start environment');
+        }
+
+        if (data.status === 'ready') {
+            // Session already existed and is running (reused)
+            steps[0].className = 'done';
+        } else if (data.status === 'provisioning') {
+            // Poll for status while provisioning runs async
+            steps[0].className = 'active';
+            let ready = false;
+            let pollCount = 0;
+            const maxPolls = 60; // 60 × 3s = 3 min max
+
+            while (!ready && pollCount < maxPolls) {
+                await new Promise(r => setTimeout(r, 3000));
+                pollCount++;
+
+                try {
+                    const statusRes = await fetch(`/api/problems/${CHALLENGE.slug}/status`, {
+                        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                    });
+                    const statusData = await statusRes.json();
+
+                    if (statusData.status === 'running') {
+                        ready = true;
+                        steps[0].className = 'done';
+                    } else if (statusData.status === 'error') {
+                        throw new Error(statusData.message || 'Provisioning failed');
+                    }
+                    // else still provisioning, continue polling
+                } catch (pollErr) {
+                    if (pollErr.message.includes('failed') || pollErr.message.includes('Failed')) {
+                        throw pollErr;
+                    }
+                    // Network error, keep trying
+                }
+            }
+
+            if (!ready) {
+                throw new Error('Environment took too long to provision. Please try again.');
+            }
         }
 
         // Step 2: Scenario loaded

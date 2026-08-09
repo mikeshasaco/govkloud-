@@ -50,6 +50,50 @@ class ProblemApiController extends Controller
     }
 
     /**
+     * Check the status of a problem session (polled by frontend during provisioning).
+     *
+     * GET /api/problems/{slug}/status
+     */
+    public function status(string $slug): JsonResponse
+    {
+        $challenge = Challenge::where('slug', $slug)->published()->firstOrFail();
+        $user = Auth::user();
+        $attempt = $user->getOrCreateChallengeAttempt($challenge);
+
+        if (!$attempt->lab_session_id) {
+            return response()->json([
+                'status' => 'not_started',
+                'message' => 'No session started.',
+            ]);
+        }
+
+        $session = $attempt->labSession;
+        if (!$session) {
+            return response()->json([
+                'status' => 'not_started',
+                'message' => 'Session not found.',
+            ]);
+        }
+
+        $response = [
+            'status' => $session->status,
+            'session_id' => $session->id,
+        ];
+
+        if ($session->isRunning()) {
+            // Session is ready — apply scenario if not done yet
+            $this->sessionManager->applyScenarioIfNeeded($challenge, $session);
+            $response['message'] = 'Environment ready.';
+        } elseif ($session->status === LabSession::STATUS_ERROR) {
+            $response['message'] = $session->error_message ?? 'Environment failed to start.';
+        } else {
+            $response['message'] = 'Provisioning...';
+        }
+
+        return response()->json($response);
+    }
+
+    /**
      * Execute a kubectl command in the user's problem environment.
      *
      * POST /api/problems/{slug}/exec

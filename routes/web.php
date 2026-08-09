@@ -103,6 +103,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Real-cluster problem API
     Route::post('/api/problems/{slug}/start', [ProblemApiController::class, 'start'])->name('api.problems.start');
+    Route::get('/api/problems/{slug}/status', [ProblemApiController::class, 'status'])->name('api.problems.status');
     Route::post('/api/problems/{slug}/exec', [ProblemApiController::class, 'exec'])->name('api.problems.exec');
     Route::post('/api/problems/{slug}/apply', [ProblemApiController::class, 'apply'])->name('api.problems.apply');
     Route::post('/api/problems/{slug}/submit', [ProblemApiController::class, 'submit'])->name('api.problems.submit');

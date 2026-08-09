@@ -6,6 +6,7 @@ use App\Models\Challenge;
 use App\Models\ChallengeAttempt;
 use App\Models\LabSession;
 use App\Models\User;
+use App\Jobs\ProvisionProblemSessionJob;
 use App\Services\K8s\K8sClient;
 use App\Services\K8s\HelmClient;
 use App\Services\K8s\IngressUrlBuilder;
@@ -41,7 +42,7 @@ class ProblemSessionManager
      */
     public function startSession(User $user, Challenge $challenge, ChallengeAttempt $attempt): array
     {
-        if (!$challenge->requires_cluster) {
+        if (!$challenge->needsCluster()) {
             return [
                 'status' => 'ready',
                 'session_id' => null,
@@ -75,19 +76,32 @@ class ProblemSessionManager
                 ];
             }
 
-            // Provision a new lightweight session
-            $session = $this->provisionLightweightSession($user, $challenge);
+            // Check if there's already a provisioning session for this user
+            $provisioningSession = $user->labSessions()
+                ->where('status', LabSession::STATUS_PROVISIONING)
+                ->latest()
+                ->first();
 
-            // Apply scenario manifests
-            $this->applyScenario($challenge, $session);
+            if ($provisioningSession) {
+                $attempt->update(['lab_session_id' => $provisioningSession->id]);
+                return [
+                    'status' => 'provisioning',
+                    'session_id' => $provisioningSession->id,
+                    'message' => 'Environment is being provisioned...',
+                ];
+            }
 
-            // Link attempt to session
+            // Create session record and dispatch async provisioning job
+            $session = $this->createProblemSession($user, $challenge);
             $attempt->update(['lab_session_id' => $session->id]);
 
+            // Dispatch the provisioning job (runs in queue worker like courses)
+            ProvisionProblemSessionJob::dispatch($session->id);
+
             return [
-                'status' => 'ready',
+                'status' => 'provisioning',
                 'session_id' => $session->id,
-                'message' => 'Environment provisioned and scenario loaded.',
+                'message' => 'Environment is being provisioned...',
             ];
 
         } catch (Exception $e) {
@@ -343,6 +357,27 @@ class ProblemSessionManager
     }
 
     /**
+     * Apply scenario manifests (only once, when session first becomes ready).
+     */
+    public function applyScenarioIfNeeded(Challenge $challenge, LabSession $session): void
+    {
+        // Check if scenario was already applied (using session metadata or a simple flag)
+        $meta = $session->metadata ?? [];
+        if (!empty($meta['scenario_applied'])) {
+            return;
+        }
+
+        try {
+            $this->applyScenario($challenge, $session);
+            $session->update(['metadata' => array_merge($meta, ['scenario_applied' => true])]);
+        } catch (Exception $e) {
+            Log::warning("Could not apply scenario on status check", [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * Apply scenario manifests to the vcluster.
      */
     protected function applyScenario(Challenge $challenge, LabSession $session): void
@@ -415,13 +450,13 @@ class ProblemSessionManager
     }
 
     /**
-     * Provision a lightweight lab session (no code-server workbench, no DinD).
+     * Create a lab session record for a problem (provisioning is async via job).
      */
-    protected function provisionLightweightSession(User $user, Challenge $challenge): LabSession
+    protected function createProblemSession(User $user, Challenge $challenge): LabSession
     {
         $namespace = config('govkloud.host_k8s.namespace_prefix') . 'prob-' . $user->username;
 
-        $session = LabSession::create([
+        return LabSession::create([
             'user_id' => $user->id,
             'status' => LabSession::STATUS_PROVISIONING,
             'host_namespace' => $namespace,
@@ -432,16 +467,6 @@ class ProblemSessionManager
                     ?? config('govkloud.session.ttl_default_minutes')
             ),
         ]);
-
-        // Use the lightweight provisioner (namespace → vcluster → kubeconfig only)
-        // No workbench or ingress needed for problems
-        $success = $this->sessionProvisioner->provisionLightweight($session);
-
-        if (!$success) {
-            throw new Exception("Failed to provision problem environment");
-        }
-
-        return $session;
     }
 
     /**
