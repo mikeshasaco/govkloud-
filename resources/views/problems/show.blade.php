@@ -1091,6 +1091,22 @@ let startTime = Date.now();
 let envSessionReady = !CHALLENGE.requiresCluster || !!ATTEMPT.labSessionId;
 let isSubmitting = false;
 
+// Auto-stop environment when user leaves the page
+function stopEnvironment() {
+    if (!envSessionReady || !CHALLENGE.requiresCluster) return;
+    // Use FormData with CSRF token so Laravel accepts it
+    const formData = new FormData();
+    formData.append('_token', CSRF_TOKEN);
+    navigator.sendBeacon(`/api/problems/${CHALLENGE.slug}/stop`, formData);
+    envSessionReady = false; // Prevent double-stops
+}
+
+// Stop on tab close or navigate away
+window.addEventListener('beforeunload', stopEnvironment);
+
+// Stop on back/forward navigation
+window.addEventListener('pagehide', stopEnvironment);
+
 
 // ═══════════════════════════════════════════════════════════════
 // TERMINAL STATE ENGINE

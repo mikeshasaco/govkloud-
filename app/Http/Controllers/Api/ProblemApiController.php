@@ -249,4 +249,40 @@ class ProblemApiController extends Controller
             'message' => $success ? 'Scenario reset to initial state.' : 'Failed to reset.',
         ]);
     }
+
+    /**
+     * Stop and tear down a problem environment.
+     *
+     * POST /api/problems/{slug}/stop
+     */
+    public function stop(string $slug): JsonResponse
+    {
+        $user = Auth::user();
+
+        // Find the user's active problem session
+        $session = $user->labSessions()
+            ->whereIn('status', ['running', 'provisioning'])
+            ->latest()
+            ->first();
+
+        if (!$session) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'No active session.',
+            ]);
+        }
+
+        try {
+            $destroyer = app(\App\Services\LabRuntime\SessionDestroyer::class);
+            $destroyer->destroy($session, 'manual');
+        } catch (\Exception $e) {
+            // Mark as destroyed even if K8s cleanup fails
+            $session->update(['status' => 'destroyed']);
+        }
+
+        return response()->json([
+            'status' => 'stopped',
+            'message' => 'Environment stopped.',
+        ]);
+    }
 }

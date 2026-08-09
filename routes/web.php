@@ -108,6 +108,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/problems/{slug}/apply', [ProblemApiController::class, 'apply'])->name('api.problems.apply');
     Route::post('/api/problems/{slug}/submit', [ProblemApiController::class, 'submit'])->name('api.problems.submit');
     Route::post('/api/problems/{slug}/reset', [ProblemApiController::class, 'reset'])->name('api.problems.reset');
+    Route::post('/api/problems/{slug}/stop', [ProblemApiController::class, 'stop'])->name('api.problems.stop');
 });
 
 // Subscription / Billing routes

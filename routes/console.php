@@ -14,3 +14,4 @@ Artisan::command('inspire', function () {
 |--------------------------------------------------------------------------
 */
 Schedule::command('labs:cleanup-stale')->everyMinute();
+Schedule::command('problems:cleanup')->everyFiveMinutes();
