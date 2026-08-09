@@ -1088,7 +1088,7 @@ let commandHistory = [];
 let historyIndex = -1;
 let commandsExecuted = ATTEMPT.commandsExecuted || [];
 let startTime = Date.now();
-let envSessionReady = !CHALLENGE.requiresCluster || !!ATTEMPT.labSessionId;
+let envSessionReady = !CHALLENGE.requiresCluster; // cluster problems start as false, verified via /status API
 let isSubmitting = false;
 
 // Auto-stop environment when user leaves the page
@@ -2281,18 +2281,41 @@ document.getElementById('terminalBody').addEventListener('click', function() {
 // Run objective check on load (for resumed sessions)
 checkObjectives();
 
-// If cluster problem has an existing session, mark button as running
+// If cluster problem has an existing session, verify it's still alive
 if (CHALLENGE.requiresCluster && ATTEMPT.labSessionId) {
-    const btn = document.getElementById('startEnvBtn');
-    if (btn) {
-        btn.textContent = '✓ Running';
-        btn.className = 'start-env-btn running';
-        btn.disabled = true;
-    }
-    // Print reconnection message
-    const termOut = document.getElementById('terminalOutput');
-    termOut.innerHTML += `<span class="output" style="color:#22c55e;">✓ Reconnected to existing environment.</span>\n`;
-    termOut.innerHTML += `<span class="output" style="color:var(--text-muted);">Try: kubectl get pods</span>\n`;
+    (async () => {
+        try {
+            const res = await fetch(`/api/problems/${CHALLENGE.slug}/status`, {
+                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            });
+            const data = await res.json();
+
+            const btn = document.getElementById('startEnvBtn');
+            if (data.status === 'running') {
+                // Session is actually running
+                if (btn) {
+                    btn.textContent = '✓ Running';
+                    btn.className = 'start-env-btn running';
+                    btn.disabled = true;
+                }
+                envSessionReady = true;
+                const termOut = document.getElementById('terminalOutput');
+                termOut.innerHTML += `<span class="output" style="color:#22c55e;">✓ Reconnected to existing environment.</span>\n`;
+                termOut.innerHTML += `<span class="output" style="color:var(--text-muted);">Try: kubectl get pods</span>\n`;
+            } else {
+                // Session is gone (destroyed/expired/not found) — reset button
+                if (btn) {
+                    btn.textContent = '▶ Start Environment';
+                    btn.className = 'start-env-btn';
+                    btn.disabled = false;
+                }
+                envSessionReady = false;
+            }
+        } catch (e) {
+            // Can't check, reset to safe state
+            envSessionReady = false;
+        }
+    })();
 }
 
 // If problem is already completed
