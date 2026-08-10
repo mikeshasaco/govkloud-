@@ -1226,6 +1226,19 @@ function handleTerminalInput(event) {
  * Execute a command against the real vcluster via the kubectl proxy API.
  */
 async function executeRealCommand(command) {
+    // Intercept 'kubectl apply -f <filename>' — use editor content instead
+    const applyMatch = command.match(/^kubectl\s+apply\s+-f\s+(.+)$/i);
+    if (applyMatch) {
+        const filename = applyMatch[1].trim();
+        // Check if it matches any editor file
+        const editorFile = Object.keys(files).find(f => f === filename || f.endsWith('/' + filename));
+        if (editorFile || Object.keys(files).length === 1) {
+            // Use the editor content via the /apply endpoint
+            applyToCluster();
+            return;
+        }
+    }
+
     // Show command immediately with a loading indicator
     const termOut = document.getElementById('terminalOutput');
     termOut.innerHTML += `<span class="prompt">$ </span><span class="cmd">${escapeHtml(command)}</span>\n`;
