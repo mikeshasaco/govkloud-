@@ -228,11 +228,13 @@ spec:
   containers:
   - name: kubectl
     image: bitnami/kubectl:latest
-    command: ["sleep", "infinity"]
+    command: ["sh", "-c", "cp /tmp/kube-secret/config /home/.kube/config && kubectl config set-context --current --namespace=default && sleep infinity"]
     volumeMounts:
     - name: kubeconfig
-      mountPath: /home/.kube
+      mountPath: /tmp/kube-secret
       readOnly: true
+    - name: kube-writable
+      mountPath: /home/.kube
     env:
     - name: KUBECONFIG
       value: /home/.kube/config
@@ -250,6 +252,8 @@ spec:
       items:
       - key: config
         path: config
+  - name: kube-writable
+    emptyDir: {}
   restartPolicy: Always
 YAML;
 
