@@ -63,6 +63,9 @@ class ProblemSessionManager
                     'challenge' => $challenge->slug,
                 ]);
 
+                // Clean the vcluster before applying new problem's scenario
+                $this->cleanVclusterNamespace($existingSession);
+
                 // Apply scenario manifests to the existing vcluster
                 $this->applyScenario($challenge, $existingSession);
 
@@ -307,33 +310,40 @@ class ProblemSessionManager
     }
 
     /**
-     * Reset a problem's scenario (re-apply initial state).
+     * Wipe all user-created resources from the vcluster's default namespace.
+     * Used when switching between problems or resetting a scenario.
+     */
+    protected function cleanVclusterNamespace(LabSession $session): void
+    {
+        $kubectlPath = config('govkloud.kubectl.binary_path');
+        $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
+        $namespace = $session->host_namespace;
+        $runnerPod = 'kubectl-runner';
+
+        $resourceTypes = 'pods,deployments,services,configmaps,secrets,ingresses,networkpolicies,jobs,cronjobs,statefulsets,daemonsets,replicasets,pvc';
+        exec(sprintf(
+            '%s --kubeconfig %s exec -n %s %s -- kubectl delete %s --all -n default --ignore-not-found 2>&1',
+            escapeshellarg($kubectlPath),
+            escapeshellarg($hostKubeconfig),
+            escapeshellarg($namespace),
+            escapeshellarg($runnerPod),
+            $resourceTypes
+        ));
+
+        // Wait for resources to terminate
+        sleep(3);
+
+        Log::info("[Problem] Cleaned vcluster namespace", ['namespace' => $namespace]);
+    }
+
+    /**
+     * Reset a problem's scenario (clean + re-apply initial state).
      */
     public function resetScenario(Challenge $challenge, LabSession $session): bool
     {
         try {
-            $kubectlPath = config('govkloud.kubectl.binary_path');
-            $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
-            $namespace = $session->host_namespace;
-            $runnerPod = 'kubectl-runner';
-
-            // Delete all user-created resources in default namespace via exec
-            $resourceTypes = 'pods,deployments,services,configmaps,secrets,ingresses,networkpolicies,jobs,cronjobs,statefulsets,daemonsets,replicasets,pvc';
-            exec(sprintf(
-                '%s --kubeconfig %s exec -n %s %s -- kubectl delete %s --all -n default --ignore-not-found 2>&1',
-                escapeshellarg($kubectlPath),
-                escapeshellarg($hostKubeconfig),
-                escapeshellarg($namespace),
-                escapeshellarg($runnerPod),
-                $resourceTypes
-            ));
-
-            // Wait a moment for cleanup
-            sleep(2);
-
-            // Re-apply scenario
+            $this->cleanVclusterNamespace($session);
             $this->applyScenario($challenge, $session);
-
             return true;
         } catch (Exception $e) {
             Log::error("Failed to reset scenario", [
