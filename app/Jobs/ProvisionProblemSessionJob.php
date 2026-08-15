@@ -74,6 +74,46 @@ class ProvisionProblemSessionJob implements ShouldQueue
 
         // Use lightweight provisioner (no workbench/ingress)
         $provisioner->provisionLightweight($session);
+
+        // Apply scenario manifests so the broken state is ready immediately
+        // (e.g., CrashLooping pod, wrong selectors, etc.)
+        $this->applyScenarioManifests($session);
+    }
+
+    /**
+     * Apply the challenge's scenario manifests to the vcluster.
+     * This creates the "broken" state for troubleshoot problems.
+     */
+    protected function applyScenarioManifests(LabSession $session): void
+    {
+        // Find the challenge linked to this session via the attempt
+        $attempt = \App\Models\ChallengeAttempt::where('lab_session_id', $session->id)->first();
+        if (!$attempt || !$attempt->challenge) {
+            Log::warning("ProvisionProblemSessionJob: No challenge found for scenario", [
+                'session_id' => $session->id,
+            ]);
+            return;
+        }
+
+        $challenge = $attempt->challenge;
+        $manifests = $challenge->scenario_manifests_json;
+
+        if (empty($manifests)) {
+            Log::info("ProvisionProblemSessionJob: No scenario manifests for this problem (build type)", [
+                'challenge' => $challenge->slug,
+            ]);
+            return;
+        }
+
+        Log::info("ProvisionProblemSessionJob: Applying scenario manifests", [
+            'challenge' => $challenge->slug,
+            'session_id' => $session->id,
+        ]);
+
+        $sessionManager = app(\App\Services\Problems\ProblemSessionManager::class);
+        $sessionManager->applyScenarioIfNeeded($challenge, $session);
+
+        Log::info("ProvisionProblemSessionJob: Scenario applied, broken state ready");
     }
 
     public function failed(\Throwable $exception): void
