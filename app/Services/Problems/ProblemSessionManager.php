@@ -382,6 +382,7 @@ class ProblemSessionManager
     {
         $manifests = $challenge->scenario_manifests_json;
         if (empty($manifests)) {
+            Log::info("[Scenario] No manifests for {$challenge->slug} (build-type)");
             return;
         }
 
@@ -390,12 +391,20 @@ class ProblemSessionManager
         $namespace = $session->host_namespace;
         $runnerPod = 'kubectl-runner';
 
+        // Wait for kubectl inside the runner pod to be ready
+        $this->waitForKubectlReady($kubectlPath, $hostKubeconfig, $namespace, $runnerPod);
+
         // scenario_manifests_json can be a string (raw YAML) or array of YAML strings
         $yamlContent = is_array($manifests)
             ? implode("\n---\n", $manifests)
             : $manifests;
 
-        // Route through host cluster → exec into vcluster → kubectl apply -f -
+        Log::info("[Scenario] Applying manifests for {$challenge->slug}", [
+            'namespace' => $namespace,
+            'yaml_length' => strlen($yamlContent),
+        ]);
+
+        // Route through host cluster → exec into runner → kubectl apply -f -
         $command = sprintf(
             '%s --kubeconfig %s exec -i -n %s %s -- kubectl apply -f - 2>&1',
             escapeshellarg($kubectlPath),
@@ -413,7 +422,7 @@ class ProblemSessionManager
         $process = proc_open($command, $descriptors, $pipes);
 
         if (!is_resource($process)) {
-            throw new Exception("Failed to exec into vcluster pod for scenario apply");
+            throw new Exception("Failed to exec into runner pod for scenario apply");
         }
 
         fwrite($pipes[0], $yamlContent);
@@ -427,16 +436,10 @@ class ProblemSessionManager
 
         $returnCode = proc_close($process);
 
-        if ($returnCode !== 0) {
-            Log::warning("Scenario apply had issues", [
-                'challenge' => $challenge->slug,
-                'output' => trim($stdout . "\n" . $stderr),
-            ]);
-        }
-
-        Log::info("Scenario applied for problem", [
-            'challenge' => $challenge->slug,
-            'session_id' => $session->id,
+        Log::info("[Scenario] Apply result for {$challenge->slug}", [
+            'exit_code' => $returnCode,
+            'stdout' => trim($stdout),
+            'stderr' => trim($stderr),
         ]);
 
         // Wait for the scenario state to establish
@@ -457,6 +460,36 @@ class ProblemSessionManager
         };
 
         sleep($waitSeconds);
+    }
+
+    /**
+     * Wait until kubectl is functional inside the runner pod.
+     * The pod may be "Running" but its startup command (copy + configure kubeconfig) needs time.
+     */
+    protected function waitForKubectlReady(string $kubectlPath, string $hostKubeconfig, string $namespace, string $runnerPod): void
+    {
+        $maxAttempts = 15;
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            $output = [];
+            $returnCode = 0;
+            exec(sprintf(
+                '%s --kubeconfig %s exec -n %s %s -- kubectl version --client --short 2>&1',
+                escapeshellarg($kubectlPath),
+                escapeshellarg($hostKubeconfig),
+                escapeshellarg($namespace),
+                escapeshellarg($runnerPod)
+            ), $output, $returnCode);
+
+            if ($returnCode === 0) {
+                Log::info("[Scenario] kubectl ready in runner pod after {$i} retries");
+                return;
+            }
+
+            Log::debug("[Scenario] kubectl not ready yet (attempt {$i}): " . implode(' ', $output));
+            sleep(2);
+        }
+
+        Log::warning("[Scenario] kubectl never became ready after {$maxAttempts} attempts, proceeding anyway");
     }
 
     /**
