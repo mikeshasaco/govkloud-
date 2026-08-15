@@ -31,7 +31,8 @@ class ProvisionProblemSessionJob implements ShouldQueue
     public int $timeout = 600;
 
     public function __construct(
-        public string $sessionId
+        public string $sessionId,
+        public string $challengeSlug = ''
     ) {
     }
 
@@ -69,6 +70,7 @@ class ProvisionProblemSessionJob implements ShouldQueue
 
         Log::info("ProvisionProblemSessionJob: Starting lightweight provisioning", [
             'session_id' => $this->sessionId,
+            'challenge' => $this->challengeSlug,
             'attempt' => $this->attempts(),
         ]);
 
@@ -76,7 +78,6 @@ class ProvisionProblemSessionJob implements ShouldQueue
         $provisioner->provisionLightweight($session);
 
         // Apply scenario manifests so the broken state is ready immediately
-        // (e.g., CrashLooping pod, wrong selectors, etc.)
         $this->applyScenarioManifests($session);
     }
 
@@ -86,34 +87,58 @@ class ProvisionProblemSessionJob implements ShouldQueue
      */
     protected function applyScenarioManifests(LabSession $session): void
     {
-        // Find the challenge linked to this session via the attempt
-        $attempt = \App\Models\ChallengeAttempt::where('lab_session_id', $session->id)->first();
-        if (!$attempt || !$attempt->challenge) {
+        // Find the challenge directly by slug
+        $challenge = null;
+
+        if ($this->challengeSlug) {
+            $challenge = \App\Models\Challenge::where('slug', $this->challengeSlug)->first();
+        }
+
+        // Fallback: lookup via attempt
+        if (!$challenge) {
+            $attempt = \App\Models\ChallengeAttempt::where('lab_session_id', $session->id)->first();
+            $challenge = $attempt?->challenge;
+        }
+
+        if (!$challenge) {
             Log::warning("ProvisionProblemSessionJob: No challenge found for scenario", [
                 'session_id' => $session->id,
+                'slug' => $this->challengeSlug,
             ]);
             return;
         }
 
-        $challenge = $attempt->challenge;
         $manifests = $challenge->scenario_manifests_json;
 
         if (empty($manifests)) {
-            Log::info("ProvisionProblemSessionJob: No scenario manifests for this problem (build type)", [
+            Log::info("ProvisionProblemSessionJob: No scenario (build-type problem)", [
                 'challenge' => $challenge->slug,
             ]);
             return;
         }
 
-        Log::info("ProvisionProblemSessionJob: Applying scenario manifests", [
+        Log::info("ProvisionProblemSessionJob: Applying broken scenario", [
             'challenge' => $challenge->slug,
-            'session_id' => $session->id,
+            'manifest_count' => is_array($manifests) ? count($manifests) : 1,
         ]);
 
-        $sessionManager = app(\App\Services\Problems\ProblemSessionManager::class);
-        $sessionManager->applyScenarioIfNeeded($challenge, $session);
+        try {
+            $sessionManager = app(\App\Services\Problems\ProblemSessionManager::class);
+            $sessionManager->applyScenario($challenge, $session);
 
-        Log::info("ProvisionProblemSessionJob: Scenario applied, broken state ready");
+            // Mark it as applied in session metadata
+            $meta = $session->metadata ?? [];
+            $session->update(['metadata' => array_merge($meta, ['scenario_applied' => true])]);
+
+            Log::info("ProvisionProblemSessionJob: Broken state ready ✓", [
+                'challenge' => $challenge->slug,
+            ]);
+        } catch (\Exception $e) {
+            Log::error("ProvisionProblemSessionJob: Failed to apply scenario", [
+                'challenge' => $challenge->slug,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function failed(\Throwable $exception): void

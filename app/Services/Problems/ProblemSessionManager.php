@@ -99,7 +99,7 @@ class ProblemSessionManager
             $attempt->update(['lab_session_id' => $session->id]);
 
             // Dispatch the provisioning job (runs in queue worker like courses)
-            ProvisionProblemSessionJob::dispatch($session->id);
+            ProvisionProblemSessionJob::dispatch($session->id, $challenge->slug);
 
             return [
                 'status' => 'provisioning',
@@ -378,7 +378,7 @@ class ProblemSessionManager
     /**
      * Apply scenario manifests to the vcluster.
      */
-    protected function applyScenario(Challenge $challenge, LabSession $session): void
+    public function applyScenario(Challenge $challenge, LabSession $session): void
     {
         $manifests = $challenge->scenario_manifests_json;
         if (empty($manifests)) {
