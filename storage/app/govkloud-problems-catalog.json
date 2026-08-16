@@ -1,0 +1,3476 @@
+[
+  {
+    "title": "Fix the CrashLooping Pod",
+    "slug": "fix-the-crashlooping-pod",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `web-app` is stuck in CrashLoopBackOff. Investigate the issue and get it running.\n\nThe pod should:\n- Be in Running state\n- Use a valid container image\n- Have port 80 exposed",
+    "tags": [
+      "pods",
+      "troubleshooting",
+      "images"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-app\n  labels:\n    app: web\nspec:\n  containers:\n  - name: nginx\n    image: nginx:99.99\n    ports:\n    - containerPort: 80"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "web-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod web-app should be Running"
+      },
+      {
+        "type": "container_image",
+        "pod_name": "web-app",
+        "namespace": "default",
+        "expected_image": "nginx",
+        "description": "Should use a valid nginx image"
+      }
+    ],
+    "initial_files_json": {
+      "fix.yaml": "# Fix the pod and apply your changes\napiVersion: v1\nkind: Pod\nmetadata:\n  name: web-app\n  labels:\n    app: web\nspec:\n  containers:\n  - name: nginx\n    image: \n    ports:\n    - containerPort: 80"
+    },
+    "solution_files_json": {
+      "fix.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-app\n  labels:\n    app: web\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80"
+    },
+    "solution_explanation": "The pod was using nginx:99.99 which doesn't exist. Delete the broken pod then apply with a valid image like nginx:1.25.",
+    "hints_json": [
+      "Run kubectl describe pod web-app to see the events",
+      "Look at the image tag - does that version exist?",
+      "Delete the pod first, then apply with the correct image: nginx:1.25"
+    ]
+  },
+  {
+    "title": "Create a Basic Pod",
+    "slug": "create-a-basic-pod",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod named `hello-web` running an nginx container.\n\nYour pod should:\n- Be named `hello-web`\n- Use the `nginx:1.25` image\n- Expose port 80\n- Have the label `app: hello`",
+    "tags": [
+      "pods",
+      "basics"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "hello-web",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod hello-web should be Running"
+      },
+      {
+        "type": "container_image",
+        "pod_name": "hello-web",
+        "namespace": "default",
+        "expected_image": "nginx:1.25",
+        "description": "Should use nginx:1.25"
+      },
+      {
+        "type": "label_exists",
+        "kind": "Pod",
+        "name": "hello-web",
+        "namespace": "default",
+        "expected_labels": {
+          "app": "hello"
+        },
+        "description": "Pod should have label app=hello"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "# Create your Pod manifest here\napiVersion: v1\nkind: Pod\nmetadata:\n  name: \n  labels:\n    app: \nspec:\n  containers:\n  - name: \n    image: \n    ports:\n    - containerPort: "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: hello-web\n  labels:\n    app: hello\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80"
+    },
+    "solution_explanation": "A basic Pod spec needs metadata.name, labels, a container with image, and ports.",
+    "hints_json": [
+      "Fill in the name field under metadata",
+      "The image should be nginx:1.25",
+      "Set containerPort to 80"
+    ]
+  },
+  {
+    "title": "Scale a Deployment",
+    "slug": "scale-a-deployment",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Deployment named `api-server` is running with only 1 replica. Your team needs 3 replicas for high availability.\n\nScale the deployment to 3 replicas and ensure all pods are running.",
+    "tags": [
+      "deployments",
+      "scaling",
+      "replicas"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: api-server\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: api\n  template:\n    metadata:\n      labels:\n        app: api\n    spec:\n      containers:\n      - name: api\n        image: nginx:1.25\n        ports:\n        - containerPort: 80\n        resources:\n          requests:\n            memory: \"32Mi\"\n            cpu: \"50m\""
+    ],
+    "validation_rules_json": [
+      {
+        "type": "replica_count",
+        "name": "api-server",
+        "namespace": "default",
+        "expected_replicas": 3,
+        "description": "Deployment should have 3 ready replicas"
+      }
+    ],
+    "initial_files_json": {
+      "notes.txt": "# You can scale a deployment using:\n# kubectl scale deployment <name> --replicas=<count>"
+    },
+    "solution_files_json": {
+      "notes.txt": "kubectl scale deployment api-server --replicas=3"
+    },
+    "solution_explanation": "Use kubectl scale deployment api-server --replicas=3 to scale up.",
+    "hints_json": [
+      "Check current replicas: kubectl get deployment api-server",
+      "Use kubectl scale to change the replica count",
+      "kubectl scale deployment api-server --replicas=3"
+    ]
+  },
+  {
+    "title": "Fix the Service Selector",
+    "slug": "fix-the-service-selector",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 15,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Service named `web-svc` is supposed to route traffic to the `web-app` pods, but no endpoints are being matched.\n\nFix the Service so it correctly routes to the running pods.",
+    "tags": [
+      "services",
+      "selectors",
+      "networking"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-app\n  labels:\n    app: web\n    tier: frontend\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80",
+      "apiVersion: v1\nkind: Service\nmetadata:\n  name: web-svc\nspec:\n  selector:\n    app: webapp\n  ports:\n  - port: 80\n    targetPort: 80"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "endpoints_populated",
+        "name": "web-svc",
+        "namespace": "default",
+        "description": "Service web-svc should have active endpoints"
+      },
+      {
+        "type": "pod_status",
+        "name": "web-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod web-app should be Running"
+      }
+    ],
+    "initial_files_json": {
+      "fix-service.yaml": "# Fix the Service selector to match the pod labels\napiVersion: v1\nkind: Service\nmetadata:\n  name: web-svc\nspec:\n  selector:\n    app: \n  ports:\n  - port: 80\n    targetPort: 80"
+    },
+    "solution_files_json": {
+      "fix-service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: web-svc\nspec:\n  selector:\n    app: web\n  ports:\n  - port: 80\n    targetPort: 80"
+    },
+    "solution_explanation": "The Service selector had app: webapp but the pod has label app: web. Fix the selector to match.",
+    "hints_json": [
+      "Run kubectl get endpoints web-svc",
+      "Check pod labels: kubectl get pod web-app --show-labels",
+      "The Service selector 'webapp' doesn't match the pod label 'web'"
+    ]
+  },
+  {
+    "title": "Fix the Pending Pod",
+    "slug": "fix-pending-pod",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `greedy-app` is stuck in Pending state. It's requesting too many resources.\n\nFix the resource requests so the pod can be scheduled.",
+    "tags": [
+      "scheduling",
+      "resources",
+      "pending"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: greedy-app\nspec:\n  containers:\n  - name: app\n    image: nginx:1.25\n    resources:\n      requests:\n        memory: \"64Gi\"\n        cpu: \"32\""
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "greedy-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running (not Pending)"
+      }
+    ],
+    "initial_files_json": {
+      "fix-resources.yaml": "# Fix the resource requests to something reasonable\napiVersion: v1\nkind: Pod\nmetadata:\n  name: greedy-app\nspec:\n  containers:\n  - name: app\n    image: nginx:1.25\n    resources:\n      requests:\n        memory: \n        cpu: "
+    },
+    "solution_files_json": {
+      "fix-resources.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: greedy-app\nspec:\n  containers:\n  - name: app\n    image: nginx:1.25\n    resources:\n      requests:\n        memory: \"128Mi\"\n        cpu: \"100m\""
+    },
+    "solution_explanation": "The pod requested 64Gi memory and 32 CPU cores which exceeds node capacity. Set reasonable values.",
+    "hints_json": [
+      "Run kubectl describe pod greedy-app and look at Events",
+      "Check the resource requests - are they realistic?",
+      "Try 128Mi memory and 100m CPU"
+    ]
+  },
+  {
+    "title": "Fix the Wrong Container Command",
+    "slug": "fix-wrong-container-command",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `worker` is in CrashLoopBackOff because its command exits immediately.\n\nFix the command so the pod stays running.",
+    "tags": [
+      "pods",
+      "commands",
+      "crashloop"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: worker\nspec:\n  containers:\n  - name: worker\n    image: busybox:1.36\n    command: [\"echo\", \"hello\"]"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "worker",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      }
+    ],
+    "initial_files_json": {
+      "fix-worker.yaml": "# Fix the command so the pod stays running\napiVersion: v1\nkind: Pod\nmetadata:\n  name: worker\nspec:\n  containers:\n  - name: worker\n    image: busybox:1.36\n    command: "
+    },
+    "solution_files_json": {
+      "fix-worker.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: worker\nspec:\n  containers:\n  - name: worker\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"while true; do echo working; sleep 10; done\"]"
+    },
+    "solution_explanation": "echo hello exits immediately causing CrashLoopBackOff. Use a long-running command.",
+    "hints_json": [
+      "The echo command finishes instantly",
+      "The pod needs a command that keeps running",
+      "Use a while loop with sleep"
+    ]
+  },
+  {
+    "title": "Create a ConfigMap and Mount It",
+    "slug": "create-configmap-mount",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 15,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a ConfigMap named `app-config` with the key `APP_ENV=production` and mount it as an environment variable in a Pod named `config-app`.\n\nRequirements:\n- ConfigMap named `app-config` with key APP_ENV = production\n- Pod named `config-app` using `busybox:1.36`\n- Pod reads APP_ENV from the ConfigMap\n- Pod command: `[\"sh\", \"-c\", \"echo $APP_ENV && sleep 3600\"]`",
+    "tags": [
+      "configmaps",
+      "environment-variables"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "ConfigMap",
+        "name": "app-config",
+        "namespace": "default",
+        "description": "ConfigMap app-config should exist"
+      },
+      {
+        "type": "config_data",
+        "name": "app-config",
+        "namespace": "default",
+        "expected_keys": [
+          "APP_ENV"
+        ],
+        "description": "ConfigMap should have APP_ENV key"
+      },
+      {
+        "type": "pod_status",
+        "name": "config-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod config-app should be Running"
+      }
+    ],
+    "initial_files_json": {
+      "configmap.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: \ndata:\n  APP_ENV: ",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: \nspec:\n  containers:\n  - name: app\n    image: \n    command: [\"sh\", \"-c\", \"echo $APP_ENV && sleep 3600\"]\n    env:\n    - name: APP_ENV\n      valueFrom:\n        configMapKeyRef:\n          name: \n          key: "
+    },
+    "solution_files_json": {
+      "configmap.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: app-config\ndata:\n  APP_ENV: production",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: config-app\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo $APP_ENV && sleep 3600\"]\n    env:\n    - name: APP_ENV\n      valueFrom:\n        configMapKeyRef:\n          name: app-config\n          key: APP_ENV"
+    },
+    "solution_explanation": "Create the ConfigMap first, then the Pod. Use configMapKeyRef to inject ConfigMap keys as env vars.",
+    "hints_json": [
+      "Create the ConfigMap first, then the Pod",
+      "Use configMapKeyRef in the pod env section",
+      "The configMapKeyRef.name must match your ConfigMap name"
+    ]
+  },
+  {
+    "title": "Create a Secret and Use It",
+    "slug": "create-secret-use-it",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 15,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Secret named `db-credentials` with a database password, then create a Pod that uses it.\n\nRequirements:\n- Secret named `db-credentials` with key DB_PASSWORD = supersecret123\n- Pod named `db-app` using `busybox:1.36`\n- Pod reads DB_PASSWORD from the Secret\n- Pod command: `[\"sh\", \"-c\", \"echo Connected && sleep 3600\"]`",
+    "tags": [
+      "secrets",
+      "security"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Secret",
+        "name": "db-credentials",
+        "namespace": "default",
+        "description": "Secret db-credentials should exist"
+      },
+      {
+        "type": "pod_status",
+        "name": "db-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod db-app should be Running"
+      }
+    ],
+    "initial_files_json": {
+      "secret.yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: \ntype: Opaque\nstringData:\n  DB_PASSWORD: ",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: \nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo Connected && sleep 3600\"]\n    env:\n    - name: DB_PASSWORD\n      valueFrom:\n        secretKeyRef:\n          name: \n          key: "
+    },
+    "solution_files_json": {
+      "secret.yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: db-credentials\ntype: Opaque\nstringData:\n  DB_PASSWORD: supersecret123",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: db-app\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo Connected && sleep 3600\"]\n    env:\n    - name: DB_PASSWORD\n      valueFrom:\n        secretKeyRef:\n          name: db-credentials\n          key: DB_PASSWORD"
+    },
+    "solution_explanation": "Use stringData for plain text secrets. The pod references the secret with secretKeyRef.",
+    "hints_json": [
+      "Use stringData instead of data for plain text",
+      "Apply the Secret before the Pod",
+      "secretKeyRef.name must match the Secret name"
+    ]
+  },
+  {
+    "title": "Fix the Resource Limits",
+    "slug": "fix-resource-limits",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "troubleshoot",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `memory-hog` keeps getting OOMKilled because its memory limit is set too low.\n\nFix the resource limits so the pod can run. Nginx needs at least 128Mi of memory.",
+    "tags": [
+      "resources",
+      "limits",
+      "oomkilled"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: memory-hog\nspec:\n  containers:\n  - name: app\n    image: nginx:1.25\n    resources:\n      requests:\n        memory: \"4Mi\"\n        cpu: \"50m\"\n      limits:\n        memory: \"8Mi\"\n        cpu: \"100m\""
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "memory-hog",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running (not OOMKilled)"
+      }
+    ],
+    "initial_files_json": {
+      "fix-resources.yaml": "# Fix the memory limits\napiVersion: v1\nkind: Pod\nmetadata:\n  name: memory-hog\nspec:\n  containers:\n  - name: app\n    image: nginx:1.25\n    resources:\n      requests:\n        memory: \n        cpu: \"50m\"\n      limits:\n        memory: \n        cpu: \"100m\""
+    },
+    "solution_files_json": {
+      "fix-resources.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: memory-hog\nspec:\n  containers:\n  - name: app\n    image: nginx:1.25\n    resources:\n      requests:\n        memory: \"128Mi\"\n        cpu: \"50m\"\n      limits:\n        memory: \"256Mi\"\n        cpu: \"100m\""
+    },
+    "solution_explanation": "The memory limit of 8Mi is too low for nginx. Set requests to 128Mi and limits to 256Mi.",
+    "hints_json": [
+      "Run kubectl describe pod memory-hog and check Last State",
+      "The memory limit of 8Mi is too low for nginx",
+      "Set memory requests to 128Mi and limits to 256Mi"
+    ]
+  },
+  {
+    "title": "Fix the Failing Liveness Probe",
+    "slug": "fix-liveness-probe",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "troubleshoot",
+    "points": 25,
+    "estimated_minutes": 15,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `health-app` keeps restarting because its liveness probe is failing. The probe is checking the wrong port.\n\nFix the liveness probe so the pod stays healthy.",
+    "tags": [
+      "probes",
+      "liveness",
+      "health-checks"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: health-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    livenessProbe:\n      httpGet:\n        path: /\n        port: 8080\n      initialDelaySeconds: 3\n      periodSeconds: 5"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "health-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running without restarts"
+      }
+    ],
+    "initial_files_json": {
+      "fix-probe.yaml": "# Fix the liveness probe port\napiVersion: v1\nkind: Pod\nmetadata:\n  name: health-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    livenessProbe:\n      httpGet:\n        path: /\n        port: \n      initialDelaySeconds: 3\n      periodSeconds: 5"
+    },
+    "solution_files_json": {
+      "fix-probe.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: health-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    livenessProbe:\n      httpGet:\n        path: /\n        port: 80\n      initialDelaySeconds: 3\n      periodSeconds: 5"
+    },
+    "solution_explanation": "The liveness probe checked port 8080 but nginx listens on 80. Fix the probe port to match.",
+    "hints_json": [
+      "Check kubectl describe pod health-app for probe failures",
+      "What port does nginx listen on?",
+      "The probe port 8080 doesn't match container port 80"
+    ]
+  },
+  {
+    "title": "Deploy a Multi-Container Pod",
+    "slug": "deploy-multi-container-pod",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 25,
+    "estimated_minutes": 15,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with two containers: a main web server and a sidecar logging container.\n\nRequirements:\n- Pod named `web-with-logging`\n- Container 1: `web` using `nginx:1.25` on port 80\n- Container 2: `logger` using `busybox:1.36` with command to log timestamps\n- Both share a volume named `shared-logs`",
+    "tags": [
+      "multi-container",
+      "sidecar",
+      "volumes"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "web-with-logging",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      }
+    ],
+    "initial_files_json": {
+      "sidecar.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-with-logging\nspec:\n  volumes:\n  - name: shared-logs\n    emptyDir: {}\n  containers:\n  - name: web\n    image: \n    ports:\n    - containerPort: 80\n    volumeMounts:\n    - name: shared-logs\n      mountPath: /var/log/nginx\n  - name: logger\n    image: \n    command: \n    volumeMounts:\n    - name: shared-logs\n      mountPath: /logs"
+    },
+    "solution_files_json": {
+      "sidecar.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-with-logging\nspec:\n  volumes:\n  - name: shared-logs\n    emptyDir: {}\n  containers:\n  - name: web\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    volumeMounts:\n    - name: shared-logs\n      mountPath: /var/log/nginx\n  - name: logger\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"while true; do date >> /logs/access.log; sleep 5; done\"]\n    volumeMounts:\n    - name: shared-logs\n      mountPath: /logs"
+    },
+    "solution_explanation": "Multi-container pods share network and can share volumes via emptyDir. The sidecar pattern is common for logging.",
+    "hints_json": [
+      "Both containers go under spec.containers",
+      "Use emptyDir volume for shared storage",
+      "The logger needs a long-running command"
+    ]
+  },
+  {
+    "title": "Deploy Redis with Persistent Storage",
+    "slug": "deploy-redis-persistent",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 25,
+    "estimated_minutes": 18,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Deploy a Redis server with persistent storage.\n\nRequirements:\n- PVC named `redis-data` requesting 1Gi\n- Deployment named `redis` with 1 replica using `redis:7-alpine`\n- Redis data dir /data mounted to the PVC\n- Service named `redis-svc` exposing port 6379",
+    "tags": [
+      "redis",
+      "persistent-volumes",
+      "stateful"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "PersistentVolumeClaim",
+        "name": "redis-data",
+        "namespace": "default",
+        "description": "PVC redis-data should exist"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "Deployment",
+        "name": "redis",
+        "namespace": "default",
+        "description": "Deployment redis should exist"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "Service",
+        "name": "redis-svc",
+        "namespace": "default",
+        "description": "Service redis-svc should exist"
+      },
+      {
+        "type": "endpoints_populated",
+        "name": "redis-svc",
+        "namespace": "default",
+        "description": "Service should have endpoints"
+      }
+    ],
+    "initial_files_json": {
+      "pvc.yaml": "apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: \nspec:\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: ",
+      "deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: redis\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: redis\n  template:\n    metadata:\n      labels:\n        app: redis\n    spec:\n      containers:\n      - name: redis\n        image: \n        ports:\n        - containerPort: 6379\n        volumeMounts:\n        - name: data\n          mountPath: /data\n      volumes:\n      - name: data\n        persistentVolumeClaim:\n          claimName: ",
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: \nspec:\n  selector:\n    app: redis\n  ports:\n  - port: 6379\n    targetPort: 6379"
+    },
+    "solution_files_json": {
+      "pvc.yaml": "apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: redis-data\nspec:\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gi",
+      "deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: redis\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: redis\n  template:\n    metadata:\n      labels:\n        app: redis\n    spec:\n      containers:\n      - name: redis\n        image: redis:7-alpine\n        ports:\n        - containerPort: 6379\n        volumeMounts:\n        - name: data\n          mountPath: /data\n      volumes:\n      - name: data\n        persistentVolumeClaim:\n          claimName: redis-data",
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: redis-svc\nspec:\n  selector:\n    app: redis\n  ports:\n  - port: 6379\n    targetPort: 6379"
+    },
+    "solution_explanation": "Create the PVC first, then the Deployment, then the Service. PVC must exist before the Deployment.",
+    "hints_json": [
+      "Apply the PVC before the Deployment",
+      "The claimName must match the PVC name",
+      "Redis stores data in /data by default"
+    ]
+  },
+  {
+    "title": "Fix the Missing ConfigMap",
+    "slug": "fix-missing-configmap",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "troubleshoot",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `config-reader` is stuck in CreateContainerConfigError because it references a ConfigMap that doesn't exist.\n\nCreate the missing ConfigMap to get the pod running.",
+    "tags": [
+      "configmaps",
+      "troubleshooting"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: config-reader\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"cat /config/settings.conf && sleep 3600\"]\n    volumeMounts:\n    - name: config-vol\n      mountPath: /config\n  volumes:\n  - name: config-vol\n    configMap:\n      name: app-settings"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "ConfigMap",
+        "name": "app-settings",
+        "namespace": "default",
+        "description": "ConfigMap app-settings should exist"
+      },
+      {
+        "type": "pod_status",
+        "name": "config-reader",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      }
+    ],
+    "initial_files_json": {
+      "configmap.yaml": "# Create the missing ConfigMap\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: \ndata:\n  settings.conf: |"
+    },
+    "solution_files_json": {
+      "configmap.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: app-settings\ndata:\n  settings.conf: |\n    log_level=info\n    debug=false\n    port=8080"
+    },
+    "solution_explanation": "The pod mounts a ConfigMap named app-settings as a volume. Create it with a settings.conf key.",
+    "hints_json": [
+      "Run kubectl describe pod config-reader to see the error",
+      "The pod expects a ConfigMap named app-settings",
+      "The data key settings.conf becomes the filename at /config/"
+    ]
+  },
+  {
+    "title": "Deploy a NodePort Service",
+    "slug": "deploy-nodeport-service",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Deployment and expose it via a NodePort Service.\n\nRequirements:\n- Deployment named `web-app` with 2 replicas using `nginx:1.25`\n- Service named `web-nodeport` of type NodePort\n- Service port 80, nodePort 30080\n- Label selector: `app: web`",
+    "tags": [
+      "services",
+      "nodeport",
+      "networking"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Deployment",
+        "name": "web-app",
+        "namespace": "default",
+        "description": "Deployment should exist"
+      },
+      {
+        "type": "replica_count",
+        "name": "web-app",
+        "namespace": "default",
+        "expected_replicas": 2,
+        "description": "Should have 2 replicas"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "Service",
+        "name": "web-nodeport",
+        "namespace": "default",
+        "description": "NodePort Service should exist"
+      },
+      {
+        "type": "endpoints_populated",
+        "name": "web-nodeport",
+        "namespace": "default",
+        "description": "Service should have endpoints"
+      }
+    ],
+    "initial_files_json": {
+      "deploy.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web-app\nspec:\n  replicas: \n  selector:\n    matchLabels:\n      app: web\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n      - name: nginx\n        image: \n        ports:\n        - containerPort: 80",
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: web-nodeport\nspec:\n  type: NodePort\n  selector:\n    app: web\n  ports:\n  - port: 80\n    targetPort: 80\n    nodePort: "
+    },
+    "solution_files_json": {
+      "deploy.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web-app\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: web\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        ports:\n        - containerPort: 80",
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: web-nodeport\nspec:\n  type: NodePort\n  selector:\n    app: web\n  ports:\n  - port: 80\n    targetPort: 80\n    nodePort: 30080"
+    },
+    "solution_explanation": "NodePort Services expose pods on a static port (30000-32767) on every node.",
+    "hints_json": [
+      "Set replicas to 2 and image to nginx:1.25",
+      "NodePort must be between 30000-32767",
+      "Apply Deployment first, then Service"
+    ]
+  },
+  {
+    "title": "Create a Deployment with Rolling Updates",
+    "slug": "create-deployment-rolling-update",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 25,
+    "estimated_minutes": 15,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Deployment with a proper rolling update strategy for zero-downtime deploys.\n\nRequirements:\n- Deployment named `web-deploy` with 3 replicas\n- Image: `nginx:1.25` on port 80\n- Rolling update: maxSurge=1, maxUnavailable=0\n- Labels: app=web",
+    "tags": [
+      "deployments",
+      "rolling-updates"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Deployment",
+        "name": "web-deploy",
+        "namespace": "default",
+        "description": "Deployment should exist"
+      },
+      {
+        "type": "replica_count",
+        "name": "web-deploy",
+        "namespace": "default",
+        "expected_replicas": 3,
+        "description": "Should have 3 replicas"
+      }
+    ],
+    "initial_files_json": {
+      "deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web-deploy\nspec:\n  replicas: \n  strategy:\n    type: RollingUpdate\n    rollingUpdate:\n      maxSurge: \n      maxUnavailable: \n  selector:\n    matchLabels:\n      app: web\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n      - name: nginx\n        image: \n        ports:\n        - containerPort: "
+    },
+    "solution_files_json": {
+      "deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web-deploy\nspec:\n  replicas: 3\n  strategy:\n    type: RollingUpdate\n    rollingUpdate:\n      maxSurge: 1\n      maxUnavailable: 0\n  selector:\n    matchLabels:\n      app: web\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        ports:\n        - containerPort: 80"
+    },
+    "solution_explanation": "maxSurge=1, maxUnavailable=0 ensures zero downtime during rollouts.",
+    "hints_json": [
+      "Fill in replicas: 3",
+      "maxSurge=1, maxUnavailable=0 for zero downtime",
+      "Image is nginx:1.25, port is 80"
+    ]
+  },
+  {
+    "title": "Debug Network Policy Blocking",
+    "slug": "debug-network-policy",
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "problem_type": "scenario",
+    "points": 35,
+    "estimated_minutes": 20,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A frontend pod cannot reach the backend pod. A NetworkPolicy is blocking traffic with wrong selectors and ports.\n\nInvestigate and fix the NetworkPolicy so the frontend can reach the backend on port 80.",
+    "tags": [
+      "network-policies",
+      "networking",
+      "security"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: backend\n  labels:\n    app: backend\nspec:\n  containers:\n  - name: backend\n    image: nginx:1.25\n    ports:\n    - containerPort: 80",
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: frontend\n  labels:\n    app: frontend\nspec:\n  containers:\n  - name: frontend\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]",
+      "apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: backend-policy\nspec:\n  podSelector:\n    matchLabels:\n      app: backend\n  policyTypes:\n  - Ingress\n  ingress:\n  - from:\n    - podSelector:\n        matchLabels:\n          app: wrong-label\n    ports:\n    - port: 8080"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "backend",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Backend should be Running"
+      },
+      {
+        "type": "pod_status",
+        "name": "frontend",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Frontend should be Running"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "NetworkPolicy",
+        "name": "backend-policy",
+        "namespace": "default",
+        "description": "NetworkPolicy should still exist"
+      }
+    ],
+    "initial_files_json": {
+      "fix-netpol.yaml": "# Fix the NetworkPolicy\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: backend-policy\nspec:\n  podSelector:\n    matchLabels:\n      app: backend\n  policyTypes:\n  - Ingress\n  ingress:\n  - from:\n    - podSelector:\n        matchLabels:\n          app: \n    ports:\n    - port: "
+    },
+    "solution_files_json": {
+      "fix-netpol.yaml": "apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: backend-policy\nspec:\n  podSelector:\n    matchLabels:\n      app: backend\n  policyTypes:\n  - Ingress\n  ingress:\n  - from:\n    - podSelector:\n        matchLabels:\n          app: frontend\n    ports:\n    - port: 80"
+    },
+    "solution_explanation": "Two issues: wrong selector (wrong-label vs frontend) and wrong port (8080 vs 80).",
+    "hints_json": [
+      "Check frontend pod labels: kubectl get pod frontend --show-labels",
+      "The NetworkPolicy allows from 'wrong-label' - is that correct?",
+      "Also check if the port matches the backend container port"
+    ]
+  },
+  {
+    "title": "Deploy a Complete Microservice Stack",
+    "slug": "deploy-complete-microservice",
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "problem_type": "build",
+    "points": 40,
+    "estimated_minutes": 25,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Deploy a complete 3-tier microservice: web, API, and Redis.\n\nRequirements:\n- Redis: Deployment (1 replica, redis:7-alpine), Service redis-svc port 6379\n- API: Deployment (2 replicas, nginx:1.25), Service api-svc port 80\n- Web: Deployment (2 replicas, nginx:1.25), Service web-svc port 80\n- All services should have active endpoints",
+    "tags": [
+      "microservices",
+      "deployments",
+      "full-stack"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Deployment",
+        "name": "redis",
+        "namespace": "default",
+        "description": "Redis deployment should exist"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "Deployment",
+        "name": "api",
+        "namespace": "default",
+        "description": "API deployment should exist"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "Deployment",
+        "name": "web",
+        "namespace": "default",
+        "description": "Web deployment should exist"
+      },
+      {
+        "type": "replica_count",
+        "name": "api",
+        "namespace": "default",
+        "expected_replicas": 2,
+        "description": "API should have 2 replicas"
+      },
+      {
+        "type": "replica_count",
+        "name": "web",
+        "namespace": "default",
+        "expected_replicas": 2,
+        "description": "Web should have 2 replicas"
+      },
+      {
+        "type": "endpoints_populated",
+        "name": "redis-svc",
+        "namespace": "default",
+        "description": "Redis service should have endpoints"
+      },
+      {
+        "type": "endpoints_populated",
+        "name": "api-svc",
+        "namespace": "default",
+        "description": "API service should have endpoints"
+      },
+      {
+        "type": "endpoints_populated",
+        "name": "web-svc",
+        "namespace": "default",
+        "description": "Web service should have endpoints"
+      }
+    ],
+    "initial_files_json": {
+      "stack.yaml": "# Deploy the full microservice stack\n# Redis, API, and Web tiers\n# Each needs a Deployment + Service\n# Separate resources with ---"
+    },
+    "solution_files_json": {
+      "stack.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: redis\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: redis\n  template:\n    metadata:\n      labels:\n        app: redis\n    spec:\n      containers:\n      - name: redis\n        image: redis:7-alpine\n        ports:\n        - containerPort: 6379\n---\napiVersion: v1\nkind: Service\nmetadata:\n  name: redis-svc\nspec:\n  selector:\n    app: redis\n  ports:\n  - port: 6379\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: api\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: api\n  template:\n    metadata:\n      labels:\n        app: api\n    spec:\n      containers:\n      - name: api\n        image: nginx:1.25\n        ports:\n        - containerPort: 80\n---\napiVersion: v1\nkind: Service\nmetadata:\n  name: api-svc\nspec:\n  selector:\n    app: api\n  ports:\n  - port: 80\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: web\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n      - name: web\n        image: nginx:1.25\n        ports:\n        - containerPort: 80\n---\napiVersion: v1\nkind: Service\nmetadata:\n  name: web-svc\nspec:\n  selector:\n    app: web\n  ports:\n  - port: 80"
+    },
+    "solution_explanation": "Each tier needs a Deployment and matching Service. Use --- to separate resources in one file.",
+    "hints_json": [
+      "Start with Redis, then API, then Web",
+      "Each Service selector must match its Deployment pod labels",
+      "Use --- to separate resources in one YAML file"
+    ]
+  },
+  {
+    "title": "Fix RBAC Permissions",
+    "slug": "fix-rbac-permissions",
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "problem_type": "troubleshoot",
+    "points": 35,
+    "estimated_minutes": 18,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A ServiceAccount named `app-sa` needs permission to list and get pods, but the Role and RoleBinding are missing.\n\nCreate the proper RBAC resources.",
+    "tags": [
+      "rbac",
+      "roles",
+      "security"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: app-sa"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "ServiceAccount",
+        "name": "app-sa",
+        "namespace": "default",
+        "description": "ServiceAccount should exist"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "Role",
+        "name": "pod-reader",
+        "namespace": "default",
+        "description": "Role pod-reader should exist"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "RoleBinding",
+        "name": "app-sa-pod-reader",
+        "namespace": "default",
+        "description": "RoleBinding should exist"
+      }
+    ],
+    "initial_files_json": {
+      "rbac.yaml": "# Create Role and RoleBinding\napiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: pod-reader\nrules:\n- apiGroups: [\"\"]\n  resources: \n  verbs: \n---\napiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  name: app-sa-pod-reader\nsubjects:\n- kind: ServiceAccount\n  name: \nroleRef:\n  kind: Role\n  name: \n  apiGroup: rbac.authorization.k8s.io"
+    },
+    "solution_files_json": {
+      "rbac.yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: pod-reader\nrules:\n- apiGroups: [\"\"]\n  resources: [\"pods\"]\n  verbs: [\"get\", \"list\", \"watch\"]\n---\naVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  name: app-sa-pod-reader\nsubjects:\n- kind: ServiceAccount\n  name: app-sa\nroleRef:\n  kind: Role\n  name: pod-reader\n  apiGroup: rbac.authorization.k8s.io"
+    },
+    "solution_explanation": "RBAC needs ServiceAccount + Role + RoleBinding. The Role grants get/list/watch on pods.",
+    "hints_json": [
+      "Pods are in the core API group (empty string)",
+      "Resources: [\"pods\"], verbs: [\"get\", \"list\", \"watch\"]",
+      "RoleBinding subject name must match the ServiceAccount"
+    ]
+  },
+  {
+    "title": "Create a Pod with Environment Variables",
+    "slug": "create-pod-env-vars",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod named `env-app` that uses environment variables.\n\nRequirements:\n- Pod named `env-app`\n- Image: `busybox:1.36`\n- Environment variable `APP_NAME=govkloud`\n- Environment variable `APP_ENV=production`\n- Command: `[\"sh\", \"-c\", \"echo $APP_NAME running in $APP_ENV && sleep 3600\"]`",
+    "tags": [
+      "pods",
+      "environment-variables",
+      "basics"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "env-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod env-app should be Running"
+      },
+      {
+        "type": "pod_log_contains",
+        "name": "env-app",
+        "namespace": "default",
+        "contains": "govkloud running in production",
+        "description": "Pod should output correct env values"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: env-app\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo $APP_NAME running in $APP_ENV && sleep 3600\"]\n    env:\n    - name: APP_NAME\n      value: \n    - name: APP_ENV\n      value: "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: env-app\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo $APP_NAME running in $APP_ENV && sleep 3600\"]\n    env:\n    - name: APP_NAME\n      value: govkloud\n    - name: APP_ENV\n      value: production"
+    },
+    "solution_explanation": "Use the env field in the container spec to set environment variables.",
+    "hints_json": [
+      "Set env values under spec.containers[].env",
+      "APP_NAME should be 'govkloud'",
+      "APP_ENV should be 'production'"
+    ]
+  },
+  {
+    "title": "Create a Pod with Resource Requests",
+    "slug": "create-pod-resource-requests",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with proper resource requests and limits.\n\nRequirements:\n- Pod named `resource-app`\n- Image: `nginx:1.25`\n- CPU request: `50m`, CPU limit: `100m`\n- Memory request: `64Mi`, Memory limit: `128Mi`",
+    "tags": [
+      "pods",
+      "resources",
+      "limits"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "resource-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "resource-app",
+        "namespace": "default",
+        "field": "spec.containers[0].resources.requests.memory",
+        "expected": "64Mi",
+        "description": "Memory request should be 64Mi"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "resource-app",
+        "namespace": "default",
+        "field": "spec.containers[0].resources.limits.memory",
+        "expected": "128Mi",
+        "description": "Memory limit should be 128Mi"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: resource-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    resources:\n      requests:\n        cpu: \n        memory: \n      limits:\n        cpu: \n        memory: "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: resource-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    resources:\n      requests:\n        cpu: \"50m\"\n        memory: \"64Mi\"\n      limits:\n        cpu: \"100m\"\n        memory: \"128Mi\""
+    },
+    "solution_explanation": "Resource requests guarantee minimum resources. Limits cap usage. Use m for millicores and Mi for mebibytes.",
+    "hints_json": [
+      "CPU uses millicores: 50m = 0.05 CPU",
+      "Memory uses Mi (mebibytes)",
+      "requests <= limits"
+    ]
+  },
+  {
+    "title": "Create a Pod with Multiple Labels",
+    "slug": "create-pod-multiple-labels",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with multiple labels for proper organization.\n\nRequirements:\n- Pod named `labeled-app`\n- Image: `nginx:1.25`\n- Label `app=web`\n- Label `tier=frontend`\n- Label `env=production`",
+    "tags": [
+      "pods",
+      "labels",
+      "organization"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "labeled-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "label_exists",
+        "kind": "Pod",
+        "name": "labeled-app",
+        "namespace": "default",
+        "expected_labels": {
+          "app": "web"
+        },
+        "description": "Should have label app=web"
+      },
+      {
+        "type": "label_exists",
+        "kind": "Pod",
+        "name": "labeled-app",
+        "namespace": "default",
+        "expected_labels": {
+          "tier": "frontend"
+        },
+        "description": "Should have label tier=frontend"
+      },
+      {
+        "type": "label_exists",
+        "kind": "Pod",
+        "name": "labeled-app",
+        "namespace": "default",
+        "expected_labels": {
+          "env": "production"
+        },
+        "description": "Should have label env=production"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: labeled-app\n  labels:\n    app: \n    tier: \n    env: \nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25"
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: labeled-app\n  labels:\n    app: web\n    tier: frontend\n    env: production\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25"
+    },
+    "solution_explanation": "Labels are key-value pairs in metadata.labels. They're used for selection and organization.",
+    "hints_json": [
+      "Labels go under metadata.labels",
+      "app=web, tier=frontend, env=production",
+      "Labels are case-sensitive"
+    ]
+  },
+  {
+    "title": "Create a Pod with a Restart Policy",
+    "slug": "create-pod-restart-policy",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod that runs a one-time task and does NOT restart.\n\nRequirements:\n- Pod named `batch-task`\n- Image: `busybox:1.36`\n- Command: `[\"sh\", \"-c\", \"echo Task complete && sleep 3600\"]`\n- Restart policy: `Never`",
+    "tags": [
+      "pods",
+      "restart-policy"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "batch-task",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "batch-task",
+        "namespace": "default",
+        "field": "spec.restartPolicy",
+        "expected": "Never",
+        "description": "Restart policy should be Never"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: batch-task\nspec:\n  restartPolicy: \n  containers:\n  - name: task\n    image: busybox:1.36\n    command: "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: batch-task\nspec:\n  restartPolicy: Never\n  containers:\n  - name: task\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo Task complete && sleep 3600\"]"
+    },
+    "solution_explanation": "restartPolicy can be Always (default), OnFailure, or Never. Use Never for one-time tasks.",
+    "hints_json": [
+      "restartPolicy goes at spec level, not container level",
+      "Use 'Never' for one-time tasks",
+      "The command needs to keep running"
+    ]
+  },
+  {
+    "title": "Create a Pod with an Init Container",
+    "slug": "create-pod-init-container",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with an init container that runs before the main container.\n\nRequirements:\n- Pod named `init-app`\n- Init container: name `init`, image `busybox:1.36`, command writes 'ready' to `/shared/status`\n- Main container: name `app`, image `busybox:1.36`, reads from `/shared/status`\n- Both share a volume named `shared-data`\n- Main command: `[\"sh\", \"-c\", \"cat /shared/status && sleep 3600\"]`",
+    "tags": [
+      "pods",
+      "init-containers",
+      "volumes"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "init-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "pod_log_contains",
+        "name": "init-app",
+        "namespace": "default",
+        "contains": "ready",
+        "description": "Main container should read 'ready' from init"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: init-app\nspec:\n  volumes:\n  - name: shared-data\n    emptyDir: {}\n  initContainers:\n  - name: init\n    image: busybox:1.36\n    command: \n    volumeMounts:\n    - name: shared-data\n      mountPath: /shared\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"cat /shared/status && sleep 3600\"]\n    volumeMounts:\n    - name: shared-data\n      mountPath: /shared"
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: init-app\nspec:\n  volumes:\n  - name: shared-data\n    emptyDir: {}\n  initContainers:\n  - name: init\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo ready > /shared/status\"]\n    volumeMounts:\n    - name: shared-data\n      mountPath: /shared\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"cat /shared/status && sleep 3600\"]\n    volumeMounts:\n    - name: shared-data\n      mountPath: /shared"
+    },
+    "solution_explanation": "Init containers run to completion before main containers start. They share volumes via emptyDir.",
+    "hints_json": [
+      "Init containers go under spec.initContainers",
+      "Use echo ready > /shared/status",
+      "Both containers mount the same volume"
+    ]
+  },
+  {
+    "title": "Fix the ImagePullBackOff",
+    "slug": "fix-imagepullbackoff",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `web-server` is stuck in ImagePullBackOff. The image doesn't exist.\n\nFix the image so the pod runs successfully.",
+    "tags": [
+      "pods",
+      "troubleshooting",
+      "images"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-server\nspec:\n  containers:\n  - name: web\n    image: nginx:nonexistent-tag-999\n    ports:\n    - containerPort: 80"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "web-server",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      }
+    ],
+    "initial_files_json": {
+      "fix.yaml": "# Fix the image tag\napiVersion: v1\nkind: Pod\nmetadata:\n  name: web-server\nspec:\n  containers:\n  - name: web\n    image: \n    ports:\n    - containerPort: 80"
+    },
+    "solution_files_json": {
+      "fix.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-server\nspec:\n  containers:\n  - name: web\n    image: nginx:1.25\n    ports:\n    - containerPort: 80"
+    },
+    "solution_explanation": "The image tag nginx:nonexistent-tag-999 doesn't exist. Delete the pod and recreate with a valid image.",
+    "hints_json": [
+      "Run kubectl describe pod web-server",
+      "Check the image tag",
+      "Use a valid tag like nginx:1.25"
+    ]
+  },
+  {
+    "title": "Fix the Invalid YAML Pod",
+    "slug": "fix-invalid-yaml-pod",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `broken-yaml` failed to create because of YAML syntax issues.\n\nFix the YAML and deploy the pod.\n\nRequirements:\n- Pod named `broken-yaml`\n- Image: `nginx:1.25`\n- Port 80 exposed",
+    "tags": [
+      "pods",
+      "yaml",
+      "troubleshooting"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "broken-yaml",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "container_image",
+        "pod_name": "broken-yaml",
+        "namespace": "default",
+        "expected_image": "nginx:1.25",
+        "description": "Should use nginx:1.25"
+      }
+    ],
+    "initial_files_json": {
+      "fix.yaml": "# Fix the YAML errors and apply\napiVersion: v1\nkind: Pod\nmetadata:\n  name: broken-yaml\nspec:\n  containers:\n  - name: web\n    image: nginx:1.25\n    port:\n    - containerPort: 80"
+    },
+    "solution_files_json": {
+      "fix.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: broken-yaml\nspec:\n  containers:\n  - name: web\n    image: nginx:1.25\n    ports:\n    - containerPort: 80"
+    },
+    "solution_explanation": "The field 'port' should be 'ports' (plural). YAML key names must match the Kubernetes API.",
+    "hints_json": [
+      "Look carefully at the field names",
+      "Is 'port' the correct field name?",
+      "It should be 'ports' (plural)"
+    ]
+  },
+  {
+    "title": "Create a Pod with Annotations",
+    "slug": "create-pod-annotations",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with metadata annotations for documentation.\n\nRequirements:\n- Pod named `annotated-app`\n- Image: `nginx:1.25`\n- Annotation `description=Main web server`\n- Annotation `team=platform`",
+    "tags": [
+      "pods",
+      "annotations",
+      "metadata"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "annotated-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "annotated-app",
+        "namespace": "default",
+        "field": "metadata.annotations.team",
+        "expected": "platform",
+        "description": "Should have annotation team=platform"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: annotated-app\n  annotations:\n    description: \n    team: \nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25"
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: annotated-app\n  annotations:\n    description: Main web server\n    team: platform\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25"
+    },
+    "solution_explanation": "Annotations store non-identifying metadata. Unlike labels, they aren't used for selection.",
+    "hints_json": [
+      "Annotations go under metadata.annotations",
+      "description=Main web server",
+      "team=platform"
+    ]
+  },
+  {
+    "title": "Create a Pod with Liveness Probe",
+    "slug": "create-pod-liveness-probe",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with an HTTP liveness probe.\n\nRequirements:\n- Pod named `healthy-app`\n- Image: `nginx:1.25`\n- Liveness probe: HTTP GET on path `/` port 80\n- Initial delay: 5 seconds\n- Period: 10 seconds",
+    "tags": [
+      "pods",
+      "probes",
+      "liveness",
+      "health-checks"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "healthy-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "healthy-app",
+        "namespace": "default",
+        "field": "spec.containers[0].livenessProbe.httpGet.port",
+        "expected": "80",
+        "description": "Liveness probe should check port 80"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: healthy-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    livenessProbe:\n      httpGet:\n        path: \n        port: \n      initialDelaySeconds: \n      periodSeconds: "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: healthy-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    livenessProbe:\n      httpGet:\n        path: /\n        port: 80\n      initialDelaySeconds: 5\n      periodSeconds: 10"
+    },
+    "solution_explanation": "Liveness probes detect when a container is unhealthy and restart it automatically.",
+    "hints_json": [
+      "path should be /",
+      "port should match containerPort (80)",
+      "initialDelaySeconds gives the app time to start"
+    ]
+  },
+  {
+    "title": "Create a Pod with Readiness Probe",
+    "slug": "create-pod-readiness-probe",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with a readiness probe so it only receives traffic when ready.\n\nRequirements:\n- Pod named `ready-app`\n- Image: `nginx:1.25`\n- Readiness probe: HTTP GET on path `/` port 80\n- Initial delay: 3 seconds\n- Period: 5 seconds",
+    "tags": [
+      "pods",
+      "probes",
+      "readiness"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "ready-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "ready-app",
+        "namespace": "default",
+        "field": "spec.containers[0].readinessProbe.httpGet.port",
+        "expected": "80",
+        "description": "Readiness probe should check port 80"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: ready-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    readinessProbe:\n      httpGet:\n        path: \n        port: \n      initialDelaySeconds: \n      periodSeconds: "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: ready-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    readinessProbe:\n      httpGet:\n        path: /\n        port: 80\n      initialDelaySeconds: 3\n      periodSeconds: 5"
+    },
+    "solution_explanation": "Readiness probes determine if a pod should receive traffic. Unlike liveness probes, failing readiness doesn't restart the pod.",
+    "hints_json": [
+      "readinessProbe goes in the container spec",
+      "Path / and port 80",
+      "initialDelaySeconds: 3, periodSeconds: 5"
+    ]
+  },
+  {
+    "title": "Fix the OOMKilled Container",
+    "slug": "fix-oomkilled-container",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "troubleshoot",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `hungry-app` keeps getting OOMKilled. The memory limit is too low for the application.\n\nFix the memory limits so the pod stays running.",
+    "tags": [
+      "pods",
+      "resources",
+      "oomkilled",
+      "troubleshooting"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: hungry-app\nspec:\n  containers:\n  - name: app\n    image: nginx:1.25\n    resources:\n      requests:\n        memory: \"2Mi\"\n        cpu: \"50m\"\n      limits:\n        memory: \"4Mi\"\n        cpu: \"100m\""
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "hungry-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running (not OOMKilled)"
+      }
+    ],
+    "initial_files_json": {
+      "fix.yaml": "# Fix the memory limits\napiVersion: v1\nkind: Pod\nmetadata:\n  name: hungry-app\nspec:\n  containers:\n  - name: app\n    image: nginx:1.25\n    resources:\n      requests:\n        memory: \n        cpu: \"50m\"\n      limits:\n        memory: \n        cpu: \"100m\""
+    },
+    "solution_files_json": {
+      "fix.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: hungry-app\nspec:\n  containers:\n  - name: app\n    image: nginx:1.25\n    resources:\n      requests:\n        memory: \"64Mi\"\n        cpu: \"50m\"\n      limits:\n        memory: \"128Mi\"\n        cpu: \"100m\""
+    },
+    "solution_explanation": "4Mi memory limit is far too low for nginx. Set realistic values: 64Mi request, 128Mi limit.",
+    "hints_json": [
+      "Run kubectl describe pod hungry-app",
+      "Check the OOMKilled reason in Last State",
+      "Nginx needs at least 64Mi memory"
+    ]
+  },
+  {
+    "title": "Create a Pod with TCP Liveness Probe",
+    "slug": "create-pod-tcp-probe",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with a TCP socket liveness probe.\n\nRequirements:\n- Pod named `tcp-app`\n- Image: `nginx:1.25` on port 80\n- Liveness probe: TCP socket check on port 80\n- Initial delay: 5s, period: 10s",
+    "tags": [
+      "pods",
+      "probes",
+      "tcp"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "tcp-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "tcp-app",
+        "namespace": "default",
+        "field": "spec.containers[0].livenessProbe.tcpSocket.port",
+        "expected": "80",
+        "description": "TCP probe should check port 80"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tcp-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    livenessProbe:\n      tcpSocket:\n        port: \n      initialDelaySeconds: \n      periodSeconds: "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: tcp-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    livenessProbe:\n      tcpSocket:\n        port: 80\n      initialDelaySeconds: 5\n      periodSeconds: 10"
+    },
+    "solution_explanation": "TCP probes just check if the port is open. Simpler than HTTP probes.",
+    "hints_json": [
+      "Use tcpSocket instead of httpGet",
+      "Port 80 matches the container port",
+      "initialDelaySeconds: 5"
+    ]
+  },
+  {
+    "title": "Create a Pod with Command Probe",
+    "slug": "create-pod-exec-probe",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with an exec-based liveness probe that runs a command.\n\nRequirements:\n- Pod named `exec-probe-app`\n- Image: `busybox:1.36`\n- Main command: `[\"sh\", \"-c\", \"touch /tmp/healthy && sleep 3600\"]`\n- Liveness probe: exec command `[\"cat\", \"/tmp/healthy\"]`\n- Initial delay: 5s, period: 10s",
+    "tags": [
+      "pods",
+      "probes",
+      "exec"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "exec-probe-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_contains",
+        "kind": "Pod",
+        "name": "exec-probe-app",
+        "namespace": "default",
+        "field": "spec.containers[0].livenessProbe.exec.command",
+        "contains": "cat",
+        "description": "Probe should use exec command"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: exec-probe-app\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"touch /tmp/healthy && sleep 3600\"]\n    livenessProbe:\n      exec:\n        command:\n        - \n      initialDelaySeconds: \n      periodSeconds: "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: exec-probe-app\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"touch /tmp/healthy && sleep 3600\"]\n    livenessProbe:\n      exec:\n        command:\n        - cat\n        - /tmp/healthy\n      initialDelaySeconds: 5\n      periodSeconds: 10"
+    },
+    "solution_explanation": "Exec probes run a command inside the container. Exit code 0 = healthy.",
+    "hints_json": [
+      "The probe command should be: cat /tmp/healthy",
+      "Each argument goes on its own line under command:",
+      "initialDelaySeconds: 5"
+    ]
+  },
+  {
+    "title": "Fix the Wrong Container Port",
+    "slug": "fix-wrong-container-port",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `port-app` is running but its Service can't reach it because the container port is wrong.\n\nThe app listens on port 80 but the pod spec has the wrong port. Fix it.",
+    "tags": [
+      "pods",
+      "ports",
+      "troubleshooting"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: port-app\n  labels:\n    app: port-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 8080",
+      "apiVersion: v1\nkind: Service\nmetadata:\n  name: port-app-svc\nspec:\n  selector:\n    app: port-app\n  ports:\n  - port: 80\n    targetPort: 80"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "port-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "endpoints_populated",
+        "name": "port-app-svc",
+        "namespace": "default",
+        "description": "Service should have endpoints"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "port-app",
+        "namespace": "default",
+        "field": "spec.containers[0].ports[0].containerPort",
+        "expected": "80",
+        "description": "Container port should be 80"
+      }
+    ],
+    "initial_files_json": {
+      "fix.yaml": "# Fix the container port\napiVersion: v1\nkind: Pod\nmetadata:\n  name: port-app\n  labels:\n    app: port-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: "
+    },
+    "solution_files_json": {
+      "fix.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: port-app\n  labels:\n    app: port-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80"
+    },
+    "solution_explanation": "Nginx listens on port 80 by default. The containerPort should match.",
+    "hints_json": [
+      "What port does nginx listen on?",
+      "The Service targets port 80",
+      "containerPort should be 80"
+    ]
+  },
+  {
+    "title": "Create a Multi-Port Pod",
+    "slug": "create-multi-port-pod",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod that exposes multiple ports.\n\nRequirements:\n- Pod named `multi-port-app`\n- Image: `nginx:1.25`\n- Expose port 80 (named `http`)\n- Expose port 443 (named `https`)",
+    "tags": [
+      "pods",
+      "ports",
+      "networking"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "multi-port-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "multi-port-app",
+        "namespace": "default",
+        "field": "spec.containers[0].ports[0].containerPort",
+        "expected": "80",
+        "description": "Should have port 80"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "multi-port-app",
+        "namespace": "default",
+        "field": "spec.containers[0].ports[0].name",
+        "expected": "http",
+        "description": "Port 80 should be named 'http'"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: multi-port-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - name: \n      containerPort: \n    - name: \n      containerPort: "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: multi-port-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - name: http\n      containerPort: 80\n    - name: https\n      containerPort: 443"
+    },
+    "solution_explanation": "Named ports make it easier to reference ports in Services and probes.",
+    "hints_json": [
+      "Each port entry can have a name field",
+      "http=80, https=443",
+      "Port names must be lowercase alphanumeric"
+    ]
+  },
+  {
+    "title": "Create a Basic Deployment",
+    "slug": "create-basic-deployment",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Deployment with 2 replicas.\n\nRequirements:\n- Deployment named `web-deploy`\n- 2 replicas\n- Image: `nginx:1.25`\n- Label: `app=web`\n- Port 80",
+    "tags": [
+      "deployments",
+      "basics"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Deployment",
+        "name": "web-deploy",
+        "namespace": "default",
+        "description": "Deployment should exist"
+      },
+      {
+        "type": "replica_count",
+        "name": "web-deploy",
+        "namespace": "default",
+        "expected_replicas": 2,
+        "description": "Should have 2 ready replicas"
+      }
+    ],
+    "initial_files_json": {
+      "deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web-deploy\nspec:\n  replicas: \n  selector:\n    matchLabels:\n      app: web\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n      - name: nginx\n        image: \n        ports:\n        - containerPort: "
+    },
+    "solution_files_json": {
+      "deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: web-deploy\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: web\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        ports:\n        - containerPort: 80"
+    },
+    "solution_explanation": "Deployments manage ReplicaSets which manage Pods. The selector.matchLabels must match template.metadata.labels.",
+    "hints_json": [
+      "Set replicas to 2",
+      "Image is nginx:1.25",
+      "selector.matchLabels must match template labels"
+    ]
+  },
+  {
+    "title": "Update a Deployment Image",
+    "slug": "update-deployment-image",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Deployment named `app-deploy` is running nginx:1.24. Update it to nginx:1.25.\n\nUse `kubectl set image` or edit the deployment.",
+    "tags": [
+      "deployments",
+      "updates",
+      "rolling-updates"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: app-deploy\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: myapp\n  template:\n    metadata:\n      labels:\n        app: myapp\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.24\n        ports:\n        - containerPort: 80\n        resources:\n          requests:\n            memory: \"32Mi\"\n            cpu: \"50m\""
+    ],
+    "validation_rules_json": [
+      {
+        "type": "container_image",
+        "pod_name": "app-deploy",
+        "namespace": "default",
+        "expected_image": "nginx:1.25",
+        "description": "Should be running nginx:1.25"
+      },
+      {
+        "type": "replica_count",
+        "name": "app-deploy",
+        "namespace": "default",
+        "expected_replicas": 2,
+        "description": "Should still have 2 replicas"
+      }
+    ],
+    "initial_files_json": {
+      "notes.txt": "# Update the deployment image using:\n# kubectl set image deployment/<name> <container>=<image>\n# Or edit the deployment YAML directly"
+    },
+    "solution_files_json": {
+      "notes.txt": "kubectl set image deployment/app-deploy nginx=nginx:1.25"
+    },
+    "solution_explanation": "Use kubectl set image to update container images. This triggers a rolling update.",
+    "hints_json": [
+      "kubectl set image deployment/app-deploy nginx=nginx:1.25",
+      "Or use kubectl edit deployment app-deploy",
+      "Check with kubectl rollout status deployment/app-deploy"
+    ]
+  },
+  {
+    "title": "Rollback a Deployment",
+    "slug": "rollback-deployment",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Deployment named `rollback-app` was updated to a bad image and pods are failing. Rollback to the previous working version.\n\nThe deployment should have 2 running replicas with a valid nginx image.",
+    "tags": [
+      "deployments",
+      "rollback"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: rollback-app\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: rollback\n  template:\n    metadata:\n      labels:\n        app: rollback\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        ports:\n        - containerPort: 80\n        resources:\n          requests:\n            memory: \"32Mi\"\n            cpu: \"50m\""
+    ],
+    "validation_rules_json": [
+      {
+        "type": "replica_count",
+        "name": "rollback-app",
+        "namespace": "default",
+        "expected_replicas": 2,
+        "description": "Should have 2 ready replicas"
+      },
+      {
+        "type": "pod_status",
+        "name": "rollback-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pods should be Running"
+      }
+    ],
+    "initial_files_json": {
+      "notes.txt": "# The deployment was updated to a broken image.\n# First, check rollout history:\n#   kubectl rollout history deployment/rollback-app\n# Then rollback:\n#   kubectl rollout undo deployment/<name>"
+    },
+    "solution_files_json": {
+      "notes.txt": "# Step 1: Check history\nkubectl rollout history deployment/rollback-app\n\n# Step 2: Rollback\nkubectl rollout undo deployment/rollback-app\n\n# Step 3: Verify\nkubectl rollout status deployment/rollback-app"
+    },
+    "solution_explanation": "kubectl rollout undo reverts to the previous revision. Use --to-revision=N for specific versions.",
+    "hints_json": [
+      "Check deployment status: kubectl get deploy rollback-app",
+      "View history: kubectl rollout history deployment/rollback-app",
+      "Rollback: kubectl rollout undo deployment/rollback-app"
+    ]
+  },
+  {
+    "title": "Create a Deployment with Resource Limits",
+    "slug": "create-deployment-resources",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Deployment with proper resource management.\n\nRequirements:\n- Deployment named `managed-app`\n- 3 replicas using `nginx:1.25`\n- CPU request: 50m, limit: 100m\n- Memory request: 64Mi, limit: 128Mi\n- Label: `app=managed`",
+    "tags": [
+      "deployments",
+      "resources",
+      "limits"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Deployment",
+        "name": "managed-app",
+        "namespace": "default",
+        "description": "Deployment should exist"
+      },
+      {
+        "type": "replica_count",
+        "name": "managed-app",
+        "namespace": "default",
+        "expected_replicas": 3,
+        "description": "Should have 3 replicas"
+      }
+    ],
+    "initial_files_json": {
+      "deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: managed-app\nspec:\n  replicas: \n  selector:\n    matchLabels:\n      app: managed\n  template:\n    metadata:\n      labels:\n        app: managed\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        ports:\n        - containerPort: 80\n        resources:\n          requests:\n            cpu: \n            memory: \n          limits:\n            cpu: \n            memory: "
+    },
+    "solution_files_json": {
+      "deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: managed-app\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: managed\n  template:\n    metadata:\n      labels:\n        app: managed\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        ports:\n        - containerPort: 80\n        resources:\n          requests:\n            cpu: \"50m\"\n            memory: \"64Mi\"\n          limits:\n            cpu: \"100m\"\n            memory: \"128Mi\""
+    },
+    "solution_explanation": "Always set resource requests and limits in production. Requests are guaranteed, limits are max allowed.",
+    "hints_json": [
+      "3 replicas",
+      "CPU: 50m request, 100m limit",
+      "Memory: 64Mi request, 128Mi limit"
+    ]
+  },
+  {
+    "title": "Fix the Mismatched Selector",
+    "slug": "fix-mismatched-selector",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Deployment named `selector-app` won't create pods because the selector doesn't match the template labels.\n\nFix the mismatch so the deployment works.",
+    "tags": [
+      "deployments",
+      "selectors",
+      "troubleshooting"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Deployment",
+        "name": "selector-app",
+        "namespace": "default",
+        "description": "Deployment should exist"
+      },
+      {
+        "type": "replica_count",
+        "name": "selector-app",
+        "namespace": "default",
+        "expected_replicas": 2,
+        "description": "Should have 2 replicas"
+      }
+    ],
+    "initial_files_json": {
+      "fix.yaml": "# Fix: selector.matchLabels must match template.metadata.labels\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: selector-app\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: frontend\n  template:\n    metadata:\n      labels:\n        app: backend\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25"
+    },
+    "solution_files_json": {
+      "fix.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: selector-app\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: frontend\n  template:\n    metadata:\n      labels:\n        app: frontend\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25"
+    },
+    "solution_explanation": "selector.matchLabels must exactly match template.metadata.labels. The selector says 'frontend' but template had 'backend'.",
+    "hints_json": [
+      "Compare selector.matchLabels with template.metadata.labels",
+      "They must match exactly",
+      "Change template labels to match: app: frontend"
+    ]
+  },
+  {
+    "title": "Scale a Deployment to Zero",
+    "slug": "scale-deployment-zero",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Deployment named `scale-test` is running with 3 replicas. Scale it down to 0 replicas (maintenance mode), then back to 2.\n\nFinal state should have 2 running replicas.",
+    "tags": [
+      "deployments",
+      "scaling"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: scale-test\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: scale-test\n  template:\n    metadata:\n      labels:\n        app: scale-test\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        resources:\n          requests:\n            memory: \"32Mi\"\n            cpu: \"50m\""
+    ],
+    "validation_rules_json": [
+      {
+        "type": "replica_count",
+        "name": "scale-test",
+        "namespace": "default",
+        "expected_replicas": 2,
+        "description": "Should have 2 replicas"
+      }
+    ],
+    "initial_files_json": {
+      "notes.txt": "# Scale the deployment to 0, then to 2\n# kubectl scale deployment <name> --replicas=<count>"
+    },
+    "solution_files_json": {
+      "notes.txt": "# Scale to zero\nkubectl scale deployment scale-test --replicas=0\n\n# Scale back to 2\nkubectl scale deployment scale-test --replicas=2"
+    },
+    "solution_explanation": "Scaling to zero removes all pods. Useful for maintenance. Scale back up when ready.",
+    "hints_json": [
+      "kubectl scale deployment scale-test --replicas=0",
+      "Then scale back: --replicas=2",
+      "Verify: kubectl get deploy scale-test"
+    ]
+  },
+  {
+    "title": "Create a ClusterIP Service",
+    "slug": "create-clusterip-service",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod and expose it via a ClusterIP Service.\n\nRequirements:\n- Pod named `web-pod` with image `nginx:1.25`, label `app=web`\n- Service named `web-clusterip` of type ClusterIP\n- Service port 80, target port 80\n- Selector: `app=web`",
+    "tags": [
+      "services",
+      "clusterip",
+      "networking"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "web-pod",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "Service",
+        "name": "web-clusterip",
+        "namespace": "default",
+        "description": "Service should exist"
+      },
+      {
+        "type": "endpoints_populated",
+        "name": "web-clusterip",
+        "namespace": "default",
+        "description": "Service should have endpoints"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-pod\n  labels:\n    app: web\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80",
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: web-clusterip\nspec:\n  type: ClusterIP\n  selector:\n    app: \n  ports:\n  - port: \n    targetPort: "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: web-pod\n  labels:\n    app: web\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80",
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: web-clusterip\nspec:\n  type: ClusterIP\n  selector:\n    app: web\n  ports:\n  - port: 80\n    targetPort: 80"
+    },
+    "solution_explanation": "ClusterIP is the default Service type. It's only accessible within the cluster.",
+    "hints_json": [
+      "Selector must match pod labels",
+      "app: web",
+      "port and targetPort are both 80"
+    ]
+  },
+  {
+    "title": "Create a Headless Service",
+    "slug": "create-headless-service",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Headless Service for direct pod DNS resolution.\n\nRequirements:\n- Deployment named `db` with 2 replicas using `busybox:1.36`, label `app=db`\n- Command: `[\"sh\", \"-c\", \"sleep 3600\"]`\n- Headless Service named `db-headless` (clusterIP: None)\n- Selector: `app=db`, port 5432",
+    "tags": [
+      "services",
+      "headless",
+      "dns"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Deployment",
+        "name": "db",
+        "namespace": "default",
+        "description": "Deployment should exist"
+      },
+      {
+        "type": "replica_count",
+        "name": "db",
+        "namespace": "default",
+        "expected_replicas": 2,
+        "description": "Should have 2 replicas"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "Service",
+        "name": "db-headless",
+        "namespace": "default",
+        "description": "Service should exist"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Service",
+        "name": "db-headless",
+        "namespace": "default",
+        "field": "spec.clusterIP",
+        "expected": "None",
+        "description": "clusterIP should be None (headless)"
+      }
+    ],
+    "initial_files_json": {
+      "deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: db\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: db\n  template:\n    metadata:\n      labels:\n        app: db\n    spec:\n      containers:\n      - name: db\n        image: busybox:1.36\n        command: [\"sh\", \"-c\", \"sleep 3600\"]",
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: db-headless\nspec:\n  clusterIP: \n  selector:\n    app: db\n  ports:\n  - port: 5432"
+    },
+    "solution_files_json": {
+      "deployment.yaml": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: db\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: db\n  template:\n    metadata:\n      labels:\n        app: db\n    spec:\n      containers:\n      - name: db\n        image: busybox:1.36\n        command: [\"sh\", \"-c\", \"sleep 3600\"]",
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: db-headless\nspec:\n  clusterIP: None\n  selector:\n    app: db\n  ports:\n  - port: 5432"
+    },
+    "solution_explanation": "Headless Services (clusterIP: None) return pod IPs directly instead of a virtual IP. Used for StatefulSets.",
+    "hints_json": [
+      "Set clusterIP to None",
+      "This makes it a headless service",
+      "DNS returns individual pod IPs"
+    ]
+  },
+  {
+    "title": "Fix Service with No Endpoints",
+    "slug": "fix-service-no-endpoints",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "troubleshoot",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Service named `api-svc` has no endpoints. The selector doesn't match any pods.\n\nFix the Service selector to match the running pod.",
+    "tags": [
+      "services",
+      "selectors",
+      "endpoints",
+      "troubleshooting"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: api-pod\n  labels:\n    app: api\n    version: v1\nspec:\n  containers:\n  - name: api\n    image: nginx:1.25\n    ports:\n    - containerPort: 80",
+      "apiVersion: v1\nkind: Service\nmetadata:\n  name: api-svc\nspec:\n  selector:\n    app: backend\n  ports:\n  - port: 80\n    targetPort: 80"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "api-pod",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "endpoints_populated",
+        "name": "api-svc",
+        "namespace": "default",
+        "description": "Service should have endpoints"
+      }
+    ],
+    "initial_files_json": {
+      "fix-service.yaml": "# Fix the selector to match the pod label\napiVersion: v1\nkind: Service\nmetadata:\n  name: api-svc\nspec:\n  selector:\n    app: \n  ports:\n  - port: 80\n    targetPort: 80"
+    },
+    "solution_files_json": {
+      "fix-service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: api-svc\nspec:\n  selector:\n    app: api\n  ports:\n  - port: 80\n    targetPort: 80"
+    },
+    "solution_explanation": "The Service selector 'backend' didn't match the pod label 'api'. Fix the selector to match.",
+    "hints_json": [
+      "Check pod labels: kubectl get pod api-pod --show-labels",
+      "The pod has label app=api",
+      "Fix the Service selector to match"
+    ]
+  },
+  {
+    "title": "Create a Service for a Deployment",
+    "slug": "create-service-for-deployment",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Deployment named `frontend` is already running. Create a Service to expose it.\n\nRequirements:\n- Service named `frontend-svc`\n- Type: ClusterIP\n- Port 80, target port 80\n- Must select the `frontend` pods",
+    "tags": [
+      "services",
+      "deployments"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: frontend\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: frontend\n  template:\n    metadata:\n      labels:\n        app: frontend\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        ports:\n        - containerPort: 80\n        resources:\n          requests:\n            memory: \"32Mi\"\n            cpu: \"50m\""
+    ],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Service",
+        "name": "frontend-svc",
+        "namespace": "default",
+        "description": "Service should exist"
+      },
+      {
+        "type": "endpoints_populated",
+        "name": "frontend-svc",
+        "namespace": "default",
+        "description": "Service should have endpoints"
+      }
+    ],
+    "initial_files_json": {
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: frontend-svc\nspec:\n  selector:\n    app: \n  ports:\n  - port: \n    targetPort: "
+    },
+    "solution_files_json": {
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: frontend-svc\nspec:\n  selector:\n    app: frontend\n  ports:\n  - port: 80\n    targetPort: 80"
+    },
+    "solution_explanation": "The Service selector must match the Deployment's pod template labels.",
+    "hints_json": [
+      "Check deployment labels: kubectl get deploy frontend -o yaml",
+      "Selector should be app: frontend",
+      "Port and targetPort both 80"
+    ]
+  },
+  {
+    "title": "Create a ConfigMap from Literal Values",
+    "slug": "create-configmap-literal",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a ConfigMap using literal key-value pairs.\n\nRequirements:\n- ConfigMap named `app-settings`\n- Key `LOG_LEVEL` = `info`\n- Key `PORT` = `8080`",
+    "tags": [
+      "configmaps",
+      "basics"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "ConfigMap",
+        "name": "app-settings",
+        "namespace": "default",
+        "description": "ConfigMap should exist"
+      },
+      {
+        "type": "config_data",
+        "name": "app-settings",
+        "namespace": "default",
+        "expected_keys": [
+          "LOG_LEVEL",
+          "PORT"
+        ],
+        "description": "Should have LOG_LEVEL and PORT keys"
+      }
+    ],
+    "initial_files_json": {
+      "configmap.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: app-settings\ndata:\n  LOG_LEVEL: \n  PORT: "
+    },
+    "solution_files_json": {
+      "configmap.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: app-settings\ndata:\n  LOG_LEVEL: info\n  PORT: \"8080\""
+    },
+    "solution_explanation": "ConfigMaps store non-sensitive configuration data as key-value pairs.",
+    "hints_json": [
+      "Data goes under the 'data' field",
+      "LOG_LEVEL: info",
+      "PORT: 8080 (quote numbers in YAML)"
+    ]
+  },
+  {
+    "title": "Mount ConfigMap as Volume",
+    "slug": "mount-configmap-volume",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 15,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a ConfigMap and mount it as a file inside a Pod.\n\nRequirements:\n- ConfigMap named `nginx-config` with key `nginx.conf` containing `server { listen 80; }`\n- Pod named `nginx-custom` using `nginx:1.25`\n- Mount the ConfigMap at `/etc/nginx/conf.d`",
+    "tags": [
+      "configmaps",
+      "volumes",
+      "mounts"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "ConfigMap",
+        "name": "nginx-config",
+        "namespace": "default",
+        "description": "ConfigMap should exist"
+      },
+      {
+        "type": "pod_status",
+        "name": "nginx-custom",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      }
+    ],
+    "initial_files_json": {
+      "configmap.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: nginx-config\ndata:\n  nginx.conf: |",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: nginx-custom\nspec:\n  volumes:\n  - name: config\n    configMap:\n      name: \n  containers:\n  - name: nginx\n    image: nginx:1.25\n    volumeMounts:\n    - name: config\n      mountPath: "
+    },
+    "solution_files_json": {
+      "configmap.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: nginx-config\ndata:\n  nginx.conf: |\n    server { listen 80; }",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: nginx-custom\nspec:\n  volumes:\n  - name: config\n    configMap:\n      name: nginx-config\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    volumeMounts:\n    - name: config\n      mountPath: /etc/nginx/conf.d"
+    },
+    "solution_explanation": "ConfigMap keys become filenames when mounted as volumes. Great for config files.",
+    "hints_json": [
+      "Create ConfigMap first, then the Pod",
+      "Volume configMap.name must match",
+      "mountPath is where files appear in the container"
+    ]
+  },
+  {
+    "title": "Create an Opaque Secret",
+    "slug": "create-opaque-secret",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Secret to store sensitive credentials.\n\nRequirements:\n- Secret named `api-credentials`\n- Type: Opaque\n- Key `API_KEY` = `sk-prod-12345`\n- Key `API_SECRET` = `super-secret-value`",
+    "tags": [
+      "secrets",
+      "security"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Secret",
+        "name": "api-credentials",
+        "namespace": "default",
+        "description": "Secret should exist"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Secret",
+        "name": "api-credentials",
+        "namespace": "default",
+        "field": "type",
+        "expected": "Opaque",
+        "description": "Secret type should be Opaque"
+      }
+    ],
+    "initial_files_json": {
+      "secret.yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: api-credentials\ntype: Opaque\nstringData:\n  API_KEY: \n  API_SECRET: "
+    },
+    "solution_files_json": {
+      "secret.yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: api-credentials\ntype: Opaque\nstringData:\n  API_KEY: sk-prod-12345\n  API_SECRET: super-secret-value"
+    },
+    "solution_explanation": "Use stringData for plaintext secrets (auto-encoded to base64). More convenient than data.",
+    "hints_json": [
+      "Use stringData for plaintext values",
+      "Type is Opaque",
+      "API_KEY: sk-prod-12345"
+    ]
+  },
+  {
+    "title": "Use Secret as Environment Variable",
+    "slug": "secret-env-var",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Secret and reference it as an environment variable in a Pod.\n\nRequirements:\n- Secret named `db-pass` with key `password` = `s3cure!`\n- Pod named `db-client` using `busybox:1.36`\n- Pod reads `DB_PASSWORD` from the Secret\n- Command: `[\"sh\", \"-c\", \"echo Connected && sleep 3600\"]`",
+    "tags": [
+      "secrets",
+      "environment-variables"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Secret",
+        "name": "db-pass",
+        "namespace": "default",
+        "description": "Secret should exist"
+      },
+      {
+        "type": "pod_status",
+        "name": "db-client",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      }
+    ],
+    "initial_files_json": {
+      "secret.yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: db-pass\ntype: Opaque\nstringData:\n  password: ",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: db-client\nspec:\n  containers:\n  - name: client\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo Connected && sleep 3600\"]\n    env:\n    - name: DB_PASSWORD\n      valueFrom:\n        secretKeyRef:\n          name: \n          key: "
+    },
+    "solution_files_json": {
+      "secret.yaml": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: db-pass\ntype: Opaque\nstringData:\n  password: s3cure!",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: db-client\nspec:\n  containers:\n  - name: client\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo Connected && sleep 3600\"]\n    env:\n    - name: DB_PASSWORD\n      valueFrom:\n        secretKeyRef:\n          name: db-pass\n          key: password"
+    },
+    "solution_explanation": "Use secretKeyRef to inject Secret keys as environment variables. The secret must exist first.",
+    "hints_json": [
+      "Create the Secret first",
+      "secretKeyRef.name must match Secret name",
+      "secretKeyRef.key must match the data key"
+    ]
+  },
+  {
+    "title": "Load All ConfigMap Keys as Env Vars",
+    "slug": "configmap-envfrom",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a ConfigMap and load ALL its keys as environment variables using envFrom.\n\nRequirements:\n- ConfigMap named `env-config` with keys: `DB_HOST=localhost`, `DB_PORT=5432`, `DB_NAME=govkloud`\n- Pod named `env-reader` using `busybox:1.36`\n- Use `envFrom` to load all keys\n- Command: `[\"sh\", \"-c\", \"echo $DB_HOST:$DB_PORT/$DB_NAME && sleep 3600\"]`",
+    "tags": [
+      "configmaps",
+      "envfrom"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "ConfigMap",
+        "name": "env-config",
+        "namespace": "default",
+        "description": "ConfigMap should exist"
+      },
+      {
+        "type": "pod_status",
+        "name": "env-reader",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "pod_log_contains",
+        "name": "env-reader",
+        "namespace": "default",
+        "contains": "localhost:5432/govkloud",
+        "description": "Should output correct env values"
+      }
+    ],
+    "initial_files_json": {
+      "configmap.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: env-config\ndata:\n  DB_HOST: \n  DB_PORT: \n  DB_NAME: ",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: env-reader\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo $DB_HOST:$DB_PORT/$DB_NAME && sleep 3600\"]\n    envFrom:\n    - configMapRef:\n        name: "
+    },
+    "solution_files_json": {
+      "configmap.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: env-config\ndata:\n  DB_HOST: localhost\n  DB_PORT: \"5432\"\n  DB_NAME: govkloud",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: env-reader\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo $DB_HOST:$DB_PORT/$DB_NAME && sleep 3600\"]\n    envFrom:\n    - configMapRef:\n        name: env-config"
+    },
+    "solution_explanation": "envFrom loads all keys from a ConfigMap as environment variables. More convenient than individual env entries.",
+    "hints_json": [
+      "Use envFrom instead of env",
+      "configMapRef.name must match ConfigMap name",
+      "All keys become env vars automatically"
+    ]
+  },
+  {
+    "title": "Create a Simple Job",
+    "slug": "create-simple-job",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Job that runs a one-time computation.\n\nRequirements:\n- Job named `compute-pi`\n- Image: `busybox:1.36`\n- Command: `[\"sh\", \"-c\", \"echo Computing pi... && sleep 5 && echo Done\"]`\n- Restart policy: Never",
+    "tags": [
+      "jobs",
+      "batch"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Job",
+        "name": "compute-pi",
+        "namespace": "default",
+        "description": "Job should exist"
+      }
+    ],
+    "initial_files_json": {
+      "job.yaml": "apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: compute-pi\nspec:\n  template:\n    spec:\n      containers:\n      - name: pi\n        image: \n        command: \n      restartPolicy: "
+    },
+    "solution_files_json": {
+      "job.yaml": "apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: compute-pi\nspec:\n  template:\n    spec:\n      containers:\n      - name: pi\n        image: busybox:1.36\n        command: [\"sh\", \"-c\", \"echo Computing pi... && sleep 5 && echo Done\"]\n      restartPolicy: Never"
+    },
+    "solution_explanation": "Jobs run pods to completion. restartPolicy must be Never or OnFailure (not Always).",
+    "hints_json": [
+      "Jobs need restartPolicy: Never or OnFailure",
+      "Image: busybox:1.36",
+      "Jobs are in apiVersion batch/v1"
+    ]
+  },
+  {
+    "title": "Create a CronJob",
+    "slug": "create-cronjob",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a CronJob that runs every minute.\n\nRequirements:\n- CronJob named `heartbeat`\n- Schedule: `*/1 * * * *` (every minute)\n- Image: `busybox:1.36`\n- Command: `[\"sh\", \"-c\", \"echo Heartbeat at $(date)\"]`\n- Restart policy: OnFailure",
+    "tags": [
+      "cronjobs",
+      "scheduling"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "CronJob",
+        "name": "heartbeat",
+        "namespace": "default",
+        "description": "CronJob should exist"
+      },
+      {
+        "type": "field_equals",
+        "kind": "CronJob",
+        "name": "heartbeat",
+        "namespace": "default",
+        "field": "spec.schedule",
+        "expected": "*/1 * * * *",
+        "description": "Should run every minute"
+      }
+    ],
+    "initial_files_json": {
+      "cronjob.yaml": "apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: heartbeat\nspec:\n  schedule: \n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: heartbeat\n            image: \n            command: \n          restartPolicy: "
+    },
+    "solution_files_json": {
+      "cronjob.yaml": "apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: heartbeat\nspec:\n  schedule: \"*/1 * * * *\"\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: heartbeat\n            image: busybox:1.36\n            command: [\"sh\", \"-c\", \"echo Heartbeat at $(date)\"]\n          restartPolicy: OnFailure"
+    },
+    "solution_explanation": "CronJobs create Jobs on a schedule. */1 * * * * means every minute.",
+    "hints_json": [
+      "Schedule uses cron syntax: */1 * * * *",
+      "CronJobs wrap Jobs in a jobTemplate",
+      "restartPolicy: OnFailure"
+    ]
+  },
+  {
+    "title": "Create a Job with Parallelism",
+    "slug": "create-parallel-job",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Job that processes work in parallel.\n\nRequirements:\n- Job named `parallel-work`\n- Run 4 completions with 2 pods running in parallel\n- Image: `busybox:1.36`\n- Command: `[\"sh\", \"-c\", \"echo Processing batch && sleep 10\"]`",
+    "tags": [
+      "jobs",
+      "parallelism"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Job",
+        "name": "parallel-work",
+        "namespace": "default",
+        "description": "Job should exist"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Job",
+        "name": "parallel-work",
+        "namespace": "default",
+        "field": "spec.completions",
+        "expected": "4",
+        "description": "Should have 4 completions"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Job",
+        "name": "parallel-work",
+        "namespace": "default",
+        "field": "spec.parallelism",
+        "expected": "2",
+        "description": "Should run 2 in parallel"
+      }
+    ],
+    "initial_files_json": {
+      "job.yaml": "apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: parallel-work\nspec:\n  completions: \n  parallelism: \n  template:\n    spec:\n      containers:\n      - name: worker\n        image: busybox:1.36\n        command: [\"sh\", \"-c\", \"echo Processing batch && sleep 10\"]\n      restartPolicy: Never"
+    },
+    "solution_files_json": {
+      "job.yaml": "apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: parallel-work\nspec:\n  completions: 4\n  parallelism: 2\n  template:\n    spec:\n      containers:\n      - name: worker\n        image: busybox:1.36\n        command: [\"sh\", \"-c\", \"echo Processing batch && sleep 10\"]\n      restartPolicy: Never"
+    },
+    "solution_explanation": "completions = total jobs needed. parallelism = how many run simultaneously.",
+    "hints_json": [
+      "completions: 4 (total work items)",
+      "parallelism: 2 (concurrent pods)",
+      "The job runs 4 pods, 2 at a time"
+    ]
+  },
+  {
+    "title": "Create a Job with Backoff Limit",
+    "slug": "create-job-backoff",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Job with a limited number of retries.\n\nRequirements:\n- Job named `retry-job`\n- Image: `busybox:1.36`\n- Command: `[\"sh\", \"-c\", \"echo Attempting... && sleep 5 && echo Success\"]`\n- Backoff limit: 3 retries\n- Active deadline: 60 seconds",
+    "tags": [
+      "jobs",
+      "retries",
+      "backoff"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Job",
+        "name": "retry-job",
+        "namespace": "default",
+        "description": "Job should exist"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Job",
+        "name": "retry-job",
+        "namespace": "default",
+        "field": "spec.backoffLimit",
+        "expected": "3",
+        "description": "Backoff limit should be 3"
+      }
+    ],
+    "initial_files_json": {
+      "job.yaml": "apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: retry-job\nspec:\n  backoffLimit: \n  activeDeadlineSeconds: \n  template:\n    spec:\n      containers:\n      - name: worker\n        image: busybox:1.36\n        command: [\"sh\", \"-c\", \"echo Attempting... && sleep 5 && echo Success\"]\n      restartPolicy: Never"
+    },
+    "solution_files_json": {
+      "job.yaml": "apiVersion: batch/v1\nkind: Job\nmetadata:\n  name: retry-job\nspec:\n  backoffLimit: 3\n  activeDeadlineSeconds: 60\n  template:\n    spec:\n      containers:\n      - name: worker\n        image: busybox:1.36\n        command: [\"sh\", \"-c\", \"echo Attempting... && sleep 5 && echo Success\"]\n      restartPolicy: Never"
+    },
+    "solution_explanation": "backoffLimit controls retries. activeDeadlineSeconds kills the job after a timeout.",
+    "hints_json": [
+      "backoffLimit: 3",
+      "activeDeadlineSeconds: 60",
+      "Job fails after 3 retries or 60 seconds"
+    ]
+  },
+  {
+    "title": "Create a ServiceAccount",
+    "slug": "create-serviceaccount",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a ServiceAccount for an application.\n\nRequirements:\n- ServiceAccount named `app-sa`\n- Pod named `sa-pod` using `busybox:1.36` with the ServiceAccount\n- Command: `[\"sh\", \"-c\", \"sleep 3600\"]`",
+    "tags": [
+      "rbac",
+      "serviceaccounts"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "ServiceAccount",
+        "name": "app-sa",
+        "namespace": "default",
+        "description": "ServiceAccount should exist"
+      },
+      {
+        "type": "pod_status",
+        "name": "sa-pod",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "sa-pod",
+        "namespace": "default",
+        "field": "spec.serviceAccountName",
+        "expected": "app-sa",
+        "description": "Pod should use app-sa ServiceAccount"
+      }
+    ],
+    "initial_files_json": {
+      "sa.yaml": "apiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: ",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: sa-pod\nspec:\n  serviceAccountName: \n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]"
+    },
+    "solution_files_json": {
+      "sa.yaml": "apiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: app-sa",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: sa-pod\nspec:\n  serviceAccountName: app-sa\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]"
+    },
+    "solution_explanation": "ServiceAccounts provide identity for pods. Use spec.serviceAccountName to assign one.",
+    "hints_json": [
+      "Create the ServiceAccount first",
+      "Use serviceAccountName in the pod spec",
+      "ServiceAccount name: app-sa"
+    ]
+  },
+  {
+    "title": "Create a Role for Pod Access",
+    "slug": "create-role-pod-access",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Role that allows reading pods.\n\nRequirements:\n- Role named `pod-reader`\n- Allows: get, list, watch on pods\n- API group: \"\" (core)\n- Namespace: default",
+    "tags": [
+      "rbac",
+      "roles"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Role",
+        "name": "pod-reader",
+        "namespace": "default",
+        "description": "Role should exist"
+      },
+      {
+        "type": "field_contains",
+        "kind": "Role",
+        "name": "pod-reader",
+        "namespace": "default",
+        "field": "rules[0].verbs",
+        "contains": "get",
+        "description": "Should allow get verb"
+      }
+    ],
+    "initial_files_json": {
+      "role.yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: pod-reader\n  namespace: default\nrules:\n- apiGroups: [\"\"]\n  resources: \n  verbs: "
+    },
+    "solution_files_json": {
+      "role.yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: pod-reader\n  namespace: default\nrules:\n- apiGroups: [\"\"]\n  resources: [\"pods\"]\n  verbs: [\"get\", \"list\", \"watch\"]"
+    },
+    "solution_explanation": "Roles define permissions. The core API group is empty string. Pods are a core resource.",
+    "hints_json": [
+      "resources: [\"pods\"]",
+      "verbs: [\"get\", \"list\", \"watch\"]",
+      "apiGroups: [\"\"] for core resources"
+    ]
+  },
+  {
+    "title": "Create a RoleBinding",
+    "slug": "create-rolebinding",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Bind a Role to a ServiceAccount.\n\nA ServiceAccount `reader-sa` and Role `pod-reader` already exist.\n\nRequirements:\n- RoleBinding named `reader-binding`\n- Binds Role `pod-reader` to ServiceAccount `reader-sa`",
+    "tags": [
+      "rbac",
+      "rolebindings"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: reader-sa",
+      "apiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: pod-reader\nrules:\n- apiGroups: [\"\"]\n  resources: [\"pods\"]\n  verbs: [\"get\", \"list\", \"watch\"]"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "RoleBinding",
+        "name": "reader-binding",
+        "namespace": "default",
+        "description": "RoleBinding should exist"
+      }
+    ],
+    "initial_files_json": {
+      "rolebinding.yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  name: reader-binding\nsubjects:\n- kind: ServiceAccount\n  name: \nroleRef:\n  kind: Role\n  name: \n  apiGroup: rbac.authorization.k8s.io"
+    },
+    "solution_files_json": {
+      "rolebinding.yaml": "apiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  name: reader-binding\nsubjects:\n- kind: ServiceAccount\n  name: reader-sa\nroleRef:\n  kind: Role\n  name: pod-reader\n  apiGroup: rbac.authorization.k8s.io"
+    },
+    "solution_explanation": "RoleBindings connect Roles to subjects (users, groups, or ServiceAccounts).",
+    "hints_json": [
+      "Subject: ServiceAccount named reader-sa",
+      "roleRef: Role named pod-reader",
+      "apiGroup for roleRef is rbac.authorization.k8s.io"
+    ]
+  },
+  {
+    "title": "Create Full RBAC Setup",
+    "slug": "create-full-rbac",
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "problem_type": "build",
+    "points": 30,
+    "estimated_minutes": 18,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a complete RBAC setup: ServiceAccount, Role, and RoleBinding.\n\nRequirements:\n- ServiceAccount named `deployer-sa`\n- Role named `deployer-role` allowing get, list, create, update, delete on deployments\n- RoleBinding named `deployer-binding` connecting them",
+    "tags": [
+      "rbac",
+      "serviceaccounts",
+      "roles",
+      "rolebindings"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "ServiceAccount",
+        "name": "deployer-sa",
+        "namespace": "default",
+        "description": "ServiceAccount should exist"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "Role",
+        "name": "deployer-role",
+        "namespace": "default",
+        "description": "Role should exist"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "RoleBinding",
+        "name": "deployer-binding",
+        "namespace": "default",
+        "description": "RoleBinding should exist"
+      }
+    ],
+    "initial_files_json": {
+      "rbac.yaml": "# ServiceAccount\napiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: \n---\n# Role\napiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: \nrules:\n- apiGroups: [\"apps\"]\n  resources: \n  verbs: \n---\n# RoleBinding\napiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  name: \nsubjects:\n- kind: ServiceAccount\n  name: \nroleRef:\n  kind: Role\n  name: \n  apiGroup: rbac.authorization.k8s.io"
+    },
+    "solution_files_json": {
+      "rbac.yaml": "apiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: deployer-sa\n---\napiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: deployer-role\nrules:\n- apiGroups: [\"apps\"]\n  resources: [\"deployments\"]\n  verbs: [\"get\", \"list\", \"create\", \"update\", \"delete\"]\n---\napiVersion: rbac.authorization.k8s.io/v1\nkind: RoleBinding\nmetadata:\n  name: deployer-binding\nsubjects:\n- kind: ServiceAccount\n  name: deployer-sa\nroleRef:\n  kind: Role\n  name: deployer-role\n  apiGroup: rbac.authorization.k8s.io"
+    },
+    "solution_explanation": "Deployments are in the 'apps' API group. The full RBAC chain: SA → RoleBinding → Role → Permissions.",
+    "hints_json": [
+      "Deployments use apiGroups: [\"apps\"]",
+      "resources: [\"deployments\"]",
+      "Use --- to separate resources"
+    ]
+  },
+  {
+    "title": "Run Pod as Non-Root User",
+    "slug": "security-run-nonroot",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod that runs as a non-root user (gov security requirement).\n\nRequirements:\n- Pod named `secure-app`\n- Image: `busybox:1.36`\n- Run as user ID 1000\n- `runAsNonRoot: true`\n- Command: `[\"sh\", \"-c\", \"whoami && sleep 3600\"]`",
+    "tags": [
+      "security",
+      "securitycontext",
+      "nonroot"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "secure-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "secure-app",
+        "namespace": "default",
+        "field": "spec.securityContext.runAsNonRoot",
+        "expected": "true",
+        "description": "runAsNonRoot should be true"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "secure-app",
+        "namespace": "default",
+        "field": "spec.securityContext.runAsUser",
+        "expected": "1000",
+        "description": "runAsUser should be 1000"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: secure-app\nspec:\n  securityContext:\n    runAsNonRoot: \n    runAsUser: \n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"whoami && sleep 3600\"]"
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: secure-app\nspec:\n  securityContext:\n    runAsNonRoot: true\n    runAsUser: 1000\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"whoami && sleep 3600\"]"
+    },
+    "solution_explanation": "runAsNonRoot prevents the container from running as root. runAsUser sets the UID. Required by DISA STIGs.",
+    "hints_json": [
+      "runAsNonRoot: true",
+      "runAsUser: 1000",
+      "securityContext goes at pod or container level"
+    ]
+  },
+  {
+    "title": "Set Read-Only Root Filesystem",
+    "slug": "security-readonly-rootfs",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with a read-only root filesystem (STIG compliance).\n\nRequirements:\n- Pod named `readonly-app`\n- Image: `busybox:1.36`\n- `readOnlyRootFilesystem: true`\n- Mount a writable `/tmp` using emptyDir\n- Command: `[\"sh\", \"-c\", \"echo test > /tmp/output && sleep 3600\"]`",
+    "tags": [
+      "security",
+      "securitycontext",
+      "readonly",
+      "stig"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "readonly-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "readonly-app",
+        "namespace": "default",
+        "field": "spec.containers[0].securityContext.readOnlyRootFilesystem",
+        "expected": "true",
+        "description": "readOnlyRootFilesystem should be true"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: readonly-app\nspec:\n  volumes:\n  - name: tmp\n    emptyDir: {}\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo test > /tmp/output && sleep 3600\"]\n    securityContext:\n      readOnlyRootFilesystem: \n    volumeMounts:\n    - name: tmp\n      mountPath: /tmp"
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: readonly-app\nspec:\n  volumes:\n  - name: tmp\n    emptyDir: {}\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo test > /tmp/output && sleep 3600\"]\n    securityContext:\n      readOnlyRootFilesystem: true\n    volumeMounts:\n    - name: tmp\n      mountPath: /tmp"
+    },
+    "solution_explanation": "Read-only root filesystem prevents modifications to the container's filesystem. Use emptyDir for writable paths.",
+    "hints_json": [
+      "readOnlyRootFilesystem: true",
+      "Mount /tmp as emptyDir for writable space",
+      "STIG requires read-only root filesystems"
+    ]
+  },
+  {
+    "title": "Drop All Linux Capabilities",
+    "slug": "security-drop-capabilities",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a hardened Pod that drops all Linux capabilities.\n\nRequirements:\n- Pod named `hardened-app`\n- Image: `busybox:1.36`\n- Drop all capabilities\n- `allowPrivilegeEscalation: false`\n- `runAsNonRoot: true`, `runAsUser: 1000`\n- Command: `[\"sh\", \"-c\", \"sleep 3600\"]`",
+    "tags": [
+      "security",
+      "capabilities",
+      "hardening"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "hardened-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_contains",
+        "kind": "Pod",
+        "name": "hardened-app",
+        "namespace": "default",
+        "field": "spec.containers[0].securityContext.capabilities.drop",
+        "contains": "ALL",
+        "description": "Should drop ALL capabilities"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "hardened-app",
+        "namespace": "default",
+        "field": "spec.containers[0].securityContext.allowPrivilegeEscalation",
+        "expected": "false",
+        "description": "allowPrivilegeEscalation should be false"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: hardened-app\nspec:\n  securityContext:\n    runAsNonRoot: true\n    runAsUser: 1000\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]\n    securityContext:\n      allowPrivilegeEscalation: \n      capabilities:\n        drop:\n        - "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: hardened-app\nspec:\n  securityContext:\n    runAsNonRoot: true\n    runAsUser: 1000\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]\n    securityContext:\n      allowPrivilegeEscalation: false\n      capabilities:\n        drop:\n        - ALL"
+    },
+    "solution_explanation": "Dropping all capabilities and preventing privilege escalation is a key container hardening practice.",
+    "hints_json": [
+      "drop: [\"ALL\"] removes all capabilities",
+      "allowPrivilegeEscalation: false",
+      "This is required by DISA STIG"
+    ]
+  },
+  {
+    "title": "Add Specific Capability",
+    "slug": "security-add-capability",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod that drops all capabilities but adds back only what's needed.\n\nRequirements:\n- Pod named `net-app`\n- Image: `busybox:1.36`\n- Drop ALL capabilities\n- Add back only `NET_BIND_SERVICE` (needed for binding to port < 1024)\n- `allowPrivilegeEscalation: false`\n- Command: `[\"sh\", \"-c\", \"sleep 3600\"]`",
+    "tags": [
+      "security",
+      "capabilities",
+      "least-privilege"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "net-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_contains",
+        "kind": "Pod",
+        "name": "net-app",
+        "namespace": "default",
+        "field": "spec.containers[0].securityContext.capabilities.drop",
+        "contains": "ALL",
+        "description": "Should drop ALL capabilities"
+      },
+      {
+        "type": "field_contains",
+        "kind": "Pod",
+        "name": "net-app",
+        "namespace": "default",
+        "field": "spec.containers[0].securityContext.capabilities.add",
+        "contains": "NET_BIND_SERVICE",
+        "description": "Should add NET_BIND_SERVICE"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: net-app\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]\n    securityContext:\n      allowPrivilegeEscalation: false\n      capabilities:\n        drop:\n        - \n        add:\n        - "
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: net-app\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]\n    securityContext:\n      allowPrivilegeEscalation: false\n      capabilities:\n        drop:\n        - ALL\n        add:\n        - NET_BIND_SERVICE"
+    },
+    "solution_explanation": "Drop ALL then add only what's needed. This is the principle of least privilege.",
+    "hints_json": [
+      "Drop ALL first, then add specific ones",
+      "NET_BIND_SERVICE allows binding to low ports",
+      "This follows least-privilege principle"
+    ]
+  },
+  {
+    "title": "Fix Pod Running as Root",
+    "slug": "security-fix-root-pod",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "troubleshoot",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "A Pod named `insecure-app` is running as root, violating security policy. Fix it to run as non-root.\n\nThe pod must:\n- Run as user 1000, group 1000\n- Have `runAsNonRoot: true`\n- Drop all capabilities\n- Have `readOnlyRootFilesystem: true`\n- Mount `/tmp` as writable",
+    "tags": [
+      "security",
+      "hardening",
+      "troubleshooting",
+      "stig"
+    ],
+    "scenario_manifests_json": [
+      "apiVersion: v1\nkind: Pod\nmetadata:\n  name: insecure-app\nspec:\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]"
+    ],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "insecure-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "insecure-app",
+        "namespace": "default",
+        "field": "spec.securityContext.runAsNonRoot",
+        "expected": "true",
+        "description": "runAsNonRoot should be true"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "insecure-app",
+        "namespace": "default",
+        "field": "spec.securityContext.runAsUser",
+        "expected": "1000",
+        "description": "Should run as user 1000"
+      }
+    ],
+    "initial_files_json": {
+      "fix.yaml": "# Harden this pod to pass security audit\napiVersion: v1\nkind: Pod\nmetadata:\n  name: insecure-app\nspec:\n  securityContext:\n    runAsNonRoot: \n    runAsUser: \n    runAsGroup: \n  volumes:\n  - name: tmp\n    emptyDir: {}\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]\n    securityContext:\n      readOnlyRootFilesystem: \n      allowPrivilegeEscalation: \n      capabilities:\n        drop:\n        - \n    volumeMounts:\n    - name: tmp\n      mountPath: /tmp"
+    },
+    "solution_files_json": {
+      "fix.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: insecure-app\nspec:\n  securityContext:\n    runAsNonRoot: true\n    runAsUser: 1000\n    runAsGroup: 1000\n  volumes:\n  - name: tmp\n    emptyDir: {}\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]\n    securityContext:\n      readOnlyRootFilesystem: true\n      allowPrivilegeEscalation: false\n      capabilities:\n        drop:\n        - ALL\n    volumeMounts:\n    - name: tmp\n      mountPath: /tmp"
+    },
+    "solution_explanation": "Gov security requires: non-root, read-only filesystem, no privilege escalation, minimal capabilities.",
+    "hints_json": [
+      "runAsNonRoot: true, runAsUser: 1000",
+      "readOnlyRootFilesystem: true",
+      "Drop ALL capabilities, allowPrivilegeEscalation: false"
+    ]
+  },
+  {
+    "title": "STIG-Compliant Pod",
+    "slug": "security-stig-pod",
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "problem_type": "build",
+    "points": 35,
+    "estimated_minutes": 20,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a fully STIG-compliant Pod that passes government security audit.\n\nRequirements:\n- Pod named `stig-compliant`\n- Image: `nginx:1.25`\n- Run as non-root (UID 101 for nginx)\n- Read-only root filesystem\n- Drop ALL capabilities\n- No privilege escalation\n- Resource limits set (CPU: 100m, Memory: 128Mi)\n- Mount /tmp and /var/cache/nginx as writable (emptyDir)",
+    "tags": [
+      "security",
+      "stig",
+      "compliance",
+      "hardening"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "stig-compliant",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "stig-compliant",
+        "namespace": "default",
+        "field": "spec.securityContext.runAsNonRoot",
+        "expected": "true",
+        "description": "runAsNonRoot should be true"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "stig-compliant",
+        "namespace": "default",
+        "field": "spec.containers[0].securityContext.readOnlyRootFilesystem",
+        "expected": "true",
+        "description": "readOnlyRootFilesystem should be true"
+      },
+      {
+        "type": "field_contains",
+        "kind": "Pod",
+        "name": "stig-compliant",
+        "namespace": "default",
+        "field": "spec.containers[0].securityContext.capabilities.drop",
+        "contains": "ALL",
+        "description": "Should drop ALL capabilities"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "stig-compliant",
+        "namespace": "default",
+        "field": "spec.containers[0].securityContext.allowPrivilegeEscalation",
+        "expected": "false",
+        "description": "allowPrivilegeEscalation should be false"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "# Create a fully STIG-compliant pod\n# Checklist:\n# - Non-root user\n# - Read-only root filesystem\n# - Drop all capabilities\n# - No privilege escalation\n# - Resource limits\n# - Writable volumes for /tmp and /var/cache/nginx\napiVersion: v1\nkind: Pod\nmetadata:\n  name: stig-compliant\nspec:\n  securityContext:\n    runAsNonRoot: \n    runAsUser: \n  volumes:\n  - name: tmp\n    emptyDir: {}\n  - name: cache\n    emptyDir: {}\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    securityContext:\n      readOnlyRootFilesystem: \n      allowPrivilegeEscalation: \n      capabilities:\n        drop:\n        - \n    resources:\n      limits:\n        cpu: \n        memory: \n    volumeMounts:\n    - name: tmp\n      mountPath: /tmp\n    - name: cache\n      mountPath: /var/cache/nginx"
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: stig-compliant\nspec:\n  securityContext:\n    runAsNonRoot: true\n    runAsUser: 101\n  volumes:\n  - name: tmp\n    emptyDir: {}\n  - name: cache\n    emptyDir: {}\n  containers:\n  - name: nginx\n    image: nginx:1.25\n    ports:\n    - containerPort: 80\n    securityContext:\n      readOnlyRootFilesystem: true\n      allowPrivilegeEscalation: false\n      capabilities:\n        drop:\n        - ALL\n    resources:\n      limits:\n        cpu: \"100m\"\n        memory: \"128Mi\"\n    volumeMounts:\n    - name: tmp\n      mountPath: /tmp\n    - name: cache\n      mountPath: /var/cache/nginx"
+    },
+    "solution_explanation": "STIG compliance requires: non-root (nginx UID=101), read-only filesystem, dropped capabilities, no escalation, resource limits, and writable volumes only where needed.",
+    "hints_json": [
+      "Nginx runs as UID 101 by default",
+      "Nginx needs /tmp and /var/cache/nginx writable",
+      "Drop ALL capabilities and set resource limits"
+    ]
+  },
+  {
+    "title": "Set Seccomp Profile",
+    "slug": "security-seccomp-profile",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod with the RuntimeDefault seccomp profile to restrict system calls.\n\nRequirements:\n- Pod named `seccomp-app`\n- Image: `busybox:1.36`\n- Seccomp profile type: `RuntimeDefault`\n- Command: `[\"sh\", \"-c\", \"sleep 3600\"]`",
+    "tags": [
+      "security",
+      "seccomp",
+      "syscalls"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "seccomp-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "seccomp-app",
+        "namespace": "default",
+        "field": "spec.securityContext.seccompProfile.type",
+        "expected": "RuntimeDefault",
+        "description": "Seccomp should be RuntimeDefault"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: seccomp-app\nspec:\n  securityContext:\n    seccompProfile:\n      type: \n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]"
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: seccomp-app\nspec:\n  securityContext:\n    seccompProfile:\n      type: RuntimeDefault\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"sleep 3600\"]"
+    },
+    "solution_explanation": "Seccomp profiles restrict which system calls a container can make. RuntimeDefault uses the container runtime's default profile.",
+    "hints_json": [
+      "type: RuntimeDefault",
+      "seccompProfile goes in securityContext",
+      "This blocks dangerous syscalls"
+    ]
+  },
+  {
+    "title": "Set fsGroup for Shared Volumes",
+    "slug": "security-fsgroup",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Pod where all containers can write to a shared volume using fsGroup.\n\nRequirements:\n- Pod named `shared-vol-app`\n- `fsGroup: 2000` so volume files are owned by group 2000\n- `runAsUser: 1000`\n- Image: `busybox:1.36`\n- EmptyDir volume mounted at `/data`\n- Command: `[\"sh\", \"-c\", \"echo hello > /data/test && sleep 3600\"]`",
+    "tags": [
+      "security",
+      "fsgroup",
+      "volumes"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "pod_status",
+        "name": "shared-vol-app",
+        "namespace": "default",
+        "expected_status": "Running",
+        "description": "Pod should be Running"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "shared-vol-app",
+        "namespace": "default",
+        "field": "spec.securityContext.fsGroup",
+        "expected": "2000",
+        "description": "fsGroup should be 2000"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Pod",
+        "name": "shared-vol-app",
+        "namespace": "default",
+        "field": "spec.securityContext.runAsUser",
+        "expected": "1000",
+        "description": "runAsUser should be 1000"
+      }
+    ],
+    "initial_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: shared-vol-app\nspec:\n  securityContext:\n    runAsUser: \n    fsGroup: \n  volumes:\n  - name: data\n    emptyDir: {}\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo hello > /data/test && sleep 3600\"]\n    volumeMounts:\n    - name: data\n      mountPath: /data"
+    },
+    "solution_files_json": {
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: shared-vol-app\nspec:\n  securityContext:\n    runAsUser: 1000\n    fsGroup: 2000\n  volumes:\n  - name: data\n    emptyDir: {}\n  containers:\n  - name: app\n    image: busybox:1.36\n    command: [\"sh\", \"-c\", \"echo hello > /data/test && sleep 3600\"]\n    volumeMounts:\n    - name: data\n      mountPath: /data"
+    },
+    "solution_explanation": "fsGroup sets the group owner for all volume files. All containers in the pod can then write to shared volumes.",
+    "hints_json": [
+      "runAsUser: 1000",
+      "fsGroup: 2000",
+      "fsGroup affects volume file ownership"
+    ]
+  },
+  {
+    "title": "Create a Basic StatefulSet",
+    "slug": "create-basic-statefulset",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 25,
+    "estimated_minutes": 15,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a StatefulSet for a stateful application.\n\nRequirements:\n- StatefulSet named `web-stateful`\n- 2 replicas using `nginx:1.25`\n- Headless Service named `web-headless`\n- Label: `app=web-stateful`",
+    "tags": [
+      "statefulsets",
+      "headless-services"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "StatefulSet",
+        "name": "web-stateful",
+        "namespace": "default",
+        "description": "StatefulSet should exist"
+      },
+      {
+        "type": "resource_exists",
+        "kind": "Service",
+        "name": "web-headless",
+        "namespace": "default",
+        "description": "Headless Service should exist"
+      },
+      {
+        "type": "field_equals",
+        "kind": "Service",
+        "name": "web-headless",
+        "namespace": "default",
+        "field": "spec.clusterIP",
+        "expected": "None",
+        "description": "Service should be headless"
+      }
+    ],
+    "initial_files_json": {
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: web-headless\nspec:\n  clusterIP: \n  selector:\n    app: web-stateful\n  ports:\n  - port: 80",
+      "statefulset.yaml": "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: web-stateful\nspec:\n  serviceName: \n  replicas: \n  selector:\n    matchLabels:\n      app: web-stateful\n  template:\n    metadata:\n      labels:\n        app: web-stateful\n    spec:\n      containers:\n      - name: nginx\n        image: \n        ports:\n        - containerPort: 80"
+    },
+    "solution_files_json": {
+      "service.yaml": "apiVersion: v1\nkind: Service\nmetadata:\n  name: web-headless\nspec:\n  clusterIP: None\n  selector:\n    app: web-stateful\n  ports:\n  - port: 80",
+      "statefulset.yaml": "apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: web-stateful\nspec:\n  serviceName: web-headless\n  replicas: 2\n  selector:\n    matchLabels:\n      app: web-stateful\n  template:\n    metadata:\n      labels:\n        app: web-stateful\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        ports:\n        - containerPort: 80"
+    },
+    "solution_explanation": "StatefulSets need a headless Service (clusterIP: None). Pods get stable network identities like web-stateful-0, web-stateful-1.",
+    "hints_json": [
+      "Create the headless Service first",
+      "serviceName must match the Service",
+      "clusterIP: None makes it headless"
+    ]
+  },
+  {
+    "title": "Create a ResourceQuota",
+    "slug": "create-resourcequota",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a ResourceQuota to limit resource usage in a namespace.\n\nRequirements:\n- ResourceQuota named `compute-quota`\n- Max 4 pods\n- Max CPU requests: 2 cores\n- Max memory requests: 2Gi",
+    "tags": [
+      "resourcequotas",
+      "governance"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "ResourceQuota",
+        "name": "compute-quota",
+        "namespace": "default",
+        "description": "ResourceQuota should exist"
+      },
+      {
+        "type": "field_equals",
+        "kind": "ResourceQuota",
+        "name": "compute-quota",
+        "namespace": "default",
+        "field": "spec.hard.pods",
+        "expected": "4",
+        "description": "Max pods should be 4"
+      }
+    ],
+    "initial_files_json": {
+      "quota.yaml": "apiVersion: v1\nkind: ResourceQuota\nmetadata:\n  name: compute-quota\nspec:\n  hard:\n    pods: \n    requests.cpu: \n    requests.memory: "
+    },
+    "solution_files_json": {
+      "quota.yaml": "apiVersion: v1\nkind: ResourceQuota\nmetadata:\n  name: compute-quota\nspec:\n  hard:\n    pods: \"4\"\n    requests.cpu: \"2\"\n    requests.memory: 2Gi"
+    },
+    "solution_explanation": "ResourceQuotas limit total resource consumption in a namespace. Essential for multi-tenant clusters.",
+    "hints_json": [
+      "pods: 4",
+      "requests.cpu: 2",
+      "requests.memory: 2Gi"
+    ]
+  },
+  {
+    "title": "Create a LimitRange",
+    "slug": "create-limitrange",
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "problem_type": "build",
+    "points": 20,
+    "estimated_minutes": 12,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a LimitRange to set default resource limits for pods.\n\nRequirements:\n- LimitRange named `default-limits`\n- Type: Container\n- Default CPU limit: 200m, default memory limit: 256Mi\n- Default CPU request: 100m, default memory request: 128Mi",
+    "tags": [
+      "limitranges",
+      "resources",
+      "defaults"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "LimitRange",
+        "name": "default-limits",
+        "namespace": "default",
+        "description": "LimitRange should exist"
+      }
+    ],
+    "initial_files_json": {
+      "limitrange.yaml": "apiVersion: v1\nkind: LimitRange\nmetadata:\n  name: default-limits\nspec:\n  limits:\n  - type: Container\n    default:\n      cpu: \n      memory: \n    defaultRequest:\n      cpu: \n      memory: "
+    },
+    "solution_files_json": {
+      "limitrange.yaml": "apiVersion: v1\nkind: LimitRange\nmetadata:\n  name: default-limits\nspec:\n  limits:\n  - type: Container\n    default:\n      cpu: \"200m\"\n      memory: \"256Mi\"\n    defaultRequest:\n      cpu: \"100m\"\n      memory: \"128Mi\""
+    },
+    "solution_explanation": "LimitRanges set default resource limits/requests for containers that don't specify their own.",
+    "hints_json": [
+      "default = limits, defaultRequest = requests",
+      "CPU: 200m limit, 100m request",
+      "Memory: 256Mi limit, 128Mi request"
+    ]
+  },
+  {
+    "title": "Create a Namespace",
+    "slug": "create-namespace",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 10,
+    "estimated_minutes": 8,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Namespace for team isolation.\n\nRequirements:\n- Namespace named `dev-team`\n- Label: `team=development`\n- Label: `env=dev`",
+    "tags": [
+      "namespaces",
+      "organization"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Namespace",
+        "name": "dev-team",
+        "namespace": "default",
+        "description": "Namespace should exist"
+      },
+      {
+        "type": "label_exists",
+        "kind": "Namespace",
+        "name": "dev-team",
+        "namespace": "default",
+        "expected_labels": {
+          "team": "development"
+        },
+        "description": "Should have team=development label"
+      }
+    ],
+    "initial_files_json": {
+      "namespace.yaml": "apiVersion: v1\nkind: Namespace\nmetadata:\n  name: \n  labels:\n    team: \n    env: "
+    },
+    "solution_files_json": {
+      "namespace.yaml": "apiVersion: v1\nkind: Namespace\nmetadata:\n  name: dev-team\n  labels:\n    team: development\n    env: dev"
+    },
+    "solution_explanation": "Namespaces provide logical isolation. Use labels for organization.",
+    "hints_json": [
+      "name: dev-team",
+      "team: development",
+      "env: dev"
+    ]
+  },
+  {
+    "title": "Deploy to a Specific Namespace",
+    "slug": "deploy-to-namespace",
+    "category": "kubernetes",
+    "difficulty": "beginner",
+    "problem_type": "build",
+    "points": 15,
+    "estimated_minutes": 10,
+    "requires_cluster": true,
+    "is_published": true,
+    "description": "Create a Namespace and deploy a Pod into it.\n\nRequirements:\n- Namespace named `staging`\n- Pod named `stage-app` in namespace `staging`\n- Image: `nginx:1.25`",
+    "tags": [
+      "namespaces",
+      "pods"
+    ],
+    "scenario_manifests_json": [],
+    "validation_rules_json": [
+      {
+        "type": "resource_exists",
+        "kind": "Namespace",
+        "name": "staging",
+        "namespace": "default",
+        "description": "Namespace should exist"
+      },
+      {
+        "type": "pod_status",
+        "name": "stage-app",
+        "namespace": "staging",
+        "expected_status": "Running",
+        "description": "Pod should be Running in staging namespace"
+      }
+    ],
+    "initial_files_json": {
+      "namespace.yaml": "apiVersion: v1\nkind: Namespace\nmetadata:\n  name: ",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: stage-app\n  namespace: \nspec:\n  containers:\n  - name: app\n    image: nginx:1.25"
+    },
+    "solution_files_json": {
+      "namespace.yaml": "apiVersion: v1\nkind: Namespace\nmetadata:\n  name: staging",
+      "pod.yaml": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: stage-app\n  namespace: staging\nspec:\n  containers:\n  - name: app\n    image: nginx:1.25"
+    },
+    "solution_explanation": "Use metadata.namespace to deploy resources into a specific namespace. Create the namespace first.",
+    "hints_json": [
+      "Create namespace first, then deploy the pod",
+      "metadata.namespace: staging",
+      "Apply namespace YAML before pod YAML"
+    ]
+  }
+]
