@@ -213,7 +213,7 @@ class ClusterValidatorService
         $kind = strtolower($rule['kind'] ?? 'deployment');
         $name = $rule['name'];
         $namespace = $rule['namespace'] ?? 'default';
-        $expected = (int) $rule['expected'];
+        $expected = (int) ($rule['expected'] ?? $rule['expected_replicas'] ?? 0);
 
         $result = $this->kubectl(
             ['get', $kind, $name, '-n', $namespace, '-o', 'jsonpath={.status.readyReplicas}'],
@@ -248,8 +248,23 @@ class ClusterValidatorService
         $kind = strtolower($rule['kind']);
         $name = $rule['name'];
         $namespace = $rule['namespace'] ?? 'default';
-        $labelKey = $rule['label_key'];
+
+        // Support both formats:
+        //   { "label_key": "app", "label_value": "hello" }
+        //   { "expected_labels": { "app": "hello" } }
+        $labelKey = $rule['label_key'] ?? null;
         $labelValue = $rule['label_value'] ?? null;
+
+        if (!$labelKey && isset($rule['expected_labels'])) {
+            // Extract first key-value pair from expected_labels map
+            $labelKey = array_key_first($rule['expected_labels']);
+            $labelValue = $rule['expected_labels'][$labelKey] ?? null;
+        }
+
+        if (!$labelKey) {
+            Log::warning('label_exists rule missing label_key or expected_labels', $rule);
+            return false;
+        }
 
         $result = $this->kubectl(
             ['get', $kind, $name, '-n', $namespace, '-o',
@@ -279,8 +294,31 @@ class ClusterValidatorService
         $kind = strtolower($rule['kind'] ?? 'configmap');
         $name = $rule['name'];
         $namespace = $rule['namespace'] ?? 'default';
-        $key = $rule['key'];
+
+        // Support both formats:
+        //   { "key": "APP_ENV", "expected_value": "production" }
+        //   { "expected_keys": ["APP_ENV"] }
+        $key = $rule['key'] ?? null;
         $expectedValue = $rule['expected_value'] ?? null;
+
+        // If using expected_keys array, check each key exists
+        if (!$key && isset($rule['expected_keys'])) {
+            foreach ($rule['expected_keys'] as $checkKey) {
+                $result = $this->kubectl(
+                    ['get', $kind, $name, '-n', $namespace, '-o', "jsonpath={.data.{$checkKey}}"],
+                    $hostNamespace, $runnerPod
+                );
+                if (!$result['success'] || empty(trim($result['output']))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        if (!$key) {
+            Log::warning('config_data rule missing key or expected_keys', $rule);
+            return false;
+        }
 
         $result = $this->kubectl(
             ['get', $kind, $name, '-n', $namespace, '-o', "jsonpath={.data.{$key}}"],
