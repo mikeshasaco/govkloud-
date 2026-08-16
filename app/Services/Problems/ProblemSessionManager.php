@@ -11,6 +11,7 @@ use App\Services\K8s\K8sClient;
 use App\Services\K8s\HelmClient;
 use App\Services\K8s\IngressUrlBuilder;
 use App\Services\LabRuntime\SessionProvisioner;
+use App\Services\LabRuntime\SessionDestroyer;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
@@ -30,6 +31,7 @@ class ProblemSessionManager
         protected IngressUrlBuilder $ingressUrlBuilder,
         protected SessionProvisioner $sessionProvisioner,
         protected ClusterValidatorService $validator,
+        protected SessionDestroyer $sessionDestroyer,
     ) {}
 
     /**
@@ -287,12 +289,23 @@ class ProblemSessionManager
 
         $rules = $challenge->validation_rules_json ?? [];
         if (empty($rules)) {
-            // No validation rules = manual review or legacy problem
+            // No validation rules — still mark as completed
+            $attempt->update([
+                'submitted_at' => now(),
+                'status' => 'completed',
+                'completed_at' => now(),
+                'points_earned' => $challenge->points ?? 10,
+            ]);
+
+            $this->updateAcceptanceRate($challenge);
+            $this->destroySessionOnCompletion($session);
+
             return [
                 'passed' => true,
                 'results' => [],
                 'score' => 0,
                 'total' => 0,
+                'points_earned' => $challenge->points ?? 10,
                 'message' => 'No automated checks for this problem.',
             ];
         }
@@ -319,15 +332,17 @@ class ProblemSessionManager
             'completed_at' => $results['passed'] ? now() : null,
         ]);
 
-        // Update acceptance rate
+        // Update acceptance rate and cleanup on success
         if ($results['passed']) {
             $this->updateAcceptanceRate($challenge);
+            $this->destroySessionOnCompletion($session);
         }
 
         $results['points_earned'] = $pointsEarned;
 
         return $results;
     }
+
 
     /**
      * Wipe all user-created resources from the vcluster's default namespace.
@@ -631,6 +646,26 @@ class ProblemSessionManager
         if ($totalAttempts > 0) {
             $challenge->update([
                 'acceptance_rate' => round(($completedAttempts / $totalAttempts) * 100, 2),
+            ]);
+        }
+    }
+
+    /**
+     * Destroy the session environment after successful completion.
+     * Runs asynchronously to avoid blocking the response.
+     */
+    protected function destroySessionOnCompletion(LabSession $session): void
+    {
+        try {
+            $this->sessionDestroyer->destroy($session, 'completed');
+            Log::info('[Problem] Session destroyed after successful completion', [
+                'session_id' => $session->id,
+            ]);
+        } catch (Exception $e) {
+            // Non-fatal: the cleanup cron will catch it
+            Log::warning('[Problem] Failed to destroy session after completion', [
+                'session_id' => $session->id,
+                'error' => $e->getMessage(),
             ]);
         }
     }

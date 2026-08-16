@@ -46,7 +46,7 @@ class SessionDestroyer
             // Update session status based on reason
             $newStatus = match ($reason) {
                 'ttl', 'idle' => LabSession::STATUS_EXPIRED,
-                'manual' => LabSession::STATUS_DESTROYED,
+                'manual', 'completed' => LabSession::STATUS_DESTROYED,
                 default => LabSession::STATUS_DESTROYED,
             };
 
