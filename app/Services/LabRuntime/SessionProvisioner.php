@@ -240,11 +240,11 @@ spec:
       value: /home/.kube/config
     resources:
       limits:
-        cpu: "100m"
-        memory: "64Mi"
+        cpu: "200m"
+        memory: "128Mi"
       requests:
         cpu: "50m"
-        memory: "32Mi"
+        memory: "64Mi"
   volumes:
   - name: kubeconfig
     secret:

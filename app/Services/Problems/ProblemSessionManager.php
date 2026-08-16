@@ -140,6 +140,18 @@ class ProblemSessionManager
             ];
         }
 
+        // Intercept: kubectl apply -f <filename> won't work because files are in the browser, not on the pod.
+        // Guide the user to use the Apply button or pipe from stdin.
+        if (preg_match('/^apply\s+-f\s+(?!-\s*$)\S+/i', $sanitized)) {
+            return [
+                'output' => "⚠️  Files from the editor don't exist on the cluster.\n" .
+                            "Use the \$ kubectl apply button above the editor, or run:\n" .
+                            "  kubectl apply -f -\n" .
+                            "and paste your YAML (then press Ctrl+D to apply).",
+                'exit_code' => 1,
+            ];
+        }
+
         $kubectlPath = config('govkloud.kubectl.binary_path');
         $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
         $namespace = $session->host_namespace;
@@ -160,11 +172,19 @@ class ProblemSessionManager
         $returnCode = 0;
         exec($fullCommand, $output, $returnCode);
 
+        $outputText = implode("\n", $output);
+
+        // Friendly message for OOM kills (exit code 137 = SIGKILL, usually OOM)
+        if ($returnCode === 137) {
+            $outputText .= "\n\n⚠️  command terminated with exit code 137 (out of memory). Try a simpler command.";
+        }
+
         return [
-            'output' => implode("\n", $output),
+            'output' => $outputText,
             'exit_code' => $returnCode,
         ];
     }
+
 
     /**
      * Apply YAML content from the code editor to the user's vcluster.
