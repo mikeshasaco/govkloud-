@@ -1390,7 +1390,14 @@ function processCommand(command) {
 
     // Parse command
     const parts = command.split(/\s+/);
-    const tool = parts[0];
+    let tool = parts[0];
+
+    // Handle sudo by stripping it and processing the rest
+    if (tool === 'sudo') {
+        if (parts.length < 2) return 'usage: sudo <command>';
+        tool = parts[1];
+        parts.splice(0, 1); // remove 'sudo', so parts[0] is now the real command
+    }
 
     switch (tool) {
         case 'kubectl':
@@ -1398,18 +1405,75 @@ function processCommand(command) {
         case 'terraform':
             return handleTerraform(parts.slice(1), command);
         case 'docker':
+        case 'docker-compose':
             return handleDocker(parts.slice(1), command);
         case 'cat':
             return handleCat(parts.slice(1));
         case 'ls':
-            return Object.keys(files).join('\n') || '(no files)';
+            return handleLs(parts.slice(1));
+        case 'chmod':
+            return handleChmod(parts.slice(1));
+        case 'chown':
+            return handleChown(parts.slice(1));
+        case 'bash':
+            return handleBash(parts.slice(1));
+        case 'sh':
+            return handleBash(parts.slice(1));
+        case 'echo':
+            return parts.slice(1).join(' ').replace(/^["']|["']$/g, '');
+        case 'touch':
+            return handleTouch(parts.slice(1));
+        case 'mkdir':
+            return handleMkdir(parts.slice(1));
+        case 'cp':
+            return handleCp(parts.slice(1));
+        case 'mv':
+            return handleMv(parts.slice(1));
+        case 'rm':
+            return handleRm(parts.slice(1));
+        case 'find':
+            return handleFind(parts.slice(1));
+        case 'grep':
+            return handleGrep(parts.slice(1));
+        case 'head':
+            return handleHead(parts.slice(1));
+        case 'tail':
+            return handleTail(parts.slice(1));
+        case 'wc':
+            return handleWc(parts.slice(1));
+        case 'stat':
+            return handleStat(parts.slice(1));
+        case 'gzip':
+            return handleGzip(parts.slice(1));
+        case 'systemctl':
+            return handleSystemctl(parts.slice(1));
+        case 'crontab':
+            return handleCrontab(parts.slice(1));
+        case 'date':
+            return new Date().toString();
+        case 'pwd':
+            return '/home/user/workspace';
+        case 'whoami':
+            return 'user';
+        case 'id':
+            return 'uid=1000(user) gid=1000(user) groups=1000(user)';
+        case 'hostname':
+            return 'govkloud-lab';
+        case 'uname':
+            return parts.includes('-a') ? 'Linux govkloud-lab 5.15.0 #1 SMP x86_64 GNU/Linux' : 'Linux';
+        case 'which':
+            if (parts.length < 2) return 'usage: which <command>';
+            const knownCmds = ['kubectl','terraform','docker','bash','ls','cat','chmod','grep','find','stat','gzip','systemctl','crontab'];
+            return knownCmds.includes(parts[1]) ? `/usr/bin/${parts[1]}` : `${parts[1]} not found`;
+        case 'man':
+            return parts.length < 2 ? 'What manual page do you want?' : `No manual entry for ${parts[1]}. Try: ${parts[1]} --help`;
         case 'clear':
             clearTerminal();
             return '';
         case 'help':
-            return 'Available commands: kubectl, terraform, docker, cat, ls, clear, help';
+            return 'Available commands:\n  kubectl, terraform, docker  — Infrastructure tools\n  ls, cat, cp, mv, rm, touch  — File operations\n  chmod, chown, stat           — Permissions\n  grep, find, head, tail, wc   — Text processing\n  bash, echo, date, pwd        — Shell basics\n  systemctl, crontab, gzip     — System administration\n  clear, help                  — Terminal';
         default:
-            return `error: command not found: ${tool}\nTry: kubectl, terraform, docker, cat, ls, help`;
+            return `bash: command not found: ${tool}\nType 'help' for available commands.`;
     }
 }
 
@@ -1803,6 +1867,388 @@ function handleCat(args) {
     if (!filename) return 'usage: cat <filename>';
     if (files[filename]) return files[filename];
     return `cat: ${filename}: No such file or directory`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LINUX COMMAND HANDLERS
+// ═══════════════════════════════════════════════════════════════
+
+// Virtual filesystem metadata (permissions, owners)
+let fileMeta = {};
+function getFileMeta(filename) {
+    if (!fileMeta[filename]) {
+        // Default permissions based on extension
+        const isScript = filename.endsWith('.sh');
+        fileMeta[filename] = {
+            perms: isScript ? '-rw-r--r--' : '-rw-r--r--',
+            octal: '644',
+            owner: 'user',
+            group: 'user',
+            size: (files[filename] || '').length,
+        };
+    }
+    fileMeta[filename].size = (files[filename] || '').length;
+    return fileMeta[filename];
+}
+
+function handleLs(args) {
+    const allFiles = Object.keys(files);
+    if (allFiles.length === 0) return '(no files)';
+
+    // Check for -l flag
+    const hasLong = args.some(a => a.includes('l'));
+    const targetFile = args.find(a => !a.startsWith('-'));
+
+    if (targetFile) {
+        if (!files.hasOwnProperty(targetFile)) return `ls: cannot access '${targetFile}': No such file or directory`;
+        if (hasLong) {
+            const meta = getFileMeta(targetFile);
+            return `${meta.perms} 1 ${meta.owner} ${meta.group} ${meta.size} Aug 18 10:00 ${targetFile}`;
+        }
+        return targetFile;
+    }
+
+    if (hasLong) {
+        return 'total ' + allFiles.length + '\n' + allFiles.map(f => {
+            const meta = getFileMeta(f);
+            return `${meta.perms} 1 ${meta.owner} ${meta.group} ${String(meta.size).padStart(5)} Aug 18 10:00 ${f}`;
+        }).join('\n');
+    }
+    return allFiles.join('  ');
+}
+
+function handleChmod(args) {
+    if (args.length < 2) return 'chmod: missing operand\nUsage: chmod [MODE] FILE';
+    const mode = args[0];
+    const filename = args[1];
+
+    if (!files.hasOwnProperty(filename)) return `chmod: cannot access '${filename}': No such file or directory`;
+
+    const meta = getFileMeta(filename);
+
+    // Symbolic mode (u+x, g-w, a+r, etc.)
+    const symbolicMatch = mode.match(/^([ugoa]*)([+-])([rwx]+)$/);
+    if (symbolicMatch) {
+        const who = symbolicMatch[1] || 'a';
+        const op = symbolicMatch[2];
+        const what = symbolicMatch[3];
+        // Convert current perms string to array
+        let p = meta.perms.split('');
+        const applyTo = (offset) => {
+            what.split('').forEach(w => {
+                const idx = offset + { r: 0, w: 1, x: 2 }[w];
+                p[idx] = op === '+' ? w : '-';
+            });
+        };
+        if (who.includes('u') || who.includes('a')) applyTo(1);
+        if (who.includes('g') || who.includes('a')) applyTo(4);
+        if (who.includes('o') || who.includes('a')) applyTo(7);
+        meta.perms = p.join('');
+        // Recalculate octal
+        const octalDigit = (offset) => (p[offset] !== '-' ? 4 : 0) + (p[offset+1] !== '-' ? 2 : 0) + (p[offset+2] !== '-' ? 1 : 0);
+        meta.octal = '' + octalDigit(1) + octalDigit(4) + octalDigit(7);
+        return '';
+    }
+
+    // Octal mode (644, 755, etc.)
+    const octalMatch = mode.match(/^[0-7]{3,4}$/);
+    if (octalMatch) {
+        const digits = mode.slice(-3).split('').map(Number);
+        const permChar = (val, chars) => chars.split('').map((c, i) => val & (4 >> i) ? c : '-').join('');
+        meta.perms = '-' + permChar(digits[0], 'rwx') + permChar(digits[1], 'rwx') + permChar(digits[2], 'rwx');
+        meta.octal = mode.slice(-3);
+        return '';
+    }
+
+    return `chmod: invalid mode: '${mode}'`;
+}
+
+function handleChown(args) {
+    if (args.length < 2) return 'chown: missing operand\nUsage: chown OWNER[:GROUP] FILE';
+    const ownerGroup = args[0].split(':');
+    const filename = args[1];
+    if (!files.hasOwnProperty(filename)) return `chown: cannot access '${filename}': No such file or directory`;
+    const meta = getFileMeta(filename);
+    meta.owner = ownerGroup[0];
+    if (ownerGroup[1]) meta.group = ownerGroup[1];
+    return '';
+}
+
+function handleBash(args) {
+    if (args.length === 0) return 'bash: no script specified\nUsage: bash [-n] <script.sh>';
+
+    // -n flag: syntax check only
+    if (args[0] === '-n') {
+        const filename = args[1];
+        if (!filename) return 'bash: -n: option requires an argument';
+        if (!files[filename]) return `bash: ${filename}: No such file or directory`;
+        // Basic syntax check: look for unmatched quotes, missing fi/done
+        const content = files[filename];
+        const ifCount = (content.match(/\bif\b/g) || []).length;
+        const fiCount = (content.match(/\bfi\b/g) || []).length;
+        const forCount = (content.match(/\bfor\b|\bwhile\b/g) || []).length;
+        const doneCount = (content.match(/\bdone\b/g) || []).length;
+        if (ifCount !== fiCount) return `${filename}: line 1: syntax error: unexpected end of file (missing 'fi')`;
+        if (forCount !== doneCount) return `${filename}: line 1: syntax error: unexpected end of file (missing 'done')`;
+        return ''; // No output means success
+    }
+
+    // Execute a script
+    const filename = args[0];
+    if (!files[filename]) return `bash: ${filename}: No such file or directory`;
+    const meta = getFileMeta(filename);
+    if (!meta.perms[3]?.match(/x/) && !args.includes('-x')) {
+        // Running via bash doesn't require execute permission, just return simulated output
+    }
+    // Simulate running the script by extracting echo statements
+    const content = files[filename];
+    const output = [];
+    content.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('#') || trimmed === '') return;
+        if (trimmed.startsWith('echo ')) {
+            output.push(trimmed.replace(/^echo\s+/, '').replace(/^["']|["']$/g, ''));
+        }
+    });
+    return output.length > 0 ? output.join('\n') : `(script ${filename} executed)`;
+}
+
+function handleTouch(args) {
+    if (args.length === 0) return 'touch: missing file operand';
+    args.forEach(f => {
+        if (!f.startsWith('-') && !files[f]) {
+            files[f] = '';
+        }
+    });
+    return '';
+}
+
+function handleMkdir(args) {
+    if (args.length === 0) return 'mkdir: missing operand';
+    return ''; // Directories are virtual, just succeed
+}
+
+function handleCp(args) {
+    const realArgs = args.filter(a => !a.startsWith('-'));
+    if (realArgs.length < 2) return 'cp: missing file operand';
+    const src = realArgs[0];
+    const dst = realArgs[1];
+    if (!files[src]) return `cp: cannot stat '${src}': No such file or directory`;
+    files[dst] = files[src];
+    fileMeta[dst] = { ...getFileMeta(src) };
+    return '';
+}
+
+function handleMv(args) {
+    const realArgs = args.filter(a => !a.startsWith('-'));
+    if (realArgs.length < 2) return 'mv: missing file operand';
+    const src = realArgs[0];
+    const dst = realArgs[1];
+    if (!files[src]) return `mv: cannot stat '${src}': No such file or directory`;
+    files[dst] = files[src];
+    fileMeta[dst] = fileMeta[src] || getFileMeta(src);
+    delete files[src];
+    delete fileMeta[src];
+    return '';
+}
+
+function handleRm(args) {
+    const realArgs = args.filter(a => !a.startsWith('-'));
+    if (realArgs.length === 0) return 'rm: missing operand';
+    realArgs.forEach(f => {
+        if (files[f]) {
+            delete files[f];
+            delete fileMeta[f];
+        }
+    });
+    return '';
+}
+
+function handleStat(args) {
+    // Handle both Linux (-c) and macOS (-f) style flags
+    const filename = args.find(a => !a.startsWith('-'));
+    if (!filename) return 'stat: missing operand';
+    if (!files.hasOwnProperty(filename)) return `stat: cannot statx '${filename}': No such file or directory`;
+
+    const meta = getFileMeta(filename);
+
+    // -c%s or -f%z: just return size
+    if (args.some(a => a === '-c%s' || a === '-f%z')) {
+        return String(meta.size);
+    }
+
+    return `  File: ${filename}\n  Size: ${meta.size}\tBlocks: ${Math.ceil(meta.size / 512) * 8}\tIO Block: 4096   regular file\nAccess: (0${meta.octal}/${meta.perms})  Uid: ( 1000/   ${meta.owner})   Gid: ( 1000/   ${meta.group})\nAccess: 2026-08-18 10:00:00.000000000 -0500\nModify: 2026-08-18 10:00:00.000000000 -0500\nChange: 2026-08-18 10:00:00.000000000 -0500`;
+}
+
+function handleFind(args) {
+    // Basic find simulation
+    const dir = args[0] || '.';
+    const nameIdx = args.indexOf('-name');
+    const mtimeIdx = args.indexOf('-mtime');
+    const hasDelete = args.includes('-delete');
+
+    let results = Object.keys(files);
+
+    if (nameIdx >= 0 && args[nameIdx + 1]) {
+        const pattern = args[nameIdx + 1].replace(/\*/g, '.*').replace(/\?/g, '.');
+        const regex = new RegExp(pattern);
+        results = results.filter(f => regex.test(f));
+    }
+
+    if (hasDelete) {
+        results.forEach(f => {
+            delete files[f];
+            delete fileMeta[f];
+        });
+        return ''; // -delete produces no output
+    }
+
+    return results.map(f => `./${f}`).join('\n') || '';
+}
+
+function handleGrep(args) {
+    const realArgs = args.filter(a => !a.startsWith('-'));
+    if (realArgs.length < 1) return 'Usage: grep [OPTIONS] PATTERN [FILE]';
+
+    const pattern = realArgs[0];
+    const targetFiles = realArgs.slice(1);
+    const searchFiles = targetFiles.length > 0 ? targetFiles : Object.keys(files);
+    const results = [];
+
+    searchFiles.forEach(f => {
+        if (!files[f]) return;
+        files[f].split('\n').forEach((line, i) => {
+            if (line.includes(pattern)) {
+                const prefix = searchFiles.length > 1 ? `${f}:` : '';
+                results.push(`${prefix}${line}`);
+            }
+        });
+    });
+
+    return results.length > 0 ? results.join('\n') : '';
+}
+
+function handleHead(args) {
+    let n = 10;
+    const nIdx = args.indexOf('-n');
+    if (nIdx >= 0) n = parseInt(args[nIdx + 1]) || 10;
+    const filename = args.find(a => !a.startsWith('-') && isNaN(a));
+    if (!filename) return 'head: missing file operand';
+    if (!files[filename]) return `head: cannot open '${filename}' for reading: No such file or directory`;
+    return files[filename].split('\n').slice(0, n).join('\n');
+}
+
+function handleTail(args) {
+    let n = 10;
+    const nIdx = args.indexOf('-n');
+    if (nIdx >= 0) n = parseInt(args[nIdx + 1]) || 10;
+    const filename = args.find(a => !a.startsWith('-') && isNaN(a));
+    if (!filename) return 'tail: missing file operand';
+    if (!files[filename]) return `tail: cannot open '${filename}' for reading: No such file or directory`;
+    const lines = files[filename].split('\n');
+    return lines.slice(-n).join('\n');
+}
+
+function handleWc(args) {
+    const filename = args.find(a => !a.startsWith('-'));
+    if (!filename) return 'wc: missing file operand';
+    if (!files[filename]) return `wc: ${filename}: No such file or directory`;
+    const content = files[filename];
+    const lines = content.split('\n').length;
+    const words = content.split(/\s+/).filter(w => w).length;
+    const chars = content.length;
+    if (args.includes('-l')) return `${lines} ${filename}`;
+    if (args.includes('-w')) return `${words} ${filename}`;
+    if (args.includes('-c')) return `${chars} ${filename}`;
+    return `  ${lines}  ${words} ${chars} ${filename}`;
+}
+
+function handleGzip(args) {
+    const filename = args.find(a => !a.startsWith('-'));
+    if (!filename) return 'gzip: missing file operand';
+    if (!files[filename]) return `gzip: ${filename}: No such file or directory`;
+
+    if (args.includes('-d') || args.includes('--decompress')) {
+        // Decompress
+        const newName = filename.replace(/\.gz$/, '');
+        files[newName] = files[filename];
+        delete files[filename];
+        return '';
+    }
+
+    // Compress: "remove" original, create .gz
+    files[filename + '.gz'] = `(compressed: ${files[filename].length} bytes)`;
+    delete files[filename];
+    return '';
+}
+
+function handleSystemctl(args) {
+    if (args.length === 0) return 'Usage: systemctl [COMMAND] [UNIT]';
+    const action = args[0];
+    const unit = args[1] || '';
+
+    switch (action) {
+        case 'daemon-reload':
+            return 'Reloaded daemon configuration.';
+        case 'start':
+            if (!unit) return 'systemctl: missing unit name';
+            return '';
+        case 'stop':
+            if (!unit) return 'systemctl: missing unit name';
+            return '';
+        case 'restart':
+            if (!unit) return 'systemctl: missing unit name';
+            return '';
+        case 'enable':
+            if (!unit) return 'systemctl: missing unit name';
+            return `Created symlink /etc/systemd/system/multi-user.target.wants/${unit} → /etc/systemd/system/${unit}.`;
+        case 'disable':
+            if (!unit) return 'systemctl: missing unit name';
+            return `Removed /etc/systemd/system/multi-user.target.wants/${unit}.`;
+        case 'status':
+            if (!unit) return 'systemctl: missing unit name';
+            // Check if unit file exists in editor
+            const unitFile = files[unit] || files[unit.replace('.service', '') + '.service'];
+            if (unitFile) {
+                // Parse basic fields from unit file
+                const desc = unitFile.match(/Description=(.+)/)?.[1] || unit;
+                const execStart = unitFile.match(/ExecStart=(.+)/)?.[1] || 'unknown';
+                return `● ${unit}\n   Loaded: loaded (/etc/systemd/system/${unit}; enabled)\n   Active: active (running)\n Main PID: 1234 (${execStart.split('/').pop()})\n   Memory: 24.0M\n      CPU: 120ms`;
+            }
+            return `● ${unit}\n   Loaded: loaded\n   Active: active (running)`;
+        case 'is-active':
+            return 'active';
+        case 'is-enabled':
+            return 'enabled';
+        case 'list-units':
+            return 'UNIT                    LOAD   ACTIVE SUB     DESCRIPTION\nnetwork.target          loaded active active  Network\npostgresql.service      loaded active running PostgreSQL\nsshd.service            loaded active running OpenSSH';
+        default:
+            return `Unknown command: ${action}`;
+    }
+}
+
+function handleCrontab(args) {
+    if (args.length === 0) return 'usage: crontab [-l|-e|-r] [file]';
+
+    if (args[0] === '-l') {
+        const cronFile = files['crontab.txt'] || files['crontab'];
+        if (cronFile) {
+            return cronFile.split('\n').filter(l => l.trim() && !l.trim().startsWith('#')).join('\n') || 'no crontab for user';
+        }
+        return 'no crontab for user';
+    }
+
+    if (args[0] === '-e') {
+        return 'crontab: editing not supported in simulator. Edit crontab.txt in the editor.';
+    }
+
+    // Loading a crontab from file
+    const filename = args.find(a => !a.startsWith('-'));
+    if (filename && files[filename]) {
+        return `crontab: installing new crontab from ${filename}`;
+    }
+
+    return 'crontab: invalid option';
 }
 
 // ═══════════════════════════════════════════════════════════════
