@@ -130,21 +130,34 @@ class ProblemSessionManager
      *
      * @return array ['output' => string, 'exit_code' => int]
      */
-    public function executeCommand(LabSession $session, string $command): array
+    public function executeCommand(LabSession $session, string $command, string $category = 'kubernetes'): array
     {
-        // Security: validate and sanitize the command
-        $sanitized = $this->sanitizeCommand($command);
+        // Security: validate and sanitize the command for this category
+        $sanitized = $this->sanitizeCommand($command, $category);
 
         if ($sanitized === null) {
+            $allowed = match ($category) {
+                'docker' => 'docker commands',
+                'terraform' => 'terraform commands',
+                'linux' => 'shell commands',
+                default => 'kubectl commands',
+            };
             return [
-                'output' => "Error: Command not allowed. Only kubectl commands are permitted.",
+                'output' => "Error: Command not allowed. Only {$allowed} are permitted.",
                 'exit_code' => 1,
             ];
         }
 
-        // Intercept: kubectl apply -f <filename> won't work because files are in the browser, not on the pod.
-        // Guide the user to use the Apply button or pipe from stdin.
-        if (preg_match('/^apply\s+-f\s+(?!-\s*$)\S+/i', $sanitized)) {
+        // Determine runner pod and command prefix per category
+        [$runnerPod, $execPrefix] = match ($category) {
+            'docker' => ['docker-runner', ''],
+            'terraform' => ['terraform-runner', ''],
+            'linux' => ['linux-runner', ''],
+            default => ['kubectl-runner', 'kubectl '],
+        };
+
+        // For K8s: intercept kubectl apply -f <filename>
+        if ($category === 'kubernetes' && preg_match('/^apply\s+-f\s+(?!-\s*$)\S+/i', $sanitized)) {
             return [
                 'output' => "⚠️  Files from the editor don't exist on the cluster.\n" .
                             "Use the \$ kubectl apply button above the editor, or run:\n" .
@@ -157,17 +170,16 @@ class ProblemSessionManager
         $kubectlPath = config('govkloud.kubectl.binary_path');
         $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
         $namespace = $session->host_namespace;
-        $runnerPod = 'kubectl-runner';
 
-        // Route command through host cluster → exec into vcluster pod
-        // The vcluster pod has an internal kubeconfig at /data/server/credentials/admin.kubeconfig
+        // Build the exec command: kubectl exec into the runner pod
+        $innerCommand = $execPrefix . $sanitized;
         $fullCommand = sprintf(
-            '%s --kubeconfig %s exec -n %s %s -- kubectl %s 2>&1',
+            '%s --kubeconfig %s exec -n %s %s -- sh -c %s 2>&1',
             escapeshellarg($kubectlPath),
             escapeshellarg($hostKubeconfig),
             escapeshellarg($namespace),
             escapeshellarg($runnerPod),
-            $sanitized
+            escapeshellarg($innerCommand)
         );
 
         $output = [];
@@ -311,7 +323,12 @@ class ProblemSessionManager
         }
 
         $namespace = $session->host_namespace;
-        $runnerPod = 'kubectl-runner';
+        $runnerPod = match ($challenge->category) {
+            'docker' => 'docker-runner',
+            'terraform' => 'terraform-runner',
+            'linux' => 'linux-runner',
+            default => 'kubectl-runner',
+        };
 
         $results = $this->validator->validate($rules, $namespace, $runnerPod);
 
@@ -676,10 +693,23 @@ class ProblemSessionManager
      *
      * @return string|null Sanitized command args (without kubectl prefix), or null if blocked
      */
-    protected function sanitizeCommand(string $command): ?string
+    protected function sanitizeCommand(string $command, string $category = 'kubernetes'): ?string
     {
         $command = trim($command);
 
+        return match ($category) {
+            'docker' => $this->sanitizeDockerCommand($command),
+            'terraform' => $this->sanitizeTerraformCommand($command),
+            'linux' => $this->sanitizeLinuxCommand($command),
+            default => $this->sanitizeKubectlCommand($command),
+        };
+    }
+
+    /**
+     * Sanitize kubectl commands (existing behavior).
+     */
+    protected function sanitizeKubectlCommand(string $command): ?string
+    {
         // Must start with kubectl
         if (!str_starts_with($command, 'kubectl ')) {
             // Allow shorthand without 'kubectl' prefix
@@ -715,5 +745,130 @@ class ProblemSessionManager
         }
 
         return $args;
+    }
+
+    /**
+     * Sanitize Docker commands.
+     */
+    protected function sanitizeDockerCommand(string $command): ?string
+    {
+        // Strip 'docker ' prefix if present
+        if (str_starts_with($command, 'docker ')) {
+            $command = $command;
+        } elseif (str_starts_with($command, 'docker-compose ') || str_starts_with($command, 'docker compose ')) {
+            $command = $command;
+        } else {
+            // Allow shorthand: build, run, ps, images, etc.
+            $dockerSubcommands = ['build', 'run', 'ps', 'images', 'inspect', 'logs', 'exec',
+                'stop', 'start', 'rm', 'rmi', 'pull', 'push', 'tag', 'network', 'volume',
+                'container', 'image', 'system', 'info', 'version'];
+            $first = explode(' ', $command)[0] ?? '';
+            if (in_array($first, $dockerSubcommands)) {
+                $command = 'docker ' . $command;
+            } else {
+                return null;
+            }
+        }
+
+        // Block dangerous Docker commands
+        $blockedPatterns = [
+            '/--privileged/i',
+            '/--pid=host/i',
+            '/--network=host/i',
+            '/-v\s+\/:/i',              // Block mounting host root
+            '/--mount.*source=\//i',     // Block mounting host paths
+            '/docker\s+swarm/i',
+            '/docker\s+node/i',
+            '/docker\s+service/i',
+        ];
+
+        foreach ($blockedPatterns as $pattern) {
+            if (preg_match($pattern, $command)) {
+                return null;
+            }
+        }
+
+        return $command;
+    }
+
+    /**
+     * Sanitize Terraform commands.
+     */
+    protected function sanitizeTerraformCommand(string $command): ?string
+    {
+        // Strip 'terraform ' prefix if present
+        if (str_starts_with($command, 'terraform ')) {
+            $command = $command;
+        } else {
+            $tfSubcommands = ['init', 'plan', 'apply', 'destroy', 'validate', 'fmt',
+                'show', 'state', 'output', 'refresh', 'import', 'taint', 'untaint',
+                'graph', 'providers', 'version', 'force-unlock'];
+            $first = explode(' ', $command)[0] ?? '';
+            if (in_array($first, $tfSubcommands)) {
+                $command = 'terraform ' . $command;
+            } else {
+                return null;
+            }
+        }
+
+        // Auto-approve apply and destroy (no interactive prompts in terminal)
+        if (preg_match('/terraform\s+(apply|destroy)/', $command) && !str_contains($command, '-auto-approve')) {
+            $command .= ' -auto-approve';
+        }
+
+        return $command;
+    }
+
+    /**
+     * Sanitize Linux shell commands.
+     */
+    protected function sanitizeLinuxCommand(string $command): ?string
+    {
+        // Allowed Linux commands
+        $allowedCommands = [
+            'ls', 'cat', 'echo', 'grep', 'find', 'chmod', 'chown', 'mkdir', 'rmdir',
+            'cp', 'mv', 'rm', 'touch', 'head', 'tail', 'wc', 'sort', 'uniq', 'diff',
+            'ps', 'kill', 'top', 'whoami', 'id', 'groups', 'uname',
+            'curl', 'wget', 'ping', 'dig', 'nslookup', 'netstat', 'ss', 'ifconfig', 'ip',
+            'awk', 'sed', 'tr', 'cut', 'paste', 'tee', 'xargs',
+            'tar', 'gzip', 'gunzip', 'zip', 'unzip',
+            'date', 'cal', 'uptime', 'free', 'df', 'du',
+            'bash', 'sh', 'pwd', 'cd', 'env', 'export', 'set', 'unset', 'alias',
+            'history', 'which', 'type', 'file', 'stat', 'realpath', 'dirname', 'basename',
+            'crontab', 'systemctl', 'service', 'journalctl',
+            'useradd', 'usermod', 'groupadd', 'passwd',
+            'ssh-keygen', 'man', 'help', 'clear',
+        ];
+
+        // Get the first word (command name)
+        $parts = preg_split('/\s+/', $command, 2);
+        $firstCmd = $parts[0] ?? '';
+
+        // Allow piped commands: check first command only
+        if (!in_array($firstCmd, $allowedCommands)) {
+            return null;
+        }
+
+        // Block dangerous patterns
+        $blockedPatterns = [
+            '/\brm\s+-rf\s+\/\s*$/i',    // Block rm -rf /
+            '/>\s*\/etc\//i',              // Block writing to /etc
+            '/>\s*\/usr\//i',              // Block writing to /usr
+            '/\bdd\b/i',                   // Block dd
+            '/\bmkfs\b/i',                // Block filesystem creation
+            '/\bmount\b/i',               // Block mount
+            '/\bumount\b/i',              // Block umount
+            '/\bshutdown\b/i',
+            '/\breboot\b/i',
+            '/\binit\b/i',
+        ];
+
+        foreach ($blockedPatterns as $pattern) {
+            if (preg_match($pattern, $command)) {
+                return null;
+            }
+        }
+
+        return $command;
     }
 }

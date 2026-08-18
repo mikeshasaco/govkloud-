@@ -56,6 +56,7 @@ class ChallengeController extends Controller
             'kubernetes' => Challenge::published()->category('kubernetes')->count(),
             'terraform' => Challenge::published()->category('terraform')->count(),
             'docker' => Challenge::published()->category('docker')->count(),
+            'linux' => Challenge::published()->category('linux')->count(),
         ];
 
         return view('problems.index', compact(

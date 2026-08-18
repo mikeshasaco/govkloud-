@@ -68,17 +68,35 @@ class ProvisionProblemSessionJob implements ShouldQueue
             return;
         }
 
-        Log::info("ProvisionProblemSessionJob: Starting lightweight provisioning", [
+        // Determine the challenge category to route provisioning
+        $challenge = $this->challengeSlug
+            ? \App\Models\Challenge::where('slug', $this->challengeSlug)->first()
+            : null;
+        $category = $challenge?->category ?? 'kubernetes';
+
+        Log::info("ProvisionProblemSessionJob: Starting provisioning", [
             'session_id' => $this->sessionId,
             'challenge' => $this->challengeSlug,
+            'category' => $category,
             'attempt' => $this->attempts(),
         ]);
 
-        // Use lightweight provisioner (no workbench/ingress)
-        $provisioner->provisionLightweight($session);
+        // Route to category-specific provisioner (Docker/Terraform/Linux skip vcluster)
+        $success = match ($category) {
+            'docker' => $provisioner->provisionDocker($session),
+            'terraform' => $provisioner->provisionTerraform($session),
+            'linux' => $provisioner->provisionLinux($session),
+            default => $provisioner->provisionLightweight($session),  // kubernetes
+        };
 
-        // Apply scenario manifests so the broken state is ready immediately
-        $this->applyScenarioManifests($session);
+        if (!$success) {
+            return;
+        }
+
+        // Apply scenario manifests (only for kubernetes problems)
+        if ($category === 'kubernetes') {
+            $this->applyScenarioManifests($session);
+        }
     }
 
     /**

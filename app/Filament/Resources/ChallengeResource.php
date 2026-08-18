@@ -44,6 +44,7 @@ class ChallengeResource extends Resource
                                 'kubernetes' => 'Kubernetes',
                                 'terraform' => 'Terraform',
                                 'docker' => 'Docker',
+                                'linux' => 'Linux',
                             ])
                             ->required(),
                         Forms\Components\Select::make('difficulty')
@@ -185,6 +186,7 @@ class ChallengeResource extends Resource
                         'kubernetes' => 'info',
                         'terraform' => 'warning',
                         'docker' => 'primary',
+                        'linux' => 'success',
                         default => 'gray',
                     })
                     ->searchable(),
@@ -233,6 +235,7 @@ class ChallengeResource extends Resource
                         'kubernetes' => 'Kubernetes',
                         'terraform' => 'Terraform',
                         'docker' => 'Docker',
+                        'linux' => 'Linux',
                     ]),
                 Tables\Filters\SelectFilter::make('difficulty')
                     ->options([

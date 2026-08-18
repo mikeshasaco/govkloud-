@@ -311,6 +311,7 @@ class Challenge extends Model
             'kubernetes' => '☸️ Kubernetes',
             'terraform' => '🏗️ Terraform',
             'docker' => '🐳 Docker',
+            'linux' => '🐧 Linux',
             default => ucfirst($this->category),
         };
     }

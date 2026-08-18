@@ -59,6 +59,7 @@ class ClusterValidatorService
 
         try {
             $passed = match ($type) {
+                // Kubernetes validators
                 'pod_status' => $this->checkPodStatus($rule, $hostNamespace, $runnerPod),
                 'resource_exists' => $this->checkResourceExists($rule, $hostNamespace, $runnerPod),
                 'resource_not_exists' => $this->checkResourceNotExists($rule, $hostNamespace, $runnerPod),
@@ -71,6 +72,18 @@ class ClusterValidatorService
                 'config_data' => $this->checkConfigData($rule, $hostNamespace, $runnerPod),
                 'resource_count' => $this->checkResourceCount($rule, $hostNamespace, $runnerPod),
                 'pod_log_contains' => $this->checkPodLogContains($rule, $hostNamespace, $runnerPod),
+                // Docker validators
+                'docker_image_exists' => $this->checkDockerImageExists($rule, $hostNamespace, $runnerPod),
+                'docker_container_running' => $this->checkDockerContainerRunning($rule, $hostNamespace, $runnerPod),
+                'dockerfile_contains' => $this->checkDockerfileContains($rule, $hostNamespace, $runnerPod),
+                // Linux validators
+                'file_exists' => $this->checkFileExists($rule, $hostNamespace, $runnerPod),
+                'file_contains' => $this->checkFileContains($rule, $hostNamespace, $runnerPod),
+                'file_permissions' => $this->checkFilePermissions($rule, $hostNamespace, $runnerPod),
+                'command_output' => $this->checkCommandOutput($rule, $hostNamespace, $runnerPod),
+                // Terraform validators
+                'terraform_output' => $this->checkTerraformOutput($rule, $hostNamespace, $runnerPod),
+                'terraform_resource' => $this->checkTerraformResource($rule, $hostNamespace, $runnerPod),
                 default => throw new \InvalidArgumentException("Unknown validation type: {$type}"),
             };
 
@@ -413,5 +426,214 @@ class ClusterValidatorService
             'output' => implode("\n", $output),
             'returnCode' => $returnCode,
         ];
+    }
+
+    /**
+     * Execute an arbitrary command inside a runner pod.
+     * Used for Docker, Terraform, and Linux validators.
+     */
+    protected function execInPod(string $command, string $hostNamespace, string $runnerPod): array
+    {
+        $kubectlPath = config('govkloud.kubectl.binary_path');
+        $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
+
+        $fullCommand = sprintf(
+            '%s --kubeconfig %s exec -n %s %s -- sh -c %s 2>&1',
+            escapeshellarg($kubectlPath),
+            escapeshellarg($hostKubeconfig),
+            escapeshellarg($hostNamespace),
+            escapeshellarg($runnerPod),
+            escapeshellarg($command)
+        );
+
+        $output = [];
+        $returnCode = 0;
+        exec($fullCommand, $output, $returnCode);
+
+        return [
+            'success' => $returnCode === 0,
+            'output' => implode("\n", $output),
+            'returnCode' => $returnCode,
+        ];
+    }
+
+    // ================================================================
+    // Docker Validators
+    // ================================================================
+
+    /**
+     * Check if a Docker image exists locally.
+     */
+    protected function checkDockerImageExists(array $rule, string $hostNamespace, string $runnerPod): bool
+    {
+        $image = $rule['image'] ?? $rule['expected_image'] ?? '';
+
+        $result = $this->execInPod(
+            "docker images --format '{{.Repository}}:{{.Tag}}' | grep -q " . escapeshellarg($image),
+            $hostNamespace, $runnerPod
+        );
+
+        return $result['success'];
+    }
+
+    /**
+     * Check if a Docker container is running.
+     */
+    protected function checkDockerContainerRunning(array $rule, string $hostNamespace, string $runnerPod): bool
+    {
+        $name = $rule['container_name'] ?? $rule['name'] ?? '';
+
+        $result = $this->execInPod(
+            "docker ps --format '{{.Names}}' | grep -q " . escapeshellarg($name),
+            $hostNamespace, $runnerPod
+        );
+
+        return $result['success'];
+    }
+
+    /**
+     * Check if a Dockerfile contains expected content.
+     */
+    protected function checkDockerfileContains(array $rule, string $hostNamespace, string $runnerPod): bool
+    {
+        $file = $rule['file'] ?? 'Dockerfile';
+        $contains = $rule['contains'] ?? '';
+
+        $result = $this->execInPod(
+            "grep -q " . escapeshellarg($contains) . " /workspace/" . escapeshellarg($file),
+            $hostNamespace, $runnerPod
+        );
+
+        return $result['success'];
+    }
+
+    // ================================================================
+    // Linux Validators
+    // ================================================================
+
+    /**
+     * Check if a file exists.
+     */
+    protected function checkFileExists(array $rule, string $hostNamespace, string $runnerPod): bool
+    {
+        $path = $rule['path'] ?? '';
+
+        $result = $this->execInPod(
+            "test -f " . escapeshellarg($path),
+            $hostNamespace, $runnerPod
+        );
+
+        return $result['success'];
+    }
+
+    /**
+     * Check if a file contains expected content.
+     */
+    protected function checkFileContains(array $rule, string $hostNamespace, string $runnerPod): bool
+    {
+        $path = $rule['path'] ?? '';
+        $contains = $rule['contains'] ?? '';
+
+        $result = $this->execInPod(
+            "grep -q " . escapeshellarg($contains) . " " . escapeshellarg($path),
+            $hostNamespace, $runnerPod
+        );
+
+        return $result['success'];
+    }
+
+    /**
+     * Check file permissions (e.g., 755, 644).
+     */
+    protected function checkFilePermissions(array $rule, string $hostNamespace, string $runnerPod): bool
+    {
+        $path = $rule['path'] ?? '';
+        $expected = $rule['expected'] ?? $rule['expected_permissions'] ?? '';
+
+        $result = $this->execInPod(
+            "stat -c %a " . escapeshellarg($path),
+            $hostNamespace, $runnerPod
+        );
+
+        return $result['success'] && trim($result['output']) === $expected;
+    }
+
+    /**
+     * Run a command and check its output.
+     */
+    protected function checkCommandOutput(array $rule, string $hostNamespace, string $runnerPod): bool
+    {
+        $command = $rule['command'] ?? '';
+        $contains = $rule['contains'] ?? null;
+        $expected = $rule['expected'] ?? null;
+
+        $result = $this->execInPod($command, $hostNamespace, $runnerPod);
+
+        if (!$result['success']) {
+            return false;
+        }
+
+        $output = trim($result['output']);
+
+        if ($expected !== null) {
+            return $output === $expected;
+        }
+
+        if ($contains !== null) {
+            return str_contains($output, $contains);
+        }
+
+        // If no expected/contains, just check command succeeded
+        return true;
+    }
+
+    // ================================================================
+    // Terraform Validators
+    // ================================================================
+
+    /**
+     * Check a Terraform output value.
+     */
+    protected function checkTerraformOutput(array $rule, string $hostNamespace, string $runnerPod): bool
+    {
+        $name = $rule['name'] ?? '';
+        $expected = $rule['expected'] ?? null;
+        $contains = $rule['contains'] ?? null;
+
+        $result = $this->execInPod(
+            "cd /workspace && terraform output -raw " . escapeshellarg($name),
+            $hostNamespace, $runnerPod
+        );
+
+        if (!$result['success']) {
+            return false;
+        }
+
+        $output = trim($result['output']);
+
+        if ($expected !== null) {
+            return $output === $expected;
+        }
+
+        if ($contains !== null) {
+            return str_contains($output, $contains);
+        }
+
+        return !empty($output);
+    }
+
+    /**
+     * Check if a Terraform resource exists in state.
+     */
+    protected function checkTerraformResource(array $rule, string $hostNamespace, string $runnerPod): bool
+    {
+        $resource = $rule['resource'] ?? '';
+
+        $result = $this->execInPod(
+            "cd /workspace && terraform state list | grep -q " . escapeshellarg($resource),
+            $hostNamespace, $runnerPod
+        );
+
+        return $result['success'];
     }
 }

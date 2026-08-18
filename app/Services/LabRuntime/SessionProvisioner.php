@@ -286,6 +286,322 @@ YAML;
   }
 
   /**
+   * Provision a Docker problem environment (no vcluster needed).
+   * Deploys a runner pod with a Docker-in-Docker sidecar.
+   */
+  public function provisionDocker(LabSession $session): bool
+  {
+    $namespace = $session->host_namespace;
+
+    try {
+      // Step 1: Create namespace
+      if (!$this->k8sClient->namespaceExists($namespace)) {
+        Log::info("[Docker] Creating namespace: {$namespace}");
+        if (!$this->k8sClient->createNamespace($namespace)) {
+          throw new Exception("Failed to create namespace: {$namespace}");
+        }
+        $this->applyResourceGuardrails($session);
+      }
+
+      // Step 2: Deploy runner pod with DinD sidecar
+      Log::info("[Docker] Deploying docker-runner pod");
+      $this->deployDockerRunner($session);
+
+      // Mark as running
+      $session->update([
+        'status' => LabSession::STATUS_RUNNING,
+        'last_activity_at' => now(),
+      ]);
+
+      Log::info("[Docker] Session ready", ['session_id' => $session->id]);
+      return true;
+
+    } catch (Exception $e) {
+      Log::error("[Docker] Provisioning failed", [
+        'session_id' => $session->id,
+        'error' => $e->getMessage(),
+      ]);
+      $session->markError($e->getMessage());
+      $this->cleanupOnError($session);
+      return false;
+    }
+  }
+
+  /**
+   * Provision a Terraform problem environment (no vcluster needed).
+   * Deploys a runner pod with Terraform CLI installed.
+   */
+  public function provisionTerraform(LabSession $session): bool
+  {
+    $namespace = $session->host_namespace;
+
+    try {
+      if (!$this->k8sClient->namespaceExists($namespace)) {
+        Log::info("[Terraform] Creating namespace: {$namespace}");
+        if (!$this->k8sClient->createNamespace($namespace)) {
+          throw new Exception("Failed to create namespace: {$namespace}");
+        }
+        $this->applyResourceGuardrails($session);
+      }
+
+      Log::info("[Terraform] Deploying terraform-runner pod");
+      $this->deployTerraformRunner($session);
+
+      $session->update([
+        'status' => LabSession::STATUS_RUNNING,
+        'last_activity_at' => now(),
+      ]);
+
+      Log::info("[Terraform] Session ready", ['session_id' => $session->id]);
+      return true;
+
+    } catch (Exception $e) {
+      Log::error("[Terraform] Provisioning failed", [
+        'session_id' => $session->id,
+        'error' => $e->getMessage(),
+      ]);
+      $session->markError($e->getMessage());
+      $this->cleanupOnError($session);
+      return false;
+    }
+  }
+
+  /**
+   * Provision a Linux problem environment (no vcluster needed).
+   * Deploys a runner pod with common Linux tools.
+   */
+  public function provisionLinux(LabSession $session): bool
+  {
+    $namespace = $session->host_namespace;
+
+    try {
+      if (!$this->k8sClient->namespaceExists($namespace)) {
+        Log::info("[Linux] Creating namespace: {$namespace}");
+        if (!$this->k8sClient->createNamespace($namespace)) {
+          throw new Exception("Failed to create namespace: {$namespace}");
+        }
+        $this->applyResourceGuardrails($session);
+      }
+
+      Log::info("[Linux] Deploying linux-runner pod");
+      $this->deployLinuxRunner($session);
+
+      $session->update([
+        'status' => LabSession::STATUS_RUNNING,
+        'last_activity_at' => now(),
+      ]);
+
+      Log::info("[Linux] Session ready", ['session_id' => $session->id]);
+      return true;
+
+    } catch (Exception $e) {
+      Log::error("[Linux] Provisioning failed", [
+        'session_id' => $session->id,
+        'error' => $e->getMessage(),
+      ]);
+      $session->markError($e->getMessage());
+      $this->cleanupOnError($session);
+      return false;
+    }
+  }
+
+  /**
+   * Deploy a Docker runner pod with DinD sidecar.
+   */
+  protected function deployDockerRunner(LabSession $session): void
+  {
+    $namespace = $session->host_namespace;
+    $podName = 'docker-runner';
+
+    $yaml = <<<YAML
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {$podName}
+  namespace: {$namespace}
+  labels:
+    app: docker-runner
+    session: "{$session->id}"
+spec:
+  containers:
+  - name: runner
+    image: docker:27-cli
+    command: ["sh", "-c", "sleep infinity"]
+    env:
+    - name: DOCKER_HOST
+      value: unix:///var/run/docker.sock
+    volumeMounts:
+    - name: docker-socket
+      mountPath: /var/run
+    - name: workspace
+      mountPath: /workspace
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "128Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+  - name: dind
+    image: docker:27-dind
+    command: ["sh", "-c"]
+    args: ["dockerd-entrypoint.sh dockerd --host=unix:///var/run/docker.sock & while [ ! -S /var/run/docker.sock ]; do sleep 1; done; chmod 666 /var/run/docker.sock; wait"]
+    securityContext:
+      privileged: true
+    env:
+    - name: DOCKER_TLS_CERTDIR
+      value: ""
+    volumeMounts:
+    - name: docker-socket
+      mountPath: /var/run
+    - name: docker-storage
+      mountPath: /var/lib/docker
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+  volumes:
+  - name: docker-socket
+    emptyDir: {}
+  - name: docker-storage
+    emptyDir:
+      sizeLimit: "5Gi"
+  - name: workspace
+    emptyDir: {}
+  restartPolicy: Always
+YAML;
+
+    $this->k8sClient->applyYaml($namespace, $yaml);
+    $this->waitForRunnerPod($namespace, $podName);
+  }
+
+  /**
+   * Deploy a Terraform runner pod.
+   */
+  protected function deployTerraformRunner(LabSession $session): void
+  {
+    $namespace = $session->host_namespace;
+    $podName = 'terraform-runner';
+
+    $yaml = <<<YAML
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {$podName}
+  namespace: {$namespace}
+  labels:
+    app: terraform-runner
+    session: "{$session->id}"
+spec:
+  containers:
+  - name: runner
+    image: hashicorp/terraform:1.9
+    command: ["sh", "-c", "sleep infinity"]
+    workingDir: /workspace
+    volumeMounts:
+    - name: workspace
+      mountPath: /workspace
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+  volumes:
+  - name: workspace
+    emptyDir: {}
+  restartPolicy: Always
+YAML;
+
+    $this->k8sClient->applyYaml($namespace, $yaml);
+    $this->waitForRunnerPod($namespace, $podName);
+  }
+
+  /**
+   * Deploy a Linux runner pod with common tools.
+   */
+  protected function deployLinuxRunner(LabSession $session): void
+  {
+    $namespace = $session->host_namespace;
+    $podName = 'linux-runner';
+
+    $yaml = <<<YAML
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {$podName}
+  namespace: {$namespace}
+  labels:
+    app: linux-runner
+    session: "{$session->id}"
+spec:
+  containers:
+  - name: runner
+    image: alpine:3.19
+    command: ["sh", "-c"]
+    args:
+    - |
+      apk add --no-cache bash coreutils procps curl net-tools bind-tools grep sed gawk findutils tar gzip sudo shadow openssh-client &&
+      adduser -D -u 1000 student &&
+      mkdir -p /home/student/workspace &&
+      chown -R student:student /home/student &&
+      sleep infinity
+    workingDir: /home/student/workspace
+    volumeMounts:
+    - name: workspace
+      mountPath: /home/student/workspace
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+  volumes:
+  - name: workspace
+    emptyDir: {}
+  restartPolicy: Always
+YAML;
+
+    $this->k8sClient->applyYaml($namespace, $yaml);
+    $this->waitForRunnerPod($namespace, $podName);
+  }
+
+  /**
+   * Wait for a runner pod to be ready.
+   */
+  protected function waitForRunnerPod(string $namespace, string $podName): void
+  {
+    $kubectlPath = config('govkloud.kubectl.binary_path');
+    $hostKubeconfig = config('govkloud.host_k8s.kubeconfig_path');
+
+    $maxAttempts = 30;
+    for ($i = 0; $i < $maxAttempts; $i++) {
+      sleep(2);
+      $output = [];
+      $returnCode = 0;
+      exec(sprintf(
+        '%s --kubeconfig %s get pod %s -n %s -o jsonpath={.status.phase} 2>&1',
+        escapeshellarg($kubectlPath),
+        escapeshellarg($hostKubeconfig),
+        escapeshellarg($podName),
+        escapeshellarg($namespace)
+      ), $output, $returnCode);
+
+      if ($returnCode === 0 && trim(implode('', $output)) === 'Running') {
+        Log::info("[Problem] {$podName} pod is ready in {$namespace}");
+        return;
+      }
+    }
+
+    Log::warning("[Problem] {$podName} pod not ready after {$maxAttempts} attempts, proceeding anyway");
+  }
+
+  /**
    * Wait until the ingress route is actually serving traffic.
    * There's a delay between creating the K8s Ingress resource and
    * the nginx-ingress controller configuring the route.

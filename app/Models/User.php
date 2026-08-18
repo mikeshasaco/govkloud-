@@ -295,6 +295,7 @@ class User extends Authenticatable implements FilamentUser
                 'kubernetes' => $completed->filter(fn($a) => $a->challenge->category === 'kubernetes')->count(),
                 'terraform' => $completed->filter(fn($a) => $a->challenge->category === 'terraform')->count(),
                 'docker' => $completed->filter(fn($a) => $a->challenge->category === 'docker')->count(),
+                'linux' => $completed->filter(fn($a) => $a->challenge->category === 'linux')->count(),
             ],
         ];
     }
