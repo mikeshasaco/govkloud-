@@ -7,6 +7,7 @@
         "estimated_minutes": 10,
         "order_index": 1,
         "is_published": true,
+        "requires_cluster": false,
         "description": "A deployment script exists but cannot be executed because it lacks the right permissions.\n\nYour task:\n1. View the current permissions of `deploy.sh` using `ls -l`\n2. Make the script executable by the owner\n3. Verify the script can now run with `./deploy.sh`\n\nYou'll also create a file called `config.txt` that should be readable by everyone but only writable by the owner.",
         "initial_files_json": {
             "deploy.sh": "#!/bin/bash\n# This deployment script needs execute permissions\necho \"Deploying application...\"\necho \"Pulling latest code...\"\necho \"Restarting services...\"\necho \"Deploy complete!\"\n",
@@ -45,6 +46,7 @@
         "estimated_minutes": 20,
         "order_index": 2,
         "is_published": true,
+        "requires_cluster": false,
         "description": "Write a Bash script that rotates application logs and set up a cron job to run it daily.\n\nYour script (`rotate.sh`) should:\n1. Check if `/var/log/app/app.log` exceeds 10MB\n2. If so, compress it with gzip to `/var/log/app/app.log.{date}.gz`\n3. Create a fresh empty `app.log`\n4. Delete compressed logs older than 30 days\n5. Log the rotation action to `/var/log/app/rotation.log`\n\nThen write a crontab entry in `crontab.txt` to run this script every day at 2:00 AM.",
         "initial_files_json": {
             "rotate.sh": "#!/bin/bash\n# Log Rotation Script\n# Rotates /var/log/app/app.log when it exceeds 10MB\n\nLOG_DIR=\"/var/log/app\"\nLOG_FILE=\"${LOG_DIR}/app.log\"\nROTATION_LOG=\"${LOG_DIR}/rotation.log\"\nMAX_SIZE=10485760  # 10MB in bytes\nRETENTION_DAYS=30\n\n# Check if log file exists\n\n# Get file size\n\n# If size exceeds MAX_SIZE, rotate\n\n# Delete old compressed logs\n\n",
@@ -80,6 +82,7 @@
         "estimated_minutes": 25,
         "order_index": 3,
         "is_published": true,
+        "requires_cluster": false,
         "description": "A Node.js API service refuses to start. The systemd unit file has multiple configuration errors.\n\nYour task:\n1. Read the provided `api.service` unit file and identify all errors\n2. Fix the unit file so the service would start correctly\n3. Write the correct `systemctl` commands in `commands.sh`\n\nThe application:\n- Binary is at `/opt/api/server` (not `/opt/api/app.js`)\n- Should run as the `api` user (not root)\n- Needs the `NODE_ENV=production` environment variable\n- Depends on the network being up AND PostgreSQL (`postgresql.service`)\n- Should restart on failure with a 5-second delay\n- Should start on boot (multi-user target)",
         "initial_files_json": {
             "api.service": "[Unit]\nDescription=API Server\nAfter=network.target\n\n[Service]\nType=simple\nUser=root\nExecStart=/opt/api/app.js\nRestart=no\nEnvironment=NODE_ENV=development\n\n[Install]\nWantedBy=multi-user.target\n",

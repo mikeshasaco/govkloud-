@@ -7,6 +7,7 @@
         "estimated_minutes": 10,
         "order_index": 1,
         "is_published": true,
+        "requires_cluster": false,
         "description": "Create a Terraform configuration that uses the local provider to create a file.\n\nYour configuration should:\n- Define a resource of type \"local_file\" named \"hello\"\n- Set the filename to \"hello.txt\"\n- Set the content to \"Hello, Terraform!\"\n\nRun terraform init, then terraform plan to see what will be created.",
         "initial_files_json": {
             "main.tf": "# Define a local_file resource\nresource \"local_file\" \"hello\" {\n  # Add filename and content here\n}\n"
@@ -37,6 +38,7 @@
         "estimated_minutes": 15,
         "order_index": 2,
         "is_published": true,
+        "requires_cluster": false,
         "description": "Refactor a Terraform configuration to use variables and outputs.\n\nCreate three files:\n1. **variables.tf** - Define a variable \"environment\" (string, default \"dev\") and \"app_name\" (string, no default)\n2. **main.tf** - Use the variables in a local_file resource to create a config file\n3. **outputs.tf** - Output the filename and a computed \"full_name\" combining app_name and environment",
         "initial_files_json": {
             "variables.tf": "# Define your variables here\nvariable \"environment\" {\n  # Add type, description, and default\n}\n\nvariable \"app_name\" {\n  # Add type and description (no default)\n}\n",
@@ -76,6 +78,7 @@
         "estimated_minutes": 30,
         "order_index": 3,
         "is_published": true,
+        "requires_cluster": false,
         "description": "Create a reusable Terraform module structure.\n\nBuild a module that creates a \"server config\" with the following structure:\n\n1. **main.tf** (root) - Calls the module twice: once for \"web\" and once for \"api\"\n2. **modules/server-config/main.tf** - The module that creates a local_file with server info\n3. **modules/server-config/variables.tf** - Module input variables (server_name, port, environment)\n4. **modules/server-config/outputs.tf** - Module outputs (config_path)\n\nThe module should create a file named \"{server_name}-{environment}.conf\" with the server configuration.",
         "initial_files_json": {
             "main.tf": "# Root module - call the server-config module\nmodule \"web_server\" {\n  source = \"./modules/server-config\"\n  # Pass variables\n}\n\nmodule \"api_server\" {\n  source = \"./modules/server-config\"\n  # Pass variables\n}\n",

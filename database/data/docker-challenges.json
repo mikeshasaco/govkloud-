@@ -7,6 +7,7 @@
         "estimated_minutes": 10,
         "order_index": 1,
         "is_published": true,
+        "requires_cluster": false,
         "description": "Write a Dockerfile for a simple Python Flask application.\n\nYour Dockerfile should:\n- Use python:3.11-slim as the base image\n- Set the working directory to /app\n- Copy requirements.txt and install dependencies\n- Copy the application code\n- Expose port 5000\n- Set the CMD to run \"python app.py\"",
         "initial_files_json": {
             "Dockerfile": "# Write your Dockerfile here\nFROM \n\n",
@@ -42,6 +43,7 @@
         "estimated_minutes": 20,
         "order_index": 2,
         "is_published": true,
+        "requires_cluster": false,
         "description": "Optimize a Dockerfile using multi-stage builds to reduce the final image size.\n\nCreate a multi-stage Dockerfile for a Go application:\n- Stage 1 (builder): Use golang:1.21 to build the binary\n- Stage 2 (production): Use alpine:3.18 as the minimal runtime\n- Copy only the compiled binary from the builder stage\n- The final image should NOT contain the Go toolchain",
         "initial_files_json": {
             "Dockerfile": "# Stage 1: Build\nFROM golang:1.21 AS builder\n\n# Stage 2: Production\n# Use a minimal base image\n",
@@ -72,6 +74,7 @@
         "estimated_minutes": 30,
         "order_index": 3,
         "is_published": true,
+        "requires_cluster": false,
         "description": "Create a docker-compose.yml that defines a three-service stack:\n\n1. **web** - Nginx reverse proxy on port 80\n2. **app** - Python Flask app on port 5000 (internal only)\n3. **db** - PostgreSQL 15 with a persistent volume\n\nRequirements:\n- All services should be on a custom network called \"app-network\"\n- The db service should have a named volume \"pgdata\"\n- The app service should depend on the db service\n- Use environment variables for database credentials",
         "initial_files_json": {
             "docker-compose.yml": "version: '3.8'\n\nservices:\n  # Define your services here\n\nvolumes:\n  # Define named volumes\n\nnetworks:\n  # Define custom network\n"

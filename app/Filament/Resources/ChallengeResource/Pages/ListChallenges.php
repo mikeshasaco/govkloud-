@@ -28,8 +28,9 @@ class ListChallenges extends ListRecords
                         ->required()
                         ->helperText('Upload a .json file containing an array of problem definitions.'),
                     Forms\Components\Toggle::make('skip_existing')
-                        ->label('Skip duplicates (by slug)')
-                        ->default(true),
+                        ->label('Skip existing (by slug)')
+                        ->helperText('ON = skip duplicates. OFF = update existing problems with new data.')
+                        ->default(false),
                 ])
                 ->action(function (array $data): void {
                     $filePath = storage_path('app/public/' . $data['json_file']);
@@ -68,8 +69,9 @@ class ListChallenges extends ListRecords
                             $problem['slug'] = Str::slug($problem['title'] ?? 'problem-' . ($index + 1));
                         }
 
-                        // Skip duplicates
-                        if ($data['skip_existing'] && Challenge::where('slug', $problem['slug'])->exists()) {
+                        // Skip duplicates if toggle is on
+                        $exists = Challenge::where('slug', $problem['slug'])->exists();
+                        if ($data['skip_existing'] && $exists) {
                             $skipped++;
                             continue;
                         }
@@ -85,8 +87,11 @@ class ListChallenges extends ListRecords
                         // Note: JSON fields (hints_json, etc.) are passed as arrays
                         // and the Challenge model's $casts will handle JSON encoding automatically.
 
-                        Challenge::create($problem);
-                        $imported++;
+                        Challenge::updateOrCreate(
+                            ['slug' => $problem['slug']],
+                            $problem
+                        );
+                        if ($exists) { $updated = ($updated ?? 0) + 1; } else { $imported++; }
                     }
 
                     // Clean up the uploaded file
@@ -94,7 +99,7 @@ class ListChallenges extends ListRecords
 
                     Notification::make()
                         ->title("Import Complete")
-                        ->body("Imported {$imported} problems" . ($skipped > 0 ? ", skipped {$skipped} duplicates" : ""))
+                        ->body("Created: {$imported}, Updated: " . ($updated ?? 0) . ($skipped > 0 ? ", Skipped: {$skipped}" : ""))
                         ->success()
                         ->send();
                 }),
