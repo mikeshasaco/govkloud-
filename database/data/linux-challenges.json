@@ -1,0 +1,110 @@
+[
+    {
+        "title": "Fix File Permissions",
+        "slug": "fix-file-permissions",
+        "category": "linux",
+        "difficulty": "beginner",
+        "estimated_minutes": 10,
+        "order_index": 1,
+        "is_published": true,
+        "description": "A deployment script exists but cannot be executed because it lacks the right permissions.\n\nYour task:\n1. View the current permissions of `deploy.sh` using `ls -l`\n2. Make the script executable by the owner\n3. Verify the script can now run with `./deploy.sh`\n\nYou'll also create a file called `config.txt` that should be readable by everyone but only writable by the owner.",
+        "initial_files_json": {
+            "deploy.sh": "#!/bin/bash\n# This deployment script needs execute permissions\necho \"Deploying application...\"\necho \"Pulling latest code...\"\necho \"Restarting services...\"\necho \"Deploy complete!\"\n",
+            "config.txt": "# Application Config\nDATABASE_HOST=localhost\nDATABASE_PORT=5432\nAPP_ENV=production\n",
+            "solution.sh": "# Write the commands to fix the permissions below\n# One command per line\n\n# 1. Make deploy.sh executable by the owner\n\n# 2. Set config.txt to rw-r--r-- (644)\n\n"
+        },
+        "file_language_map": {
+            "deploy.sh": "bash",
+            "config.txt": "text",
+            "solution.sh": "bash"
+        },
+        "command_flows_json": {
+            "required_commands": [
+                { "command": "ls -l deploy.sh", "label": "View current permissions" },
+                { "command": "chmod u+x deploy.sh", "label": "Make script executable" },
+                { "command": "chmod 644 config.txt", "label": "Set config permissions" },
+                { "command": "ls -l", "label": "Verify permissions" }
+            ]
+        },
+        "solution_files_json": {
+            "solution.sh": "# 1. Make deploy.sh executable by the owner\nchmod u+x deploy.sh\n\n# 2. Set config.txt to rw-r--r-- (644)\nchmod 644 config.txt\n"
+        },
+        "solution_explanation": "Linux file permissions control who can read, write, and execute files. `chmod u+x` adds execute permission for the user (owner). `chmod 644` sets owner=rw, group=r, others=r using octal notation. The three digits represent owner, group, and others: 4=read, 2=write, 1=execute (add them together).",
+        "hints_json": [
+            "Use `ls -l` to see current permissions — the first column shows -rwxrwxrwx format",
+            "chmod u+x adds execute permission for the user/owner. u=user, g=group, o=others",
+            "Octal 644 means: owner=read+write (6), group=read (4), others=read (4)"
+        ],
+        "tags": ["permissions", "chmod", "files", "basics"]
+    },
+    {
+        "title": "Write a Log Rotation Script",
+        "slug": "write-log-rotation-script",
+        "category": "linux",
+        "difficulty": "medium",
+        "estimated_minutes": 20,
+        "order_index": 2,
+        "is_published": true,
+        "description": "Write a Bash script that rotates application logs and set up a cron job to run it daily.\n\nYour script (`rotate.sh`) should:\n1. Check if `/var/log/app/app.log` exceeds 10MB\n2. If so, compress it with gzip to `/var/log/app/app.log.{date}.gz`\n3. Create a fresh empty `app.log`\n4. Delete compressed logs older than 30 days\n5. Log the rotation action to `/var/log/app/rotation.log`\n\nThen write a crontab entry in `crontab.txt` to run this script every day at 2:00 AM.",
+        "initial_files_json": {
+            "rotate.sh": "#!/bin/bash\n# Log Rotation Script\n# Rotates /var/log/app/app.log when it exceeds 10MB\n\nLOG_DIR=\"/var/log/app\"\nLOG_FILE=\"${LOG_DIR}/app.log\"\nROTATION_LOG=\"${LOG_DIR}/rotation.log\"\nMAX_SIZE=10485760  # 10MB in bytes\nRETENTION_DAYS=30\n\n# Check if log file exists\n\n# Get file size\n\n# If size exceeds MAX_SIZE, rotate\n\n# Delete old compressed logs\n\n",
+            "crontab.txt": "# Write the crontab entry to run rotate.sh daily at 2:00 AM\n# Format: minute hour day-of-month month day-of-week command\n\n"
+        },
+        "file_language_map": {
+            "rotate.sh": "bash",
+            "crontab.txt": "text"
+        },
+        "command_flows_json": {
+            "required_commands": [
+                { "command": "bash -n rotate.sh", "label": "Check script syntax" },
+                { "command": "cat crontab.txt", "label": "Review crontab entry" }
+            ]
+        },
+        "solution_files_json": {
+            "rotate.sh": "#!/bin/bash\n# Log Rotation Script\n# Rotates /var/log/app/app.log when it exceeds 10MB\n\nLOG_DIR=\"/var/log/app\"\nLOG_FILE=\"${LOG_DIR}/app.log\"\nROTATION_LOG=\"${LOG_DIR}/rotation.log\"\nMAX_SIZE=10485760  # 10MB in bytes\nRETENTION_DAYS=30\n\n# Check if log file exists\nif [ ! -f \"${LOG_FILE}\" ]; then\n    echo \"$(date '+%Y-%m-%d %H:%M:%S') - No log file found at ${LOG_FILE}\" >> \"${ROTATION_LOG}\"\n    exit 0\nfi\n\n# Get file size\nFILE_SIZE=$(stat -f%z \"${LOG_FILE}\" 2>/dev/null || stat -c%s \"${LOG_FILE}\" 2>/dev/null)\n\n# If size exceeds MAX_SIZE, rotate\nif [ \"${FILE_SIZE}\" -gt \"${MAX_SIZE}\" ]; then\n    DATE_STAMP=$(date '+%Y%m%d-%H%M%S')\n    cp \"${LOG_FILE}\" \"${LOG_DIR}/app.log.${DATE_STAMP}\"\n    gzip \"${LOG_DIR}/app.log.${DATE_STAMP}\"\n    > \"${LOG_FILE}\"\n    echo \"$(date '+%Y-%m-%d %H:%M:%S') - Rotated app.log (${FILE_SIZE} bytes) to app.log.${DATE_STAMP}.gz\" >> \"${ROTATION_LOG}\"\nelse\n    echo \"$(date '+%Y-%m-%d %H:%M:%S') - No rotation needed (${FILE_SIZE} bytes)\" >> \"${ROTATION_LOG}\"\nfi\n\n# Delete old compressed logs\nfind \"${LOG_DIR}\" -name \"app.log.*.gz\" -mtime +${RETENTION_DAYS} -delete\n",
+            "crontab.txt": "0 2 * * * /path/to/rotate.sh\n"
+        },
+        "solution_explanation": "This script demonstrates several key Linux concepts:\n- **stat** retrieves file metadata (size). The -f%z / -c%s flags differ between macOS and Linux.\n- **gzip** compresses files in place. We copy first, then gzip, to avoid locking the active log.\n- **>** truncates a file to zero bytes without deleting the inode (important for processes that hold the file open).\n- **find -mtime +30 -delete** removes files modified more than 30 days ago.\n- The cron entry `0 2 * * *` means minute=0, hour=2, every day/month/weekday.",
+        "hints_json": [
+            "Use `stat` to get file size: `stat -c%s filename` on Linux or `stat -f%z filename` on macOS",
+            "Truncate the log with `> ${LOG_FILE}` — this empties the file without removing it",
+            "The cron format is: minute hour day month weekday command. \"0 2 * * *\" means daily at 2:00 AM"
+        ],
+        "tags": ["bash", "cron", "logs", "scripting", "automation"]
+    },
+    {
+        "title": "Troubleshoot a Failing Systemd Service",
+        "slug": "troubleshoot-failing-systemd-service",
+        "category": "linux",
+        "difficulty": "hard",
+        "estimated_minutes": 25,
+        "order_index": 3,
+        "is_published": true,
+        "description": "A Node.js API service refuses to start. The systemd unit file has multiple configuration errors.\n\nYour task:\n1. Read the provided `api.service` unit file and identify all errors\n2. Fix the unit file so the service would start correctly\n3. Write the correct `systemctl` commands in `commands.sh`\n\nThe application:\n- Binary is at `/opt/api/server` (not `/opt/api/app.js`)\n- Should run as the `api` user (not root)\n- Needs the `NODE_ENV=production` environment variable\n- Depends on the network being up AND PostgreSQL (`postgresql.service`)\n- Should restart on failure with a 5-second delay\n- Should start on boot (multi-user target)",
+        "initial_files_json": {
+            "api.service": "[Unit]\nDescription=API Server\nAfter=network.target\n\n[Service]\nType=simple\nUser=root\nExecStart=/opt/api/app.js\nRestart=no\nEnvironment=NODE_ENV=development\n\n[Install]\nWantedBy=multi-user.target\n",
+            "commands.sh": "#!/bin/bash\n# Write the systemctl commands needed after fixing the unit file\n\n# 1. Reload the systemd daemon (required after editing unit files)\n\n# 2. Enable the service to start on boot\n\n# 3. Start the service\n\n# 4. Check the service status\n\n"
+        },
+        "file_language_map": {
+            "api.service": "ini",
+            "commands.sh": "bash"
+        },
+        "command_flows_json": {
+            "required_commands": [
+                { "command": "cat api.service", "label": "Review the unit file" },
+                { "command": "cat commands.sh", "label": "Review your systemctl commands" }
+            ]
+        },
+        "solution_files_json": {
+            "api.service": "[Unit]\nDescription=API Server\nAfter=network.target postgresql.service\nRequires=postgresql.service\n\n[Service]\nType=simple\nUser=api\nExecStart=/opt/api/server\nRestart=on-failure\nRestartSec=5\nEnvironment=NODE_ENV=production\n\n[Install]\nWantedBy=multi-user.target\n",
+            "commands.sh": "#!/bin/bash\n# Write the systemctl commands needed after fixing the unit file\n\n# 1. Reload the systemd daemon (required after editing unit files)\nsudo systemctl daemon-reload\n\n# 2. Enable the service to start on boot\nsudo systemctl enable api.service\n\n# 3. Start the service\nsudo systemctl start api.service\n\n# 4. Check the service status\nsudo systemctl status api.service\n"
+        },
+        "solution_explanation": "The unit file had five issues:\n1. **Wrong binary path**: `ExecStart` pointed to `/opt/api/app.js` instead of `/opt/api/server`\n2. **Wrong user**: Should run as `api` not `root` (principle of least privilege)\n3. **Wrong restart policy**: `Restart=no` means it won't recover from crashes; `Restart=on-failure` with `RestartSec=5` adds resilience\n4. **Wrong environment**: `NODE_ENV=development` should be `production`\n5. **Missing dependency**: Needs `After=` and `Requires=` for `postgresql.service` to ensure the DB is up first\n\nAfter editing a unit file, `systemctl daemon-reload` is required to pick up changes. `enable` creates the symlink for boot-time startup. `start` launches it immediately.",
+        "hints_json": [
+            "Compare each ExecStart, User, Environment, and Restart value against the requirements",
+            "The service needs both After= and Requires= for postgresql.service — After controls order, Requires creates a hard dependency",
+            "After editing a .service file you must run `systemctl daemon-reload` before start/restart"
+        ],
+        "tags": ["systemd", "services", "troubleshoot", "systemctl", "unit-files"]
+    }
+]

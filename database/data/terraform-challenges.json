@@ -1,0 +1,112 @@
+[
+    {
+        "title": "Define a Local File Resource",
+        "slug": "define-local-file-resource",
+        "category": "terraform",
+        "difficulty": "beginner",
+        "estimated_minutes": 10,
+        "order_index": 1,
+        "is_published": true,
+        "description": "Create a Terraform configuration that uses the local provider to create a file.\n\nYour configuration should:\n- Define a resource of type \"local_file\" named \"hello\"\n- Set the filename to \"hello.txt\"\n- Set the content to \"Hello, Terraform!\"\n\nRun terraform init, then terraform plan to see what will be created.",
+        "initial_files_json": {
+            "main.tf": "# Define a local_file resource\nresource \"local_file\" \"hello\" {\n  # Add filename and content here\n}\n"
+        },
+        "file_language_map": { "main.tf": "hcl" },
+        "command_flows_json": {
+            "required_commands": [
+                { "command": "terraform init", "label": "Initialize Terraform" },
+                { "command": "terraform plan", "label": "Preview the execution plan" }
+            ]
+        },
+        "solution_files_json": {
+            "main.tf": "resource \"local_file\" \"hello\" {\n  filename = \"hello.txt\"\n  content  = \"Hello, Terraform!\"\n}"
+        },
+        "solution_explanation": "Terraform resources follow the pattern: resource \"TYPE\" \"NAME\" { ... }. The local_file resource creates a file on disk. The filename attribute sets the path and content sets what goes in the file. terraform init downloads the required provider, and terraform plan shows what will happen without making changes.",
+        "hints_json": [
+            "The resource type is \"local_file\" and the name is \"hello\"",
+            "Use filename = \"hello.txt\" inside the resource block",
+            "Use content = \"Hello, Terraform!\" to set the file content"
+        ],
+        "tags": ["terraform", "local-provider", "resources", "basics"]
+    },
+    {
+        "title": "Create Variables and Outputs",
+        "slug": "terraform-variables-and-outputs",
+        "category": "terraform",
+        "difficulty": "medium",
+        "estimated_minutes": 15,
+        "order_index": 2,
+        "is_published": true,
+        "description": "Refactor a Terraform configuration to use variables and outputs.\n\nCreate three files:\n1. **variables.tf** - Define a variable \"environment\" (string, default \"dev\") and \"app_name\" (string, no default)\n2. **main.tf** - Use the variables in a local_file resource to create a config file\n3. **outputs.tf** - Output the filename and a computed \"full_name\" combining app_name and environment",
+        "initial_files_json": {
+            "variables.tf": "# Define your variables here\nvariable \"environment\" {\n  # Add type, description, and default\n}\n\nvariable \"app_name\" {\n  # Add type and description (no default)\n}\n",
+            "main.tf": "resource \"local_file\" \"config\" {\n  filename = \"config.txt\"\n  content  = \"App: ??? Environment: ???\"\n}\n",
+            "outputs.tf": "# Define your outputs here\n"
+        },
+        "file_language_map": {
+            "variables.tf": "hcl",
+            "main.tf": "hcl",
+            "outputs.tf": "hcl"
+        },
+        "command_flows_json": {
+            "required_commands": [
+                { "command": "terraform init", "label": "Initialize Terraform" },
+                { "command": "terraform validate", "label": "Validate configuration" },
+                { "command": "terraform plan", "label": "Preview the plan" }
+            ]
+        },
+        "solution_files_json": {
+            "variables.tf": "variable \"environment\" {\n  type        = string\n  description = \"The deployment environment\"\n  default     = \"dev\"\n}\n\nvariable \"app_name\" {\n  type        = string\n  description = \"The application name\"\n}",
+            "main.tf": "resource \"local_file\" \"config\" {\n  filename = \"${var.app_name}-${var.environment}.txt\"\n  content  = \"App: ${var.app_name} Environment: ${var.environment}\"\n}",
+            "outputs.tf": "output \"filename\" {\n  value = local_file.config.filename\n}\n\noutput \"full_name\" {\n  value = \"${var.app_name}-${var.environment}\"\n}"
+        },
+        "solution_explanation": "Variables make Terraform configs reusable. Use var.name to reference them. Variables can have types, descriptions, defaults, and validation rules. Outputs expose values after apply — useful for passing data between modules or displaying results.",
+        "hints_json": [
+            "Variables use: variable \"name\" { type = string, default = \"value\" }",
+            "Reference variables with ${var.variable_name} in strings",
+            "Outputs use: output \"name\" { value = expression }"
+        ],
+        "tags": ["variables", "outputs", "interpolation", "hcl"]
+    },
+    {
+        "title": "Build a Terraform Module",
+        "slug": "build-terraform-module",
+        "category": "terraform",
+        "difficulty": "hard",
+        "estimated_minutes": 30,
+        "order_index": 3,
+        "is_published": true,
+        "description": "Create a reusable Terraform module structure.\n\nBuild a module that creates a \"server config\" with the following structure:\n\n1. **main.tf** (root) - Calls the module twice: once for \"web\" and once for \"api\"\n2. **modules/server-config/main.tf** - The module that creates a local_file with server info\n3. **modules/server-config/variables.tf** - Module input variables (server_name, port, environment)\n4. **modules/server-config/outputs.tf** - Module outputs (config_path)\n\nThe module should create a file named \"{server_name}-{environment}.conf\" with the server configuration.",
+        "initial_files_json": {
+            "main.tf": "# Root module - call the server-config module\nmodule \"web_server\" {\n  source = \"./modules/server-config\"\n  # Pass variables\n}\n\nmodule \"api_server\" {\n  source = \"./modules/server-config\"\n  # Pass variables\n}\n",
+            "modules/server-config/main.tf": "# Module implementation\nresource \"local_file\" \"config\" {\n  # Create the config file\n}\n",
+            "modules/server-config/variables.tf": "# Module input variables\n",
+            "modules/server-config/outputs.tf": "# Module outputs\n"
+        },
+        "file_language_map": {
+            "main.tf": "hcl",
+            "modules/server-config/main.tf": "hcl",
+            "modules/server-config/variables.tf": "hcl",
+            "modules/server-config/outputs.tf": "hcl"
+        },
+        "command_flows_json": {
+            "required_commands": [
+                { "command": "terraform init", "label": "Initialize with modules" },
+                { "command": "terraform plan", "label": "Preview module resources" }
+            ]
+        },
+        "solution_files_json": {
+            "main.tf": "module \"web_server\" {\n  source      = \"./modules/server-config\"\n  server_name = \"web\"\n  port        = 80\n  environment = \"production\"\n}\n\nmodule \"api_server\" {\n  source      = \"./modules/server-config\"\n  server_name = \"api\"\n  port        = 3000\n  environment = \"production\"\n}",
+            "modules/server-config/main.tf": "resource \"local_file\" \"config\" {\n  filename = \"${var.server_name}-${var.environment}.conf\"\n  content  = <<-EOT\n    server_name = ${var.server_name}\n    port        = ${var.port}\n    environment = ${var.environment}\n  EOT\n}",
+            "modules/server-config/variables.tf": "variable \"server_name\" {\n  type        = string\n  description = \"Name of the server\"\n}\n\nvariable \"port\" {\n  type        = number\n  description = \"Port number\"\n}\n\nvariable \"environment\" {\n  type        = string\n  description = \"Deployment environment\"\n  default     = \"dev\"\n}",
+            "modules/server-config/outputs.tf": "output \"config_path\" {\n  value       = local_file.config.filename\n  description = \"Path to the generated config file\"\n}"
+        },
+        "solution_explanation": "Modules are Terraform's way of creating reusable infrastructure components. A module has its own variables (inputs), resources, and outputs. The root module calls child modules with the module block, passing values via attributes that match the module's variable names. This enables DRY infrastructure code.",
+        "hints_json": [
+            "The module block needs source, plus any required variables as attributes",
+            "Module variables are defined in variables.tf inside the module directory",
+            "Use var.variable_name inside the module to reference its inputs"
+        ],
+        "tags": ["modules", "reusability", "structure", "advanced"]
+    }
+]
