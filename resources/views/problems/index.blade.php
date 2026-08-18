@@ -313,6 +313,7 @@
         .category-badge.kubernetes { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
         .category-badge.terraform { background: rgba(139, 92, 246, 0.12); color: #a78bfa; }
         .category-badge.docker { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+        .category-badge.linux { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
 
         /* Time column */
         .problem-time {
@@ -445,6 +446,10 @@
         <a href="{{ route('problems.index', ['category' => 'docker', 'difficulty' => request('difficulty')]) }}"
             class="category-tab {{ request('category') === 'docker' ? 'active' : '' }}">
             <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> Docker
+        </a>
+        <a href="{{ route('problems.index', ['category' => 'linux', 'difficulty' => request('difficulty')]) }}"
+            class="category-tab {{ request('category') === 'linux' ? 'active' : '' }}">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16M4 20V10l8-6 8 6v10"/><rect x="9" y="14" width="6" height="6"/></svg> Linux
         </a>
     </div>
 
