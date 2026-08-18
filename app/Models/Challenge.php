@@ -175,8 +175,7 @@ class Challenge extends Model
      */
     public function needsCluster(): bool
     {
-        return ($this->requires_cluster ?? false)
-            || in_array($this->problem_type ?? '', ['troubleshoot', 'build', 'scenario']);
+        return $this->requires_cluster ?? false;
     }
 
     /**
