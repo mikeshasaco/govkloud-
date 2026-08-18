@@ -77,8 +77,8 @@ class ListChallenges extends ListRecords
                         // Set defaults
                         $problem['order_index'] = $problem['order_index'] ?? Challenge::max('order_index') + 1;
                         $problem['is_published'] = $problem['is_published'] ?? false;
-                        $problem['requires_cluster'] = $problem['requires_cluster'] ?? true;
-                        $problem['problem_type'] = $problem['problem_type'] ?? 'troubleshoot';
+                        $problem['requires_cluster'] = $problem['requires_cluster'] ?? false;
+                        $problem['problem_type'] = $problem['problem_type'] ?? 'build';
                         $problem['points'] = $problem['points'] ?? 10;
                         $problem['estimated_minutes'] = $problem['estimated_minutes'] ?? 15;
 
